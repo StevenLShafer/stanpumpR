@@ -42,6 +42,9 @@ finishDrugSeries <- function(wide, PK, maximum, plotRecovery)
   # Likewise the ACT (heparin on bypass, R/act.R), which starts at its baseline
   # clotting time ACT0 before any heparin.
   if (!is.null(PK$act)) plasmaRise <- plasmaRise - actBaseline(PK$act)
+  # Likewise a factor concentrate, plotted above the patient's own activity
+  # (R/factorBaselines.R).
+  if (!is.null(PK$endogenousActivity)) plasmaRise <- plasmaRise - PK$endogenousActivity
   maxRise <- max(plasmaRise)
   results$CpNormCp <- if (maxRise > 0) plasmaRise          / maxRise * 100 else 0
   results$CeNormCp <- if (maxCp > 0) results$"Effect Site" / maxCp * 100 else 0
@@ -366,6 +369,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- NA_real_
         ng_Conv  <- NA_real_
       },
+      IUdL = {                 # Activity in IU/dL (= % of normal): a factor concentrate
+        # 1 IU/dL = 10 IU/L, so the base amount is 10 IU and a dose in IU is
+        # divided by 10 below.  See R/factorBaselines.R.
+        mg_Conv  <- NA_real_
+        mcg_Conv <- NA_real_
+        ng_Conv  <- NA_real_
+      },
       ACT = {                  # Heparin anti-Xa (IU/mL) driving the ACT (R/act.R)
         # The anti-factor Xa activity is simulated exactly as for an "IU" drug
         # (amounts in IU, divided by 1000 below to give IU/mL); actEngineResults()
@@ -402,13 +412,13 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # Checked before the mass conversions, which would turn a mass unit on an
     # activity drug into NA silently.
     iuDose <- grepl("^IU( |/|$)", dose$Units)
-    if (PK$Concentration.Units %in% c("IU", "ACT")) {
+    if (PK$Concentration.Units %in% c("IU", "ACT", "IUdL")) {
       # An ACT drug (heparin on bypass) is dosed in IU like any activity drug;
       # its anti-Xa activity is simulated the same way before actEngineResults().
       if (!all(iuDose))
         stop(PK$drug, " is dosed in international units (IU), not ",
              paste(unique(dose$Units[!iuDose]), collapse = ", "), ".")
-      dose$Dose <- dose$Dose / 1000
+      dose$Dose <- dose$Dose / (if (identical(PK$Concentration.Units, "IUdL")) 10 else 1000)
     } else if (any(iuDose)) {
       stop(PK$drug, " is not dosed in international units (IU).")
     }
@@ -703,6 +713,10 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     emerge <- PK$endCe
     if (!is.null(PK$osmotic) && length(emerge) == 1 && !is.na(emerge) && emerge > 0)
       emerge <- max(0, (emerge - PK$osmotic$baseline) / PK$osmotic$fraction)
+    # So is a factor concentrate's, set on the patient's total activity: the
+    # engines simulate only the infused activity (R/factorBaselines.R).
+    if (!is.null(PK$endogenousActivity) && length(emerge) == 1 && !is.na(emerge) && emerge > 0)
+      emerge <- max(0, emerge - PK$endogenousActivity)
 
     # The engines, for one dose table and one drug's PK sets.
     runEngines <- function(dose, pkSets)
@@ -944,6 +958,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   if (!is.null(PK$osmotic))
   {
     results$Plasma <- PK$osmotic$baseline + PK$osmotic$fraction * results$Plasma
+  }
+  # A factor concentrate is shown as the activity it leaves in the patient:
+  # the patient's own baseline plus the infused activity the engines
+  # simulated (R/factorBaselines.R).
+  if (!is.null(PK$endogenousActivity))
+  {
+    results$Plasma <- PK$endogenousActivity + results$Plasma
+    if (!all(is.na(results$"Effect Site")))
+      results$"Effect Site" <- PK$endogenousActivity + results$"Effect Site"
   }
 
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)

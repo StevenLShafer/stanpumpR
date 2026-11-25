@@ -3,7 +3,8 @@
 #
 # getDrugPK() passes a covariate only to the models that name it in their
 # signature (`cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6`, `creatinine`,
-# `gestationalAge`, `albumin`, `ast`, `pulmonaryHypertension`, `infection`),
+# `gestationalAge`, `albumin`, `ast`, `pulmonaryHypertension`, `infection`,
+# and the clotting-factor baselines of R/factorBaselines.R),
 # so the signatures are the one authoritative list of what a field affects.
 # The tooltips read them, as the Cautions page's test does, so a new model that
 # names a covariate joins its tooltip by itself, and a tooltip can never
@@ -23,7 +24,10 @@ PATIENT_FIELD_LABELS <- c(
   albumin    = "Serum albumin",
   ast        = "Serum AST",
   pulmonaryHypertension = "Pulmonary hypertension",
-  infection  = "Infection"
+  infection  = "Infection",
+  # The clotting-factor baselines, one per factor (R/factorBaselines.R)
+  stats::setNames(vapply(FACTOR_BASELINE_FIELDS, `[[`, character(1), "label"),
+                  names(FACTOR_BASELINE_FIELDS))
 )
 
 # A qualification printed after a drug's name in its tooltip, where a model
@@ -199,6 +203,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "volume. None gives the healthy volunteers' pharmacokinetics; a",
       "ventilated pneumonia is a category of its own, as the sources fitted",
       "it."
+    ),
+    factorVIIIBaseline = paste(
+      "The patient's own factor VIII activity, in IU/dL (% of normal), before",
+      "any concentrate. The factor VIII curve is this activity plus the",
+      "activity infused, so a perioperative target can be read on it."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -217,6 +226,10 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "for nab-paclitaxel, 4.4 g/dL for tolcapone, 4.5 g/dL for emicizumab);",
     "hypoalbuminaemia is then",
     "not represented."
+  ) else if (arg %in% names(FACTOR_BASELINE_FIELDS)) paste(
+    "Leave blank to take the baseline of the population the model was",
+    "fitted in, which the drug's help page gives (severe haemophilia A for",
+    "factor VIII): a patient with a higher activity is then drawn too low."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",
     EPIRUBICIN_REFERENCE_AST
