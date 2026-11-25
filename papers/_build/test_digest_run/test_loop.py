@@ -33,6 +33,22 @@ def say(msg):
 
 
 calls = []
+on_disk = []      # (stem, was its entry already ON DISK when tick() returned?) -- checked below
+
+
+def logged_now(stem):
+    """Is `stem` in the log FILE right now, with a card recorded?
+
+    Read INSIDE the batch, not after it.  The end-of-run check below reads the file once
+    everything has finished, so it would pass just as well if save_log() were deferred to the
+    end of a batch -- and the mid-batch ordering check compares only the report's lines, never
+    the file.  Between them nothing held save_log() to writing when tick() says it does, which
+    is the behaviour run 20261119-1542 made necessary (CodeRabbit, PR #926)."""
+    try:
+        return any(e.get("stem") == stem and e.get("card_written")
+                   for e in json.load(io.open(written_log, encoding="utf-8")))
+    except Exception:
+        return False
 
 
 def stub_run_claude(cmd, prompt, scratch, timeout, tick=None, poll=5.0):
@@ -44,6 +60,7 @@ def stub_run_claude(cmd, prompt, scratch, timeout, tick=None, poll=5.0):
         for _ in range(3):
             tick()                                  # no card appears, so no entry should be made
             time.sleep(0.2)
+        on_disk.append(("T_LOOP_A", logged_now("T_LOOP_A")))   # still false: no card yet
         return "timed out after 75 min; its process tree was ended and the run went on.\nnothing to show", "timeout"
     time.sleep(0.4)    # as a real batch does: a card cannot appear within the ~1.4 ms in which a
                        # file's timestamp can still read as older than t0 (measured on this machine)
@@ -51,6 +68,7 @@ def stub_run_claude(cmd, prompt, scratch, timeout, tick=None, poll=5.0):
         open(os.path.join(CARDS, s + ".md"), "w", encoding="utf-8").write("card\n")
         time.sleep(0.1)
         tick()                                      # each card is logged here, mid-batch
+        on_disk.append((s, logged_now(s)))          # ...and on disk before the next one
     return "fake: wrote the cards", 0
 
 
@@ -90,6 +108,11 @@ i_card = lines.index("- T_LOOP_C: card written")
 i_out = lines.index("fake: wrote the cards")
 check(i_card < i_out, "the card was reported as it appeared, before the batch's output block")
 check(json.load(open(written_log))[0]["stem"] == "T_LOOP_A", "digest_run_log.json was written during the run")
+seen = dict(on_disk)
+check(seen.get("T_LOOP_A") is False, "batch 1's stem is NOT logged as carded while no card exists")
+check(on_disk and all(seen.get(s) for s in ("T_LOOP_C", "T_LOOP_D")),
+      "each of batch 2's cards was on disk in the log by the time its own tick() returned, "
+      "not at the end of the batch (observed: %s)" % on_disk)
 check("NO CARD" in lines and "- T_LOOP_A: NO CARD (see output)" in lines, "a batch with no card still says so")
 check(lines.count("## Batch") == 2, "both batches appear in the report")
 

@@ -325,17 +325,54 @@ def enqueue(wanted_by):
     return added, already, ""
 
 
+
+def diag(msg):
+    """A human-readable line.  In --tasks mode it goes to STDERR, so that stdout carries
+    nothing but task records: a consumer reading six tab-separated fields was handed the
+    early-exit messages ("cannot read origin/master", "no registry lists a `to_obtain` PMID")
+    and could not parse them (CodeRabbit, PR #926)."""
+    print(msg, file=sys.stderr if TASKS else sys.stdout)
+
+
+def no_archive_caveat():
+    """Printed on EVERY exit in --no-archive mode, the early ones included.
+
+    Without it a short list reads as good news: the arrival set is the cards, so a paper that
+    is filed and not yet digested counts as still to obtain.  On 2026-11-25 that was 11 'still
+    to obtain' in this mode against 5 beside the archive.  It was missing from the two early
+    returns until CodeRabbit pointed it out on PR #926, which made the docstring's "every
+    exit" an overclaim.
+
+    In --tasks mode it is one `#`-prefixed line on STDOUT, not stderr: a consumer that pipes
+    stdout must still see it, and skipping `#` lines is the ordinary contract for a
+    tab-separated stream.  That is the one line of stdout that is not a record."""
+    if not NO_ARCHIVE:
+        return
+    if TASKS:
+        print("#\tno-archive mode: arrival = a card on %s, so a paper that arrived with no"
+              " card reads as still missing, and no superseded edition is reported" % REF)
+    else:
+        diag("\nNOTE: --no-archive. Arrival means A CARD ON %s, not a PDF on disk, so"
+             " a paper that is\n      filed but not yet digested counts as STILL TO OBTAIN,"
+             " nothing is reported as\n      arrived-not-digested, and no superseded edition"
+             " is reported. The ready rows above\n      are complete for the registries and may"
+             " be short for pending-work. Run it beside\n      the archive for the full picture."
+             % REF)
+
+
 def main():
     if FETCH:
         subprocess.run(["git", "-C", REPO, "fetch", "origin", "master", "-q"],
                        capture_output=True, text=True)
     if not git("rev-parse", REF).strip():
-        print("arrivals: cannot read %s in %s -- skipped" % (REF, REPO))
+        diag("arrivals: cannot read %s in %s -- skipped" % (REF, REPO))
+        no_archive_caveat()
         return 0
 
     have, cards, rows = archived_pmids(), cards_on_master(), wanted()
     if not rows:
-        print("arrivals: no registry lists a `to_obtain` PMID -- nothing to check")
+        diag("arrivals: no registry lists a `to_obtain` PMID -- nothing to check")
+        no_archive_caveat()
         return 0
 
     undigested, stale, partly, missing = [], [], [], []
@@ -385,10 +422,19 @@ def main():
         # has the whole request.  `ready` is the only kind that is work somebody can start
         # now; the rest are named so that a filter cannot silently drop a category it has
         # not heard of.
+        def flat(x):
+            """One field, with tabs and line breaks squeezed out.
+
+            EVERY field is flattened, not just `what`: `where` and `drug` come from CSV
+            columns, which may hold either character, and a newline in one of them would
+            write a single task across several lines while a tab would add a column
+            (CodeRabbit, PR #926)."""
+            return re.sub(r"\s+", " ", str(x or "")).strip()
+
         def emit(kind, where, drug, pmids, what):
-            print("\t".join((kind, where, drug or "-", ",".join(pmids),
-                              ",".join(cards.get(x, "") for x in pmids),
-                              re.sub(r"\s+", " ", what or "").strip())))
+            print("\t".join(flat(f) for f in (
+                kind, where, drug or "-", ",".join(pmids),
+                ",".join(cards.get(x, "") for x in pmids), what)))
         for reg, drug, pmids, reason in stale:
             emit("ready-registry-row", reg, drug, pmids, reason)
         for pmid, drug, what, where, raised in pending:
@@ -400,25 +446,8 @@ def main():
             emit("arrived-not-digested", reg, drug, pmids, reason)
         for reg, drug, here, gone, reason in partly:
             emit("partly-satisfied", reg, drug, here + gone, reason)
-        if NO_ARCHIVE:
-            print("#\tno-archive mode: arrival = a card on %s, so a paper that arrived with"
-                  " no card reads as still missing, and no superseded edition is reported"
-                  % REF)
+        no_archive_caveat()
         return 0
-
-    def no_archive_caveat():
-        """Printed in --no-archive mode WHATEVER the result, 'nothing has arrived' included.
-
-        Without it a short list reads as good news: the arrival set is the cards, so a paper
-        that is filed and not yet digested is counted as still to obtain.  On 2026-11-25 that
-        was 11 'still to obtain' in this mode against 5 beside the archive."""
-        if NO_ARCHIVE:
-            print("\nNOTE: --no-archive. Arrival means A CARD ON %s, not a PDF on disk, so"
-                  " a paper that is\n      filed but not yet digested counts as STILL TO OBTAIN,"
-                  " nothing is reported as\n      arrived-not-digested, and no superseded edition"
-                  " is reported. The ready rows above\n      are complete for the registries and may"
-                  " be short for pending-work. Run it beside\n      the archive for the full picture."
-                  % REF)
 
     if not (undigested or stale or partly or superseded or pending or added or enqueue_problem):
         print("arrivals: nothing waiting has arrived (%d `to_obtain` PMIDs, %d still to obtain)"

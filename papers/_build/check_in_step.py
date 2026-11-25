@@ -263,10 +263,15 @@ def main():
     # how a mirror silently stops being a record of what runs.
     adir = os.path.join(ARCHIVE, "_build")
     uncommitted = sorted(f for f in one_level(adir)
-                         if not f.endswith(".bat") and f not in rec.names)
-    # `.bat` is left out of THIS direction only: update.bat and digests.bat live in the
-    # archive's root, not in `_build`, so looking for them here would report them missing for
-    # ever.  It was the same before one_level(); only the walk is new.
+                         if not (f.endswith(".bat") and "/" not in f) and f not in rec.names)
+    # A TOP-LEVEL `.bat` is left out of THIS direction only: update.bat and digests.bat live
+    # in the archive's root, not in `_build`, so looking for them here would report them
+    # missing for ever.  It was the same before one_level(); only the walk is new.
+    #
+    # The exclusion stops at the top level.  A `.bat` inside a NAMED subfolder is a script of
+    # the record like any other, and nothing else would notice it was uncommitted: the first
+    # version of this line dropped `test_digest_run/helper.bat`, so the check would have
+    # reported a clean match with that script absent from git (CodeRabbit, PR #926).
 
     if not (missing or differs or uncommitted or unreadable):
         print("in-step check: the archive's %d scripts match the record in %s."
