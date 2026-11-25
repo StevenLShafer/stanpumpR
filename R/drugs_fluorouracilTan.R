@@ -41,12 +41,13 @@
 # HOW IT DIFFERS FROM BRIKI 2026 (fluorouracil)
 # =============================================
 # Briki's model, fitted to 726 patients, has a parallel LINEAR clearance
-# (52.6 L/h) beside a smaller saturable pathway (Vmax 429 mg/h, Km 2.34 mg/L);
+# (59.2 L/h, its Table S3 model) beside a smaller saturable pathway (Vmax
+# 411 mg/h, Km 1.89 mg/L);
 # Tan's, in 140, has saturable elimination alone, with a larger capacity
 # and a higher Km.  For a 60-year-old man of BSA 1.94 m2 (Mosteller), 2400
-# mg/m2 over 46 h gives an AUC of 20.8 mg h/L here and 17.9 with Briki's
-# model, and with a 400 mg/m2 bolus first 28.7 and 24.7: Briki's runs about
-# 14% lower throughout, a difference between the two cohorts that neither
+# mg/m2 over 46 h gives an AUC of 20.8 mg h/L here and 18.0 with Briki's
+# model, and with a 400 mg/m2 bolus first 28.7 and 25.3 (switch off): Briki's
+# runs 12-14% lower, a difference between the two cohorts that neither
 # model can settle.  Both are candidates of the `fluorouracil` group
 # (R/modelSelection.R), which chooses for the patient by the studied ranges
 # and then the larger study, so an adult the two both include gets Briki's.

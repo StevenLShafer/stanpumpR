@@ -299,7 +299,18 @@ values**, and the reference man, and everyone else, are scaled from there.
   (clindamycin, vancomycin, enoxaparin, epinephrine, argatroban). And
   (2026-11-23) lorazepam, whose disposition became Barr 2001's absolute
   Table 4 (no covariates), at Barr's Table 2 lorazepam group (85 kg, 176 cm,
-  74 y; 13 men and 1 woman); it had been a per-kilogram model.
+  74 y; 13 men and 1 woman); it had been a per-kilogram model. And
+  (2026-11-25, Gemini's chemotherapy audit of 2026-11-23, F22)
+  fluorouracilBriki (V1 and Q at Briki 2026's Table 2, three studies as
+  three groups, heights printed; at the same time the model became the
+  authors' alternative of supplement Table S3, on Shafer's decision, whose
+  Vmax carries its own lean-body-mass term, (LBM/55)^0.484, in place of
+  sex: a sex term on a clearance with no weight term stands in for size,
+  and the lean-mass exponent reproduces it, where FFM^0.75 would overstate
+  it by about a tenth; CL keeps its BSA term and V2 its weight term) and
+  cytarabine's adult branch (Krogh-Madsen 2012's four parameters at
+  etoposideKroghMadsen's cohort, the PDF confirming one set of 23 patients
+  for both drugs; the children's branch keeps Periclou's BSA term).
 - **Partial-covariate models not yet anchored** (2026-11-19 review). *A
   decision for Shafer*: apixaban and apixabanVTE (a sex term on CL_NR/F, a
   multinational cohort without heights), dabigatran (Q/F and V3/F fixed from
@@ -309,9 +320,10 @@ values**, and the reference man, and everyone else, are scaled from there.
   renal term, and aspirin (k34 x V3 counts weight twice with the switch on).
   *The source is not in the archive or prints no demographics*: aspirin and
   salicylate, pimavanserin, levodopa and levodopaIntestinalGel, pramipexole
-  and pramipexoleER, fluorouracilBriki, tranexamicAcid, tobramycin, sotalol,
+  and pramipexoleER, tranexamicAcid, tobramycin, sotalol,
   hydrocodone and haloperidol (amikacin, ganciclovir,
-  vancomycinKidneyTransplant and quinidine were anchored on 2026-11-20). *Exempt*: hydrochlorothiazide (a meta-analysis).
+  vancomycinKidneyTransplant and quinidine were anchored on 2026-11-20, and
+  fluorouracilBriki on 2026-11-25). *Exempt*: hydrochlorothiazide (a meta-analysis).
 - **Not anchored, and why** (2026-11-18). *The source's paper is not in the
   archive* (papers/pending-work.csv): duloxetine and everolimus (sirolimus,
   tacrolimus, amitriptyline, capecitabine, amikacin, ganciclovir, quinidine
