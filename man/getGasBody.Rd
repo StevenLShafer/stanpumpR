@@ -31,6 +31,14 @@ now I want to be identical with GasMan; later on we will update with more
 current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
 which is also what GasMan does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit, B-01 and F-01):
+the compartments are to scale by body composition, with the library's own
+fat-free mass (Al-Sallami): the vessel-rich group and muscle by fat-free
+mass, the fat group by fat mass, its blood flow following its volume as
+Weber 2021 scaled it, anchored so that the 70 kg, 170 cm, 35-year-old man
+is GasMan's standard exactly, with a GasMan-scaling option kept for the
+validation cases at other weights.  Shafer: "Ted Eger would have approved."
+To be built in its own pull request; until then the scaling is linear.
 Cardiac output is returned here as a single covariate-derived constant, but
 \code{advanceClosedFormGas()} accepts it per segment, so making it
 time-varying later requires no change to the engine.

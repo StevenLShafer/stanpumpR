@@ -42,9 +42,15 @@ The published studies of opioid MAC reduction do not agree well with one another
 
 The model falls short at low opioid levels and for alfentanil and remifentanil, part of which is the MEAC each is scaled by rather than the curve. The parameters are isolated in `R/opioidMacInteraction.R` so that they can be replaced without touching anything else.
 
+## Other drugs that lower MAC
+
+Opioids are not the only drugs that lower MAC. Dexmedetomidine, the benzodiazepines, ketamine and propofol lower it too, and stanpumpR does not show it: with one of them on board, the MAC-equivalents panel understates how much anesthetic effect the patient has. Each opioid also enters only through its MEAC, with no potency of its own on MAC.
+
 ## Interaction with *Time until threshold*
 
 When the MAC time until threshold is computed with this interaction on, the opioid's effect is held at its value at the moment the agents are turned off, although in truth the opioid effect-site concentration would keep changing. The resulting error has no fixed direction: the MAC time may read too long or too short, depending on whether the opioid's own effect-site concentration is still rising or already falling at that moment.
+
+An example of its size: remifentanil 0.2 mcg/kg/min with 2 per cent sevoflurane for 60 minutes, both stopped together, with a threshold of 0.1 MAC, reads 24.6 minutes, where the time with remifentanil washing out alongside the sevoflurane is 22.5 minutes, about 9 per cent shorter.
 
 ## What to look for
 
