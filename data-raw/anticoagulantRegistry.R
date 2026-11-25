@@ -40,11 +40,6 @@ reg <- function(model_id, drug_class, context, analyte, assay, route,
 
 registry <- rbind(
   # --- Implemented (research-ready; concentration or INR only) ---------------
-  reg("tm_mouksassi_2015_sepsis", "recombinant soluble thrombomodulin",
-      "IV, sepsis with suspected DIC (phase IIb) and healthy volunteers", "thrombomodulin alfa plasma",
-      "ELISA (LLOQ 1 ng/mL)", "IV", "research_ready", "thrombomodulinAlfa",
-      "Not approved in the US. Concentration only: no protein C, coagulation or DIC endpoint. Sparse sampling in patients; patients on renal replacement therapy excluded.",
-      "https://doi.org/10.1002/cpdd.163"),
   reg("tnk_tang_2023_ami", "thrombolytic (tissue plasminogen activator)",
       "IV bolus, acute myocardial infarction (TIMI 10B)", "tenecteplase plasma",
       "sandwich ELISA (also reads endogenous t-PA; baseline not plotted)",
@@ -178,7 +173,14 @@ registry <- rbind(
       "SC", "desirudin plasma", "aPTT",
       "SC", "pending", NA,
       "No drug-specific dynamic fit; do not alias bivalirudin or argatroban.",
-      "https://www.accessdata.fda.gov/drugsatfda_docs/label/2014/021271s006lbl.pdf")
+      "https://www.accessdata.fda.gov/drugsatfda_docs/label/2014/021271s006lbl.pdf"),
+  # Implemented (research-ready). Kept last because the published CSV holds
+  # it last (added by #883); moving it would only reorder the CSV.
+  reg("tm_mouksassi_2015_sepsis", "recombinant soluble thrombomodulin",
+      "IV, sepsis with suspected DIC (phase IIb) and healthy volunteers", "thrombomodulin alfa plasma",
+      "ELISA (LLOQ 1 ng/mL)", "IV", "research_ready", "thrombomodulinAlfa",
+      "Not approved in the US. Concentration only: no protein C, coagulation or DIC endpoint. Sparse sampling in patients; patients on renal replacement therapy excluded.",
+      "https://doi.org/10.1002/cpdd.163")
 )
 stopifnot(all(registry$readiness %in% READY))
 
@@ -201,7 +203,13 @@ COX  <- "152 PCI patients on a GP IIb/IIIa antagonist, Cox 2004"
 BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
 DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
 HAM  <- "150 patients (Study I+II), Hamberg 2007"
-VER  <- "24 healthy White subjects (single dose), Verstuyft 2012"
+# The INR (PD) model was fitted to Study I alone: VKORC1 was genotyped only there
+# (Hamberg 2007, Methods; PMID_17301738 card).
+HAMPD <- "57 patients (Study I only), Hamberg 2007"
+# Two doses 24 h apart, sampled from day 2 to day 3 (Verstuyft 2012, PDF p4;
+# PMID_22149257 card): not a single-dose study.
+VERF <- "24 healthy White subjects (two 20 mg doses 24 h apart), Verstuyft 2012"
+VERA <- "24 healthy White subjects (two 4 mg doses 24 h apart), Verstuyft 2012"
 MOUK <- "24 healthy volunteers and 368 adults with sepsis and suspected DIC, Mouksassi 2015"
 TANG <- "103 patients with acute myocardial infarction (TIMI 10B), Tang 2023"
 
@@ -279,13 +287,13 @@ parameters <- rbind(
   par("warfarin (Hamberg)", "ka", 2, "1/h (both enantiomers)", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
   par("warfarin (Hamberg)", "CL_R", 0.139, "L/h (x (1 - 0.0098 (age-71)))", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
   par("warfarin (Hamberg)", "V_R", 12.8, "L", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "EC50", "4.61 / 3.02 / 2.20", "mg/L (VKORC1 GG / GA / AA)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "gamma", 0.424, "dimensionless", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "MTT1", 11.6, "h (six-compartment chain; ktr = 1/MTT)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "MTT2", 120, "h (one-compartment chain; ktr = 1/MTT)", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "lambda", 3.61, "dimensionless", "estimated", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "Emax", 1, "fixed", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
-  par("warfarin (Hamberg)", "INR_max", 20, "fixed (INR = baseline + 20 (1 - A6 A7)^lambda)", "fixed", HAM, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "EC50", "4.61 / 3.02 / 2.20", "mg/L (VKORC1 GG / GA / AA)", "estimated", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "gamma", 0.424, "dimensionless", "estimated", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "MTT1", 11.6, "h (six-compartment chain; ktr = 1/MTT)", "estimated", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "MTT2", 120, "h (one-compartment chain; ktr = 1/MTT)", "estimated", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "lambda", 3.61, "dimensionless", "estimated", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "Emax", 1, "fixed", "fixed", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
+  par("warfarin (Hamberg)", "INR_max", 20, "fixed (INR = baseline + 20 (1 - A6 A7)^lambda)", "fixed", HAMPD, "https://doi.org/10.1038/sj.clpt.6100084"),
 
   par("edoxaban", "CL_NR/F", 15.2, "L/h (x (WT/70)^0.75)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
   par("edoxaban", "CL_R/F slope1", 0.202, "L/h per mL/min (CLcr<=90)", "estimated", NIE, "https://doi.org/10.1111/bcp.12727"),
@@ -332,32 +340,32 @@ parameters <- rbind(
   par("fondaparinux", "Ka", 0.716, "1/h (SC)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "Cl/F", 0.278, "L/h (x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "V2/F (central)", 8.14, "L (x (WT/68)^0.522)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
-  par("fondaparinux", "Q/F", 0.082, "L/h", "fixed", DEL, "https://doi.org/10.1160/TH10-02-0127"),
+  par("fondaparinux", "Q/F", 0.082, "L/h", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "V3/F (peripheral)", 15.6, "L", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
 
-  par("fluindione", "CL/F", 0.17, "L/h (x (WT/69)^0.75 x 0.637 CYP2C9 *3)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "V1/F", 5.19, "L (x WT/69)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "Q/F", 0.173, "L/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "V2/F", 2.77, "L", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "ka", 1.83, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "C50", 3.63, "mg/L (x1.30 VKORC1 less-sensitive)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "gamma", 2.32, "dimensionless", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "kin", 0.0385, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "kout", 0.0391, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("fluindione", "Emax", 1, "fixed", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "CL/F", 0.17, "L/h (x (WT/69)^0.75 x 0.637 CYP2C9 *3)", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "V1/F", 5.19, "L (x WT/69)", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "Q/F", 0.173, "L/h", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "V2/F", 2.77, "L", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "ka", 1.83, "1/h", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "C50", 3.63, "mg/L (x1.30 VKORC1 less-sensitive)", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "gamma", 2.32, "dimensionless", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "kin", 0.0385, "1/h", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "kout", 0.0391, "1/h", "estimated", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("fluindione", "Emax", 1, "fixed", "fixed", VERF, "https://doi.org/10.2165/11595560-000000000-00000"),
 
-  par("acenocoumarol", "CL_S/F", 15.3, "L/h (x 0.7 CYP2C9 *3)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "V1_S/F", 24.7, "L (x WT/69)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "Q_S/F", 4.85, "L/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "V2_S/F", 52.5, "L", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "ka", 0.936, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "tlag", 0.269, "h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "dose fraction (S)", 0.5, "fraction of racemate", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "C50", 0.0023, "mg/L (x2.29 VKORC1 less-sensitive)", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "gamma", 1.2, "dimensionless", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "kin", 0.0269, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "kout", 0.0268, "1/h", "estimated", VER, "https://doi.org/10.2165/11595560-000000000-00000"),
-  par("acenocoumarol", "Emax", 1, "fixed", "fixed", VER, "https://doi.org/10.2165/11595560-000000000-00000")
+  par("acenocoumarol", "CL_S/F", 15.3, "L/h (x 0.7 CYP2C9 *3)", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "V1_S/F", 24.7, "L (x WT/69)", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "Q_S/F", 4.85, "L/h", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "V2_S/F", 52.5, "L", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "ka", 0.936, "1/h", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "tlag", 0.269, "h", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "dose fraction (S)", 0.5, "fraction of racemate", "fixed", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "C50", 0.0023, "mg/L (x2.29 VKORC1 less-sensitive)", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "gamma", 1.2, "dimensionless", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "kin", 0.0269, "1/h", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "kout", 0.0268, "1/h", "estimated", VERA, "https://doi.org/10.2165/11595560-000000000-00000"),
+  par("acenocoumarol", "Emax", 1, "fixed", "fixed", VERA, "https://doi.org/10.2165/11595560-000000000-00000")
 )
 
 utils::write.csv(registry,
