@@ -86,6 +86,21 @@
 #
 # The parameters are isolated here so that they can be replaced without touching
 # anything else.
+#
+# DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit of 2026-11-23, D-02,
+# D-04 and F-02): only the opioids lower MAC here, each on the one MEAC scale
+# above, with no potency of its own on MAC.  Dexmedetomidine, the
+# benzodiazepines, ketamine and propofol lower MAC too, and the app does not
+# show it; inst/app-help/models/opioid-mac.md says so.  A literature search for
+# their MAC reductions with sevoflurane (dexmedetomidine, midazolam, ketamine,
+# propofol) is recorded as the alternative, not begun.
+#
+# REVIEW WHEN THE ANAESTHETIC INTERACTION MODEL ARRIVES (Shafer, 2026-11-25):
+# he will introduce a large anaesthetic drug interaction model he has been
+# developing offline, once the current work has settled.  This file, the
+# decision above and the frozen-opioid approximation in
+# applyOpioidMacInteraction() (D-03, decided the same day to wait for that
+# model) are to be reviewed when it is added.
 # -----------------------------------------------------------------------------
 
 OPIOID_MAC_EMAX  <- 0.90   # ceiling on the fractional reduction in MAC
@@ -212,7 +227,12 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # and the coupled gas washout would need a threshold that changes with the
   # time since the stop: a proposal recorded in
   # docs/gas-engine-audit/gemini-2026-11-23-assessment.md (D-03).  Until
-  # 2026-11-24 this comment said the engines did not expose them.
+  # 2026-11-24 this comment said the engines did not expose them.  DECIDED
+  # (Shafer, 2026-11-25): left as it is for the anaesthetic drug interaction
+  # model he will introduce (see the file header).  How large it is, measured
+  # that day: remifentanil 0.2 mcg/kg/min with 2% sevoflurane for 60 minutes,
+  # both stopped, threshold 0.1 MAC, reads 24.6 minutes where the time with
+  # remifentanil washing out alongside is 22.5 (about 9% long).
   #
   # The opioid's own times inside the plot join the MAC series, so a bolus's
   # peak effect is drawn where it is, not only at the gas engine's points

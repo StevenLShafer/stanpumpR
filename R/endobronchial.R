@@ -46,6 +46,15 @@
 # engine carries oxygen as gas only, and R/arterialOxygen.R reads the
 # arterial oxygen off its alveolar oxygen through the shunt.  The shunt fraction was put
 # to Shafer on 2026-11-19 and DECIDED the same day: keep the chapter's 50%.
+# Reopened by Gemini's gas-engine audit of 2026-11-23 (C-05: hypoxic
+# vasoconstriction lowers the shunt; its comparison was mostly planned
+# one-lung ventilation in the lateral position, not an accidental mainstem
+# intubation, and its 30% arithmetic did not reproduce) and DECIDED again on
+# 2026-11-25: while the box is ticked a Shunt fraction slider is shown, 0 to
+# 50%, starting at 50%, its maximum, so the user can lower it and watch the
+# oxygenation improve (to be built in its own pull request: a physiology
+# event records it with the box and the haemoglobin, and a link, a scenario
+# and the Visualizer's arterial oxygen carry it).
 # The volume share remains a [decision].
 # -----------------------------------------------------------------------------
 

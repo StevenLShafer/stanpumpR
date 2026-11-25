@@ -21,5 +21,14 @@ Mapleson's relation: MAC declines about 6\% per decade of age.
 \details{
 Mapleson (Br J Anaesth 1996;76:179-185) fitted ages from 1 year up.  Below
 1 year the relation is extrapolated, and changes MAC by under 1\% from its
-value at 1 year; it does not model the lower MAC of neonates.
+value at 1 year.  It does not model the MAC measured in infants, which is
+higher than this relation gives (sevoflurane 3.3\% in neonates and 3.2\% at
+1-6 months, Lerman 1994, against 2.31\% here at birth) and, for isoflurane
+and desflurane, peaks within the first year (isoflurane 1.87\% at 1-6
+months, Cameron 1984; desflurane 9.92\% at 6-12 months, Taylor and Lerman
+1991): figures from the PubMed abstracts, not yet read.  Whether measured
+infant MAC replaces this relation below 1 year was put to Shafer on
+2026-11-25 (Gemini's gas-engine audit, B-03 and F-03) and DEFERRED until
+the papers are read; they need interlibrary loan (PMIDs 8024136, 1741518,
+6703367 and, for preterm neonates, 3631603; \code{papers/pending-work.csv}).
 }

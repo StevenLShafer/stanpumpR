@@ -74,6 +74,10 @@ Until 23 November 2026 every step was the plot length divided by 600, so a day's
 
 MAC is age-adjusted by the Mapleson relation, MAC(age) = MAC40 × 10^(−0.00269 (age − 40)), about 6 per cent per decade, with MAC40 Mapleson's own values from the same meta-analysis (the table above). The MAC-equivalents series is the sum over potent agents of alveolar tension divided by the agent's age-adjusted MAC. Nitrous oxide is included.
 
+Mapleson fitted ages from 1 year; below that the relation is extrapolated, and moves MAC by under 1 per cent from its value at 1 year. MAC measured in infants is higher than that, and for isoflurane and desflurane it peaks within the first year (Cameron 1984; Taylor and Lerman 1991; Lerman 1994). Whether those measurements should replace the relation in infants will be decided once the papers have been read.
+
+**Pregnancy** does not change MAC here. Lower MAC has been reported in pregnancy: isoflurane MAC 28 per cent lower at 8 to 12 weeks (Gin and Chan 1994), halothane and enflurane MAC lower in early pregnancy (Chan 1996), isoflurane MAC lower in the first day or so after delivery (Zhou 1995; Chan and Gin 1995), and 25 to 40 per cent lower in ewes near term (Palahniuk 1974). The evidence is thin. No human study measured MAC at term. The human studies compared pregnant with nonpregnant women but were not randomised, and the observer, who could not be blind to pregnancy, judged movement at each step of the up-and-down method. Progesterone, the mechanism the authors proposed, did not correlate with MAC in Gin and Chan's own data, and at term pregnancy did not change sevoflurane's effect on the EEG (Ueyama 2010). Steven Shafer decided on 25 November 2026 that no pregnancy factor is applied: he cannot envision a mechanism by which pregnancy would alter MAC, and the studies do not separate the investigators' expectation from what they found.
+
 ## Validation
 
 Richard H. Epstein ran GasMan through its API for the same scenarios and the outputs were compared column by column. In the first concordance run the two agreed to one part in a million on the alveolar tension, with the residual traced to GasMan's single-precision arithmetic. Five further scenarios covering low flows, other agents, a 100 kg patient and changing settings followed, run with GasMan's own program built from its source; their 520 values are frozen in the repository and checked on every build, and on 24 November 2026 a sixth, a 5 kg patient, was added. The record is `inst/validation/VALIDATION.md`; see [Testing and validation](help:validation).
@@ -87,3 +91,21 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
+
+Cameron CB, Robinson S, Gregory GA. The minimum anesthetic concentration of isoflurane in children. *Anesth Analg* 1984;63:418-420.
+
+Taylor RH, Lerman J. Minimum alveolar concentration of desflurane and hemodynamic responses in neonates, infants, and children. *Anesthesiology* 1991;75:975-979.
+
+Lerman J, Sikich N, Kleinman S, Yentis S. The pharmacology of sevoflurane in infants and children. *Anesthesiology* 1994;80:814-824.
+
+Palahniuk RJ, Shnider SM, Eger EI 2nd. Pregnancy decreases the requirement for inhaled anesthetic agents. *Anesthesiology* 1974;41:82-83.
+
+Gin T, Chan MT. Decreased minimum alveolar concentration of isoflurane in pregnant humans. *Anesthesiology* 1994;81:829-832.
+
+Chan MT, Gin T. Postpartum changes in the minimum alveolar concentration of isoflurane. *Anesthesiology* 1995;82:1360-1363.
+
+Zhou HH, Norman P, DeLima LG, Mehta M, Bass D. The minimum alveolar concentration of isoflurane in patients undergoing bilateral tubal ligation in the postpartum period. *Anesthesiology* 1995;82:1364-1368.
+
+Chan MT, Mainland P, Gin T. Minimum alveolar concentration of halothane and enflurane are decreased in early pregnancy. *Anesthesiology* 1996;85:782-786.
+
+Ueyama H, Hagihira S, Takashina M, Nakae A, Mashimo T. Pregnancy does not enhance volatile anesthetic sensitivity on the brain: an electroencephalographic analysis study. *Anesthesiology* 2010;113:577-584.

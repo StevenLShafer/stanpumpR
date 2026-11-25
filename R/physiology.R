@@ -537,6 +537,15 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 # reversing his decision of 2026-11-16 that typed thresholds were tensions that
 # did not move), as the summed MAC series and its threshold in MAC do.  The
 # intravenous drugs are not changed.
+#
+# FEVER (Gemini's gas-engine audit of 2026-11-23, C-03).  DECIDED (Shafer,
+# 2026-11-25): the slider's top becomes 38 C, the relations above extended
+# one degree past the 37 C where every source stops (Michelsen 2001 20-35 C,
+# Zhou 2002 17-37 C, Liu 2001 31-37 C).  Shafer: "Thermal stress starts around
+# 38 degrees. Let's make 38 the top, which extrapolation probably supports."
+# A question-mark help icon beside the slider says that above 38 C enzymatic
+# action starts to fail, which cannot be extrapolated.  To be built in its own
+# pull request; until then the top is 37 C.
 
 #' Body temperature range and default, degrees C
 #' @noRd
