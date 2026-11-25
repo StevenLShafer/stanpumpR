@@ -62,7 +62,7 @@ test_that("the Patient Profile's baseline is added, and only to factor VIII", {
   expect_equal(b - a, rep(40, length(a)))
   expect_error(base(400), "Invalid factorVIIIBaseline")
   expect_error(getDrugPK("factorVIII", 70, 175, 35, "male",
-                         factorBaselines = list(factorIXBaseline = 1)),
+                         factorBaselines = list(factorXBaseline = 1)),
                "Unknown factor baseline")
   # a drug that does not name the field ignores it
   expect_null(getDrugPK("propofol", 70, 175, 35, "male",
