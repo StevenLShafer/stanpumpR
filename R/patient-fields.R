@@ -175,10 +175,12 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The patient's serum albumin, in g/dL. It sets the methotrexate",
       "clearance of the adult model (lower albumin, lower clearance) and,",
       "at 2.5 g/dL or less, the faster distribution of the children's model;",
-      "docetaxel's clearance; nab-paclitaxel's maximal elimination rate; and",
+      "docetaxel's clearance; nab-paclitaxel's maximal elimination rate;",
       "tolcapone's peripheral volume (held within its studied 2.6-5.5 g/dL);",
-      "and emicizumab's clearance (lower albumin, higher clearance; held",
-      "within its studied 1.68-5.66 g/dL)."
+      "emicizumab's clearance (lower albumin, higher clearance; held within",
+      "its studied 1.68-5.66 g/dL); and the clearance and central volume of",
+      "total mycophenolic acid (lower albumin, higher both; held within its",
+      "studied 2.2-5.3 g/dL)."
     ),
     ast = paste(
       "The patient's serum aspartate aminotransferase (AST), in U/L. It sets",
@@ -214,8 +216,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
   ) else if (arg == "albumin") paste(
     "Leave blank to hold each model's reference albumin (4 g/dL in the",
     "adult methotrexate model, a normal albumin in the children's, 3.9 g/dL",
-    "for nab-paclitaxel, 4.4 g/dL for tolcapone, 4.5 g/dL for emicizumab);",
-    "hypoalbuminaemia is then",
+    "for nab-paclitaxel, 4.4 g/dL for tolcapone, 4.5 g/dL for emicizumab,",
+    "3.0 g/dL for mycophenolate); hypoalbuminaemia is then",
     "not represented."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",
