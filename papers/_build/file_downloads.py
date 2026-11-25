@@ -11,6 +11,7 @@ Usage: python file_downloads.py [--dir <folder>] [--archive <folder>] [--dry-run
 """
 import json, logging, os, re, shutil, subprocess, sys, time
 from ncbi import norm
+from inreview import in_review_reason
 
 sys.stdout.reconfigure(encoding="utf-8")  # Downloads file names carry Unicode (U+2010 hyphens); update.bat's PYTHONIOENCODING does not reach `python -E`
 
@@ -517,6 +518,7 @@ def unidentified_note(path):
 # one per line it buried the few that matter (105 of 156 lines on 2026-11-10), so those get one line in the report
 # and are written out in full to UNPLACED_PATH.
 NOT_A_REFERENCE = "not a stanpumpR reference, as far as the filer can tell"
+PAGE1_MIN_LETTERS = 20          # below this, page 1 carries no text that can be screened
 UNPLACED_PATH = os.path.join(HERE, "unplaced_downloads.txt")
 
 
@@ -555,6 +557,8 @@ if cache.get("__refs__") != refs_sig:
     cache = {"__refs__": refs_sig}
 log = json.load(open(LOG_PATH, encoding="utf-8")) if os.path.exists(LOG_PATH) else []
 filed, review, unplaced = [], [], []
+quarantined = []                                 # manuscripts under peer review: never filed, never digested
+unscreened = []                                  # filed on their name, contents never read (no text layer)
 unwrapped = []                                   # envelope originals, logged beside the recycled downloads
 def candidates():
     """Downloads and its subfolders (people save into subfolders); the archive folder itself, top level only."""
@@ -670,6 +674,14 @@ for d, name in candidates():
         path = os.path.join(d, name)
         if not name.lower().endswith(".pdf") or not os.path.isfile(path):
             continue
+        # Before unwrap_envelope, the sha and the cache: a manuscript under peer review is not
+        # filed, not unwrapped, not touched.  Name and folder are free to judge, so they are
+        # judged here, before anything reads or alters the file.  Page 1 is read further down,
+        # once, for every path that could reach the archive.
+        q = in_review_reason(path, name=name)
+        if q:
+            quarantined.append((path, q + " (name and folder alone)"))
+            continue
         unwrap_envelope(path)                    # before the sha, the cache key and the archive skip
         in_archive_dir = os.path.abspath(d) == os.path.abspath(ARCHIVE)
         if in_archive_dir and re.fullmatch(r"(PMID_\d+(_[A-Za-z0-9]+)?|DOI_.+|NJ_.+)\.pdf", name):  # PMID_n_ESM1 = a supplement
@@ -683,6 +695,48 @@ for d, name in candidates():
             if h in arch_sha:  # already archived, byte for byte
                 recycle_original(path, arch_sha[h])
                 continue
+        # THE screen, and the only one that reads the document.  It sits above every path that
+        # follows -- the cached verdicts, identify()'s "check and rename by hand" problem, the
+        # unplaced note, and the filing itself -- because adding it per-branch left two of them
+        # uncovered, and both were the hand-rename route (CodeRabbit, PR #846).  On 2026-11-21
+        # five manuscripts under review were in Downloads and one WAS reported as "rename it
+        # PMID_<pmid>.pdf by hand".  A card can become public, so this has to refuse (Shafer).
+        try:
+            page1, unreadable = pdf_text(path, last=1, strict=True), False
+        except Exception:
+            page1, unreadable = "", True     # pdftotext failed: not "no text", but "not read"
+        # LETTERS, not emptiness.  pdftotext returns a lone form feed for a page with no text
+        # layer, and that is a NON-EMPTY string, so a truthiness test calls a blank page "text I
+        # have read" and the fail-closed branches below never fire.  Measured on an image-only
+        # PDF: 0 letters, and the first version of this check passed it straight through -- my own
+        # fix for a CodeRabbit finding, caught by testing end to end rather than reasoning.
+        #
+        # The threshold governs the NOTICE, never the screening.  in_review_reason() is given the
+        # text whatever its length: a scanned manuscript whose only selectable text is a "reviewer
+        # copy" stamp carries 12 letters, and that stamp is the strongest evidence there is
+        # (CodeRabbit, PR #846).  `screenable` says only whether a person should be told that
+        # nothing meaningful was read, which is a different question from what the screen sees.
+        letters = len(re.findall(r"[A-Za-z]", page1))
+        screenable = letters >= PAGE1_MIN_LETTERS
+        q = in_review_reason(path, name=name, text=page1 or None)
+        if q:
+            # The suffix is about what was READ, not about the threshold.  A page carrying a
+            # 12-letter "Reviewer Copy" stamp is below PAGE1_MIN_LETTERS and yet supplied the
+            # reason, so saying "name and folder alone" there would be false (CodeRabbit, PR
+            # #846).  Any letters at all means the classifier read the page.
+            quarantined.append((path, q if letters else q + " (name and folder alone)"))
+            cache.pop(key, None)             # never cache a refusal: judge it again next run
+            continue
+        if unreadable:
+            # FAIL CLOSED.  An empty extraction is a scan, which identify() already refuses and
+            # reports; a FAILED extraction is a document nothing has inspected, and filing one on
+            # the strength of its name is how a confidential copy named for a known PMID would
+            # get in (CodeRabbit, PR #846).
+            review.append((name, "its first page could not be read, so it could not be screened for "
+                                 "a manuscript under peer review: left where it is"))
+            cache.pop(key, None)
+            continue
+
         if key in cache and (cache[key].get("review") or "").startswith("no text layer"):
             continue  # scans are reported once, on first sight
         recent = not in_archive_dir and time.time() - st.st_mtime < REPORT_DAYS * 86400
@@ -740,6 +794,37 @@ for d, name in candidates():
                 recycle_original(path, r["file"])
             log.append({"from": path, "to": r["file"], "pmid": r["pmid"], "doi": r["doi"], "how": why})
         filed.append((name, r["file"], r["label"], why))
+        if not screenable:
+            # Filed with its contents never read: identify_any() took it on its name (a scan
+            # renamed by hand), so the peer-review screen above judged only the name and folder.
+            # ocr_scans.py gives it a text layer and screen_inreview.py judges it, both later in
+            # update.bat; digest_run.py refuses to card a paper with no readable text, so no card
+            # can come of it meanwhile.  Say so, because running this script alone skips both
+            # (CodeRabbit, PR #846).
+            unscreened.append((r["file"], why))
+
+if quarantined:
+    print()
+    print("QUARANTINED %d PDF(s) that look like manuscripts under peer review. NOT filed, NOT digested:" % len(quarantined))
+    for path, why in sorted(quarantined):
+        print("  %s" % os.path.basename(path))
+        print("      %s" % why)
+        print("      %s" % path)
+    print("  They stay where they are. A paper in review must not reach the repository, because its")
+    print("  card could become public. If one of these is in fact published, rename it and run again.")
+    print()
+
+if unscreened:
+    print()
+    print("FILED WITHOUT READING THE DOCUMENT: %d PDF(s) had no text layer, so only the name and"
+          % len(unscreened))
+    print("folder were screened for a manuscript under peer review:")
+    for f, why in sorted(unscreened):
+        print("  %-34s (%s)" % (f, why))
+    print("  ocr_scans.py then screen_inreview.py judge them later in update.bat, and digest_run.py")
+    print("  will not card a paper whose text is unreadable. Running THIS script alone skips both:")
+    print("  run update.bat, or run screen_inreview.py yourself.")
+    print()
 
 if recycled or unwrapped:
     old = json.load(open(RECYCLED_LOG, encoding="utf-8")) if os.path.exists(RECYCLED_LOG) else []
