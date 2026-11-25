@@ -197,6 +197,14 @@ gasPartitionTissueGas <- function(props)
 #' current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 #' on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
 #' which is also what GasMan does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+#' DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit, B-01 and F-01):
+#' the compartments are to scale by body composition, with the library's own
+#' fat-free mass (Al-Sallami): the vessel-rich group and muscle by fat-free
+#' mass, the fat group by fat mass, its blood flow following its volume as
+#' Weber 2021 scaled it, anchored so that the 70 kg, 170 cm, 35-year-old man
+#' is GasMan's standard exactly, with a GasMan-scaling option kept for the
+#' validation cases at other weights.  Shafer: "Ted Eger would have approved."
+#' To be built in its own pull request; until then the scaling is linear.
 #' Cardiac output is returned here as a single covariate-derived constant, but
 #' \code{advanceClosedFormGas()} accepts it per segment, so making it
 #' time-varying later requires no change to the engine.
@@ -264,7 +272,19 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
 #'
 #' Mapleson (Br J Anaesth 1996;76:179-185) fitted ages from 1 year up.  Below
 #' 1 year the relation is extrapolated, and changes MAC by under 1% from its
-#' value at 1 year; it does not model the lower MAC of neonates.
+#' value at 1 year.  It does not model the MAC measured in infants: higher
+#' than this relation gives in term neonates and infants (sevoflurane 3.3% in
+#' neonates and 3.2% at 1-6 months, Lerman 1994, against 2.31% here at
+#' birth), peaking within the first year for isoflurane and desflurane
+#' (isoflurane 1.87% at 1-6 months, Cameron 1984; desflurane 9.92% at 6-12
+#' months, Taylor and Lerman 1991), and lower in preterm neonates (isoflurane
+#' 1.28% under 32 weeks' gestation and 1.41% at 32-37 weeks, LeDez and Lerman
+#' 1987, against 1.50% here at birth): figures from the PubMed abstracts, not
+#' yet read.  Whether measured
+#' infant MAC replaces this relation below 1 year was put to Shafer on
+#' 2026-11-25 (Gemini's gas-engine audit, B-03 and F-03) and DEFERRED until
+#' the papers are read; they need interlibrary loan (PMIDs 8024136, 1741518,
+#' 6703367 and, for preterm neonates, 3631603; \code{papers/pending-work.csv}).
 #'
 #' @param MAC40 MAC at age 40, % of 1 atm
 #' @param age patient age in years

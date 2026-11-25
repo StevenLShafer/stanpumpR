@@ -775,3 +775,12 @@ repository).
 - At the last vernier level GasMan skips both of its checks, so a tick there
   always completes; both restatements now do too (CodeRabbit on PR #858, in
   that PR). No scenario reaches it.
+
+### A report for GasMan's authors, drafted
+
+The two inconsistencies above, the printed value that depends on the end
+time and the circuit names misread in a scenario file, are GasMan's to fix,
+not this repository's. On Shafer's decision of 2026-11-25 (the assessment's
+question 10) a report giving both, with the reproducing scenario, the numbers
+and a suggested fix, was drafted on that date for him to send to James Philip
+or post at github.com/rasman/gasmanonline. The help pages are unchanged.
