@@ -422,10 +422,10 @@ follows: the intubated lung receives all the ventilation, twice its normal
 share, and the other lung is not ventilated but is still perfused. Its blood
 takes up no agent and joins the arterial blood at the mixed venous partial
 pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
-diverge. stanpumpR takes the chapter's idealisation: half the cardiac output
-passes the unventilated lung, and the ventilated lung holds half the alveolar
-gas. (The half is the chapter's, kept on Shafer's decision of
-2026-11-19.)
+diverge. stanpumpR starts from the chapter's idealisation: half the cardiac
+output passes the unventilated lung, and the ventilated lung holds half the
+alveolar gas. (The half is the chapter's, kept on Shafer's decision of
+2026-11-19; the **Shunt fraction** slider, below, lowers it.)
 
 How much the arterial rise is delayed depends on solubility. For a poorly
 soluble agent the end-tidal tension approaches the inspired whatever the blood
@@ -465,7 +465,30 @@ Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
 3 L/min gives 69%, at 12 L/min 75%).
 
-**Haemoglobin.** Ticking the box shows a **Haemoglobin** slider (4 to 20 g/dL,
+**Shunt fraction.** Ticking the box shows a **Shunt fraction** slider, 0 to
+50% of cardiac output, starting at 50%, its maximum (Steven Shafer, 25
+November 2026). In practice hypoxic pulmonary vasoconstriction diverts blood
+from the unventilated lung, so the shunt is less than half; the slider stands
+in for it. Lower it and watch the oxygenation improve. At 30 minutes, as in the
+table above:
+
+| Shunt fraction | PaO2 on oxygen | SaO2 on oxygen | PaO2 on air | SaO2 on air |
+|---|---|---|---|---|
+| 50% | 50 mmHg | 85% | 40 mmHg | 75% |
+| 40% | 66 mmHg | 93% | 47 mmHg | 83% |
+| 30% | 103 mmHg | 98% | 55 mmHg | 88% |
+| 20% | 265 mmHg | 100% | 66 mmHg | 93% |
+| 10% | 485 mmHg | 100% | 81 mmHg | 96% |
+| 0% | 666 mmHg | 100% | 107 mmHg | 98% |
+
+On oxygen the PaO2 climbs steeply below a shunt of about 30%, as the
+saturated blood from the ventilated lung comes to outweigh the shunted blood.
+The agents' arterial partial pressures come toward end-tidal in the same way.
+At 0% the unventilated lung takes no blood, and only the ventilated lung's
+smaller alveolar volume remains of the tube. A physiology event records the
+slider with the box.
+
+**Haemoglobin.** Ticking the box also shows a **Haemoglobin** slider (4 to 20 g/dL,
 15 by default). The oxygen the shunted half fails to carry is the same number
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
@@ -478,9 +501,11 @@ with the barometric pressure, so the hypoxaemia deepens with altitude. On air
 the SaO2 is 75% at sea level, 66% at 3000 m and 43% at 5000 m; on oxygen 85%,
 82% and 80%.
 
-**Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
-blood from the unventilated lung, so the shunt is about half only at first and
-the hypoxaemia then eases; the lungs' unequal sizes; the slow absorption of the
+**Not modelled.** Hypoxic pulmonary vasoconstriction as a process: it
+diverts part of the blood from the unventilated lung over minutes, so the shunt
+is about half only at first and the hypoxaemia then eases, which the Shunt
+fraction slider, or a physiology event that lowers it, can only step through;
+the lungs' unequal sizes; the slow absorption of the
 gas trapped in the unventilated lung; the blood's own oxygen store, so the
 arterial oxygen changes at once with the tube or the fresh gas rather than over
 a circulation time; and the dissociation curve's shift with temperature and pH.

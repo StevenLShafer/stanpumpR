@@ -1601,7 +1601,7 @@ gasBodySteps <- function(weight, events)
     body <- gasBodyPhysiology(getGasBody(weight), x[["cardiac"]], split = split)
     if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
     if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
-    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1)
+    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1, x[["shunt"]])
     if (x[["haemoglobin"]] != ARTERIAL_OXYGEN_HAEMOGLOBIN)
       body$haemoglobin <- unname(x[["haemoglobin"]])
     body
@@ -1651,11 +1651,15 @@ gasBodySteps <- function(weight, events)
 #'   and each event's from its time (cardiac output, temperature, altitude
 #'   and intubation, \code{gasBodySteps()}), the agent in each compartment
 #'   carried across each step, and \code{physiology}, \code{temperature},
-#'   \code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used
+#'   \code{altitude}, \code{endobronchial}, \code{haemoglobin} and
+#'   \code{shunt} are not used
 #' @param haemoglobin NULL (15 g/dL), or the haemoglobin, g/dL, of the
 #'   arterial oxygen read off the run (\code{gasArterialOxygen()},
 #'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
 #'   does not read it
+#' @param shunt NULL (0.5), or the share of cardiac output through the
+#'   unventilated lung with an endobronchial tube, 0 to 0.5
+#'   (R/endobronchial.R); ignored without the tube
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1671,7 +1675,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           # positional call keeps its binding (exported).
                           physiology = NULL, temperature = NULL,
                           altitude = NULL, endobronchial = FALSE,
-                          physiologyEvents = NULL, haemoglobin = NULL)
+                          physiologyEvents = NULL, haemoglobin = NULL,
+                          shunt = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1694,7 +1699,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
-  body <- gasBodyEndobronchial(body, endobronchial)
+  body <- gasBodyEndobronchial(body, endobronchial, checkShunt(shunt))
   # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
   # itself does not read it
   haemoglobin <- checkHaemoglobin(haemoglobin)

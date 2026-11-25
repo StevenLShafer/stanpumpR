@@ -19,7 +19,8 @@ simulateGases(
   altitude = NULL,
   endobronchial = FALSE,
   physiologyEvents = NULL,
-  haemoglobin = NULL
+  haemoglobin = NULL,
+  shunt = NULL
 )
 }
 \arguments{
@@ -60,12 +61,17 @@ R/endobronchial.R)}
 and each event's from its time (cardiac output, temperature, altitude
 and intubation, \code{gasBodySteps()}), the agent in each compartment
 carried across each step, and \code{physiology}, \code{temperature},
-\code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used}
+\code{altitude}, \code{endobronchial}, \code{haemoglobin} and
+\code{shunt} are not used}
 
 \item{haemoglobin}{NULL (15 g/dL), or the haemoglobin, g/dL, of the
 arterial oxygen read off the run (\code{gasArterialOxygen()},
 R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
 does not read it}
+
+\item{shunt}{NULL (0.5), or the share of cardiac output through the
+unventilated lung with an endobronchial tube, 0 to 0.5
+(R/endobronchial.R); ignored without the tube}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

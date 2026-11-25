@@ -156,7 +156,7 @@ function runTextProblem(r) {
     const ph = r.physiology;
     if (ph != null) {
         if (typeof ph !== 'object') return 'physiology must give the panel\'s settings.';
-        for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+        for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure', 'shunt'])
             if (ph[k] != null && !(Number.isFinite(ph[k]) && ph[k] >= 0)) return `physiology.${k} must be a number of 0 or more.`;
         if (ph.endobronchial != null && typeof ph.endobronchial !== 'boolean') return 'physiology.endobronchial must be true or false.';
     }
@@ -167,7 +167,7 @@ function runTextProblem(r) {
         if (!Array.isArray(steps) || steps.length > 60) return 'physiologySteps must be a list of at most 60 settings.';
         for (const s of steps) {
             if (!s || typeof s !== 'object' || !Number.isFinite(s.time)) return 'each of physiologySteps needs a time.';
-            for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure'])
+            for (const k of ['liver', 'renal', 'cardiac', 'gi', 'temperature', 'altitude', 'pressure', 'shunt'])
                 if (s[k] != null && !(Number.isFinite(s[k]) && s[k] >= 0)) return `physiologySteps.${k} must be a number of 0 or more.`;
             if (s.endobronchial != null && typeof s.endobronchial !== 'boolean') return 'physiologySteps.endobronchial must be true or false.';
         }
@@ -202,7 +202,11 @@ function physiologyLine(ph) {
     mult('Liver', ph.liver); mult('Kidney', ph.renal); mult('Cardiac output', ph.cardiac); mult('GI', ph.gi);
     if (ph.temperature != null) items.push(['Temperature', `${ph.temperature} °C`, ph.temperature !== 37]);
     if (ph.altitude != null) items.push(['Altitude', ph.altitude > 0 ? `${ph.altitude} m (${ph.pressure} Torr)` : 'sea level', ph.altitude > 0]);
-    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial ? 'endobronchial' : 'tracheal', ph.endobronchial]);
+    // The shunt fraction (2026-11-25), percent, said only where the slider
+    // has lowered it from its 50%
+    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial
+        ? 'endobronchial' + (ph.shunt != null && ph.shunt !== 50 ? `, shunt ${ph.shunt}%` : '')
+        : 'tracheal', ph.endobronchial]);
     return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
