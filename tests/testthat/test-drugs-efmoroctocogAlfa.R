@@ -11,6 +11,17 @@ test_that("the standard model's clearance times exp(-0.394), nothing else change
   }
 })
 
+test_that("pinned values: the reference man with the switch off, a heavy woman with it on", {
+  # switch off, 70 kg, 35 years: CL = 204 x (35/30)^-0.214 x (70/64)^0.75 x exp(-0.394) mL/h,
+  # V1 = 2640 x (70/64)^0.827 mL, Q 135 mL/h, V2 339 mL
+  pk <- efmoroctocogAlfa(70, 170, 35, "male", FALSE)$PK$default
+  expect_equal_rounded(c(pk$v1, pk$v2, pk$cl1, pk$cl2),
+                       c(2.843081, 0.339, 0.002372624, 0.00225))
+  pk <- efmoroctocogAlfa(110, 165, 50, "female", TRUE)$PK$default
+  expect_equal_rounded(c(pk$v1, pk$v2, pk$cl1, pk$cl2),
+                       c(2.880294, 0.3443727, 0.002224342, 0.002276692))
+})
+
 test_that("the checks in the header, at the source's medians", {
   pk <- efmoroctocogAlfa(64, 175, 30, "male", FALSE)$PK$default
   k10 <- pk$cl1 / pk$v1; k12 <- pk$cl2 / pk$v1; k21 <- pk$cl2 / pk$v2
