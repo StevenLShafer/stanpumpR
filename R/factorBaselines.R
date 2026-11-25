@@ -43,6 +43,15 @@ FACTOR_BASELINE_FIELDS <- list(
     min = 0,
     max = 300,
     step = 0.5
+  ),
+  # Fibrinogen is a mass, plotted in mg/dL (Shafer, 2026-11-25); its bounds
+  # take in afibrinogenaemia (0) and three times the top of normal (about 450)
+  fibrinogenBaseline = list(
+    label = "Fibrinogen baseline",
+    units = "mg/dL",
+    min = 0,
+    max = 1500,
+    step = 10
   )
 )
 
