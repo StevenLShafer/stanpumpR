@@ -28,7 +28,7 @@ a list in the shape \code{getDrugPK()} expects, with a
 }
 \description{
 Two compartments allometric in weight with saturable binding to a tissue
-pool whose capacity scales with weight and age; plotted as the unbound
-plasma concentration, run by \code{advanceMichaelisMenten()}.  See the
+pool whose capacity scales with weight and age; plotted as the plasma
+concentration of drug not bound to that pool (total plasma vincristine), run by \code{advanceMichaelisMenten()}.  See the
 header of \code{R/drugs_vincristinePediatric.R}.
 }

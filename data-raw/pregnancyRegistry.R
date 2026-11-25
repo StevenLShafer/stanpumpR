@@ -3640,7 +3640,18 @@ registry <- rbind(
       source = "PubMed search 2026-11-20; DOPRAM (doxapram hydrochloride) injection label, Hikma, NDA 014879, 2024-04-09, Pregnancy (DailyMed setid b8eb330a-a75b-46cb-b694-5be9327ed2eb); Downing JW et al. Br J Anaesth 1977;49:473-477 (PMID 861115); Hogg MI et al. Br J Obstet Gynaecol 1977;84:48-50 (PMID 843472)",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=b8eb330a-a75b-46cb-b694-5be9327ed2eb",
       to_obtain = "",
-      notes = "Read: the label in full; the PubMed records as abstracts. The model (Clements 1979) is one healthy man's venous plasma curve. Doxapram crosses the placenta (fetal breathing in sheep after maternal doses), which matters for the fetus, not for the maternal curve plotted here.")
+      notes = "Read: the label in full; the PubMed records as abstracts. The model (Clements 1979) is one healthy man's venous plasma curve. Doxapram crosses the placenta (fetal breathing in sheep after maternal doses), which matters for the fetus, not for the maternal curve plotted here."),
+  row("diphenhydramine", "Hypnotics and sedatives", "unknown",
+      finding = "No study of diphenhydramine pharmacokinetics in human pregnancy was found (PubMed, 2026-11-25: diphenhydramine pharmacokinetics pregnancy, 17 records). The pregnancy studies are in chronically catheterised sheep (Riggs 1987, Kumar 1997, and the Rurak group's reviews), which measure maternal, fetal and placental clearances in the ewe; Paton and Webster's 1985 review of the antihistamines found little, if any, published information on their pharmacokinetics in pregnancy. The injection label (Hikma, ANDA 080817, read in full) is pregnancy category B and gives no pregnancy pharmacokinetics.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = "none",
+      design = "review", n = 0L, confidence = "low",
+      evidence_read = "abstract",
+      source = "PubMed search 2026-11-25; Paton DM, Webster DR. Clin Pharmacokinet 1985;10:477-497 (PMID 2866055); Riggs KW et al. Am J Obstet Gynecol 1987;157:1286-1291 (PMID 3688093); Kumar S et al. J Pharmacol Exp Ther 1997;282:617-632 (PMID 9262323); diphenhydramine hydrochloride injection label, Hikma, ANDA 080817, Pregnancy (DailyMed setid 829bbcbf-fb27-4484-aff6-a7e7467670af)",
+      source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=829bbcbf-fb27-4484-aff6-a7e7467670af",
+      to_obtain = "",
+      notes = "Read: the label in full; the PubMed records as abstracts. The model (Meredith 1984) is healthy men's venous plasma. Diphenhydramine crosses the placenta and is taken up by the fetal liver in sheep, which matters for the fetus, not for the maternal curve plotted here.")
 )
 
 # The candidate models renamed when their drug's model became the program's

@@ -16,6 +16,10 @@ renv::restore()           # Restore pinned R package dependencies from renv.lock
 
 First-time local setup: copy `config.yml.sample` → `config.yml`
 
+**After changing a roxygen comment, regenerate and commit `man/` and `NAMESPACE`.** R-CMD-check regenerates them on every pull request and fails if anything changes (`.github/workflows/check-standard.yaml`). On master it reports drift without failing, so a stale page never holds back a deploy. Merges that skipped this left master three exports and 19 pages behind (#893). Use the roxygen2 version that DESCRIPTION's `Config/roxygen2/version` and `renv.lock` pin (8.1.1): another version rewrites dozens of pages in its own form. In a cloud container with an older roxygen2:
+1. Install the pinned version into a scratch library from `https://packagemanager.posit.co/cran/__linux__/noble/latest`. Loading the package also needs mirai, shiny >= 1.11 and httr2 >= 1.1 there.
+2. Run `roxygen2::roxygenise()` under `Rscript --vanilla`, with that library first on `.libPaths()`.
+
 ---
 
 ## Architecture: Reactive Request-to-Render Pipeline (`R/app_server.R`)
