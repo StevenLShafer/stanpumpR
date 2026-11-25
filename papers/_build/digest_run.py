@@ -32,6 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = os.path.dirname(HERE)
 import cards                      # where the cards live, and how a run's cards reach the repository
+from inreview import paper_card_refusal            # never card one under review (2026-11-21)
 CARDS = cards.CARDS               # the only directory this run writes cards into
 REPO = cards.REPO
 from machine import LOCAL          # caches and scratch kept out of the Drive-synced archive (2026-10-30)
@@ -59,7 +60,12 @@ def save_log(entries):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(entries, f, indent=1)
     os.replace(tmp, LOG)
-PY = r"C:\Python314\python.exe"
+# THIS interpreter, not a hard-coded path. digests.bat launches this script with
+# C:\Python314\python.exe (the install that has openpyxl), so in production sys.executable
+# IS that -- and off Windows the hard-coded path made subprocess.run() raise
+# FileNotFoundError before the queue was even built, which is where CI runs the queue test
+# (CodeRabbit, PR #846).
+PY = sys.executable
 CLAUDE = shutil.which("claude") or os.path.expanduser(r"~\.local\bin\claude.exe")
 # The CLI authenticates the headless runs with Shafer's long-lived token, a Windows USER variable (2026-10-29).
 # A process started before he set it does not inherit it, and one started earlier still holds whatever value was
@@ -69,7 +75,12 @@ try:
     import winreg
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as k:
         os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = winreg.QueryValueEx(k, "CLAUDE_CODE_OAUTH_TOKEN")[0]
-except OSError:
+except (ImportError, OSError):
+    # ImportError as well as OSError: winreg exists only on Windows, and the bare `except
+    # OSError` let ModuleNotFoundError escape, so importing this module at all failed off
+    # Windows -- which is where CI runs test_digest_queue.py (CodeRabbit / fda-labels, PR #846).
+    # The intent was always "if the registry cannot be read, carry on", and absence of the
+    # module is one more way it cannot be read.
     pass  # not in the registry: an inherited value, if any, is used; a login failure stops the run and says so
 BATCH = 2
 BATCH_TIMEOUT = 75 * 60  # seconds for one claude run
@@ -87,9 +98,37 @@ def say(msg):
         f.write(msg + "\n")
 
 
+def run_digest_prep():
+    """Rebuild STATUS.md and the manifest. Never fatal: its output is not read, and a run that
+    cannot start it must still finish its own work and report."""
+    try:
+        subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE,
+                       capture_output=True)
+    except OSError as exc:
+        say("could not rerun digest_prep.py (%s); STATUS.md may be out of date"
+            % exc.__class__.__name__)
+
+
 def pid_alive(pid):
-    out = subprocess.run(["tasklist", "/FI", "PID eq %d" % pid, "/NH"], capture_output=True, text=True).stdout
-    return str(pid) in out
+    """Is that process still running? Reached when a lock file names one.
+
+    tasklist exists only on Windows, and this is on the path a --dry run takes whenever a lock
+    file is present -- so off Windows it raised FileNotFoundError and the run died before the
+    queue (CodeRabbit, PR #846, after the same shape of failure with winreg). signal 0 asks the
+    kernel without sending anything, and PermissionError means someone else's process, which is
+    still a process.
+    """
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", "PID eq %d" % pid, "/NH"],
+                             capture_output=True, text=True).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
 
 
 class Job:
@@ -279,7 +318,7 @@ try:
     say("master %s, cap %d, batches of %d\ncards -> %s\n" % (sha, cap, BATCH, CARDS))
 
     # 3. the queue, in priority order
-    subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE, capture_output=True)
+    run_digest_prep()
     manifest = json.load(open(os.path.join(HERE, "digest_manifest.json"), encoding="utf-8"))
 
     def tier(m):
@@ -383,6 +422,24 @@ try:
             continue
         if m.get("scan"):  # no usable text layer: OCR transcription errors are likeliest and least visible there,
             continue       # so scans are left to an interactive session (digest session's rule, 2026-10-28)
+        # The LAST line of defence, and the one that matters most: a card is the thing that can
+        # become public, so even a paper that reached the archive is not carded if it looks like
+        # a manuscript under peer review.  file_downloads.py refuses to file one and
+        # screen_inreview.py says whether one got in; this refuses to write the public artefact.
+        # Steven L. Shafer, 2026-11-21: "there is a risk that a digest prepared from a paper in
+        # peer review might be public. That is a risk that must be guarded against."
+        # The card is the public artefact, so the decision is card_refusal()'s -- which lives in
+        # inreview.py, with its own regression cases, because this loop cannot be imported
+        # without starting a digest run and so could not be tested where it stood.
+        # The whole text-based decision, in one call that a test can execute: it reads the
+        # paper's extracted text itself and asks card_refusal().  The manifest's `scan` flag is
+        # NOT consulted -- digest_prep.py's return code is unchecked, so a failed preparation
+        # can leave an older non-scan entry in use, and the refusal rests on the text on disk
+        # (CodeRabbit, PR #846).
+        refusal = paper_card_refusal(m["stem"], ARCH, os.path.join(HERE, "text"))
+        if refusal:
+            kept.append("%s (%s)" % (m["stem"], refusal))
+            continue
         cand.append({"stem": m["stem"], "tier": t, "stale": m["digest"] == "stale",
                      "blocked": bool(wanted_by(m["stem"])), "arrived": arrived(m["stem"])})
 
@@ -544,7 +601,7 @@ try:
             break
 
     # 5. refresh STATUS.md and REVIEW.md
-    subprocess.run([PY, "-E", os.path.join(HERE, "digest_prep.py")], cwd=HERE, capture_output=True)
+    run_digest_prep()
     say("done; digests\\STATUS.md and digests\\REVIEW.md refreshed")
 
     # 6. the cards go to the repository as a branch, not left loose in a checkout (2026-10-29)
