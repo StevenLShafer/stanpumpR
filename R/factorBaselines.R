@@ -52,6 +52,15 @@ FACTOR_BASELINE_FIELDS <- list(
     min = 0,
     max = 1500,
     step = 10
+  ),
+  # Serum IgG, plotted in g/L after intravenous immunoglobulin (Shafer,
+  # 2026-11-25); bounds from none to about three times the top of normal
+  igGBaseline = list(
+    label = "IgG baseline",
+    units = "g/L",
+    min = 0,
+    max = 60,
+    step = 0.5
   )
 )
 
