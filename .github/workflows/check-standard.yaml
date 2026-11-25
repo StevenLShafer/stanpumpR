@@ -65,9 +65,25 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      # The roxygen2 version DESCRIPTION records (Config/roxygen2/version, as
+      # renv.lock pins it), for the drift check below: another version writes
+      # the pages in its own form, which would read as drift.
+      - name: Pinned roxygen2 version
+        id: roxygen2
+        run: |
+          version=$(sed -n 's|^Config/roxygen2/version: *||p' DESCRIPTION)
+          if [ -z "$version" ]; then
+            echo "::error::DESCRIPTION has no Config/roxygen2/version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - uses: r-lib/actions/setup-r-dependencies@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
+        id: deps
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            roxygen2@${{ steps.roxygen2.outputs.version }}
           needs: check
 
       - uses: r-lib/actions/check-r-package@5cc1f0d89c5281319eaa97952fe65a6d55e6f816 #v2
@@ -94,3 +110,28 @@ jobs:
             testthat::test_file(file.path("tests", "testthat", f),
                                 reporter = "summary",
                                 stop_on_failure = TRUE)
+
+      # man/ and NAMESPACE are generated from the roxygen comments in R/, and
+      # merges that changed the comments without regenerating left master's
+      # pages and exports behind its code (#893: three drug models never
+      # exported, two pages missing an argument, 19 pages missing).  So
+      # regenerate them and fail if anything changes.  It runs whether or not
+      # the check above passed, so that both are reported.  On a pull request
+      # a failure blocks the merge; on master it is reported but does not
+      # fail the job, so that a page left behind never holds back the
+      # production deploy, which waits on this workflow.
+      - name: man/ and NAMESPACE match the roxygen comments
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' && matrix.config.os == 'ubuntu-latest' && matrix.config.r == 'release' }}
+        continue-on-error: ${{ github.event_name != 'pull_request' }}
+        env:
+          ROXYGEN2_VERSION: ${{ steps.roxygen2.outputs.version }}
+        run: |
+          Rscript -e 'v <- Sys.getenv("ROXYGEN2_VERSION"); got <- as.character(packageVersion("roxygen2")); if (got != v) stop("roxygen2 ", got, " is installed; DESCRIPTION pins ", v); roxygen2::roxygenise()'
+          drift=$(git status --porcelain -- NAMESPACE man DESCRIPTION)
+          if [ -n "$drift" ]; then
+            echo "::error title=roxygen drift::man/ or NAMESPACE does not match the roxygen comments. Regenerate with roxygen2 $ROXYGEN2_VERSION (roxygen2::roxygenise()) and commit the result; AGENTS.md, Quick Commands, says how."
+            echo "$drift"
+            git --no-pager diff -- NAMESPACE man DESCRIPTION
+            exit 1
+          fi
+          echo "man/ and NAMESPACE match the roxygen comments (roxygen2 $ROXYGEN2_VERSION)."
