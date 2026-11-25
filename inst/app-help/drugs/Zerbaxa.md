@@ -8,7 +8,7 @@ Clicking the ceftolozane panel opens the dose dialog for Zerbaxa, because Zerbax
 
 ### The regimen
 
-The label gives every dose as a 1-hour infusion every 8 hours:
+The label gives every dose every 8 hours, as a 1-hour infusion, except for children with hospital-acquired or ventilator-associated pneumonia, whose doses run over 2 hours:
 
 | Infection | Adults | Children |
 |---|---|---|
@@ -16,7 +16,7 @@ The label gives every dose as a 1-hour infusion every 8 hours:
 | Complicated urinary tract infection | 1.5 g | 30 mg/kg, up to 1.5 g |
 | Hospital-acquired or ventilator-associated pneumonia | 3 g | 60 mg/kg (75 mg/kg from 2 years), up to 3 g |
 
-To enter a 1-hour infusion of 1.5 g, enter `1.5 g/hr` at its start and `0 g/hr` an hour later, and repeat every 8 hours. The label reduces the dose when the creatinine clearance is 50 mL/min or less.
+To enter a 1-hour infusion of 1.5 g, enter `1.5 g/hr` at its start and `0 g/hr` an hour later, and repeat every 8 hours. A child's pneumonia dose over 2 hours is entered as half the dose per hour, and its 0 two hours after the start. The label reduces the dose when the creatinine clearance is 50 mL/min or less.
 
 ### Set the infection
 
