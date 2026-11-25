@@ -3611,7 +3611,10 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              # the pulmonary hypertension groups' candidates (2026-11-18)
              sildenafilFDA = "sildenafil", sildenafilMiura = "sildenafil",
              tadalafilFergusonSells = "tadalafil", tadalafilMiura = "tadalafil",
-             ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan")
+             ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan",
+             # the landiolol group's candidates (2026-11-25)
+             landiololHonda = "landiolol", landiololKunisawa2014 = "landiolol",
+             landiololKunisawa2015 = "landiolol")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)
