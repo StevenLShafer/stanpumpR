@@ -3519,7 +3519,7 @@ registry <- rbind(
       source = "ADVATE prescribing information, BLA 125063, revised 4/2025, 8.1 (DailyMed setid 80fa03d2-cd4c-4155-9b57-1396c4fa42da)",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=80fa03d2-cd4c-4155-9b57-1396c4fa42da",
       to_obtain = "",
-      notes = "Haemophilia A is X-linked, so a pregnant patient is a carrier, usually with a baseline near normal; the rise of the baseline in pregnancy is the baseline field's to carry. Not by Gideon Koren."),
+      notes = "A pregnant patient with low factor VIII may be a carrier (often near normal, though some are as low as affected men), a woman with haemophilia A, or have acquired haemophilia A, which can arise in pregnancy or after delivery; enter her measured activity in the Factor VIII baseline field, which also carries the rise of late pregnancy. Not by Gideon Koren."),
   row("thrombomodulinAlfa", "Anticoagulants", "applied",
       finding = "No pharmacokinetics of thrombomodulin alfa in pregnancy were found (PubMed 2026-11-25: 'thrombomodulin alfa pregnancy', two records, neither a pregnancy study: a letter on idiopathic pulmonary fibrosis and a review of DIC; 'recombinant human soluble thrombomodulin obstetric DIC pharmacokinetics', none). The drug is not approved in the US and has no US label. Mouksassi 2015, the library's model, puts its clearance on a Cockcroft-Gault term, and 54-74% of a dose is recovered in urine, so the model's renal term takes the rise in filtration of pregnancy (applied), an assumption.",
       applied = "Creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no thrombomodulin alfa data), before the model's 150 mL/min hold; the volume is unchanged.",
