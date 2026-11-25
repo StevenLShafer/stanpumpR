@@ -141,6 +141,8 @@ plasmaOnly <- c(
     "evolocumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
+    # anakinra (Urien 2013, 2026-11-25): plasma only
+    "anakinra",
     "thrombomodulinAlfa",
     # emicizumab (Retout 2020, 2026-11-25): plasma only, subcutaneous
     "emicizumab",

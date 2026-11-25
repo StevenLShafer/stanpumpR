@@ -471,6 +471,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "evolocumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
+    # anakinra (Urien 2013, 2026-11-25): plasma only
+    "anakinra",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
