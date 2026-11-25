@@ -201,7 +201,28 @@ registry <- rbind(
       "https://pmc.ncbi.nlm.nih.gov/articles/PMC2014189/",
       "clevidipine__emulsion__iv__healthy_men__concentration__ericsson1999"),
 
+  reg("landiolol__pad__kunisawa2015", "landiolol",
+      "8 anaesthetised patients with peripheral arterial disease, 64-84 years, TCI to 500 then 1,000 ng/mL", "landiolol", "plasma (arterial, esterases stopped)",
+      "implemented", "landiolol", "full_text",
+      "Read on the PDF: two compartments per kg with a 0.633-min lag (not represented); weight, LBM and age tested and not retained.  The only landiolol model in the archive, so used for every patient; Honda 2008's volunteer model would be the candidate for younger adults once read.  Its clearance (30.7 mL/min/kg) is about half the label's 57 (Krumpl 2018, whole blood, awake).",
+      NA,
+      "Kunisawa T, Yamagishi A, Suno M, et al. Target-controlled infusion and population pharmacokinetics of landiolol hydrochloride in patients with peripheral arterial disease. Ther Clin Risk Manag 2015;11:107-114. PMID 25653534.",
+      doi("10.2147/TCRM.S74867")),
   # --- A candidate model exists; the paper is needed ---------------------------
+  reg("landiolol__healthy__honda2008", "landiolol",
+      "47 healthy Japanese men", "landiolol hydrochloride", "plasma",
+      "needs_full_text", NA, "abstract",
+      "The abstract gives the model (two compartments with a lag: CL 36.6 mL/min/kg, V1 101 mL/kg, Q 16.1 mL/min/kg, V2 55.6 mL/kg, lag 0.82 min) and Kunisawa 2015's Table 2 prints the same values with their SEs, but the cohort's ages and weights, which the selector needs, and the sampling are in the full text.  With them it becomes the landiolol candidate for younger adults beside Kunisawa 2015.",
+      "Honda N, Nakade S, Kasai H, et al. Population pharmacokinetics of landiolol hydrochloride in healthy subjects. Drug Metab Pharmacokinet 2008;23(6):447-455. PMID 19122339; save as PMID_19122339.pdf.",
+      "Honda N, Nakade S, Kasai H, et al. Population pharmacokinetics of landiolol hydrochloride in healthy subjects. Drug Metab Pharmacokinet 2008;23(6):447-455. PMID 19122339.",
+      doi("10.2133/dmpk.23.447")),
+  reg("landiolol__gynecologic__kunisawa2014", "landiolol",
+      "9 anaesthetised gynaecologic surgical patients, TCI to 500 then 1,000 ng/mL", "landiolol", "plasma (arterial)",
+      "needs_full_text", NA, "abstract",
+      "The abstract gives two compartments with a lag (CL 34.0 mL/min/kg, V1 74.9 mL/kg, Q 70.9 mL/min/kg, V2 38.9 mL/kg, lag 0.634 min); the cohort and covariates are in the full text.  A third candidate, of middle-aged women.",
+      "Kunisawa T, Yamagishi A, Suno M, et al. Target-controlled infusion and population pharmacokinetics of landiolol hydrochloride in gynecologic patients. J Anesth 2015;29:198-205. PMID 25186494; save as PMID_25186494.pdf.",
+      "Kunisawa T, Yamagishi A, Suno M, et al. Target-controlled infusion and population pharmacokinetics of landiolol hydrochloride in gynecologic patients. J Anesth 2015;29:198-205. PMID 25186494.",
+      doi("10.1007/s00540-014-1908-5")),
   reg("clevidipine__cardiac_surgery__bailey2002", "clevidipine",
       "61 adults hypertensive after cardiac surgery, 0.32-9.58 mcg/kg/min (577 samples)", "clevidipine", "arterial blood",
       "complete_not_implemented", NA, "full_text",
@@ -770,6 +791,7 @@ par <- function(drug, parameter, value, units, provenance, evidence, source_url)
 AB  <- doi("10.1186/cc7972")
 DU  <- doi("10.1002/jcph.1328")
 KA  <- pubmed(7203731)
+KU15 <- doi("10.2147/TCRM.S74867")
 HO  <- doi("10.1097/00007691-198804000-00006")
 AR  <- doi("10.1111/j.1365-2125.1983.tb02182.x")
 LI  <- doi("10.1007/s40262-024-01430-y")
@@ -926,6 +948,12 @@ parameters <- rbind(
   par("nicardipine", "Vss", 1.13, "L/kg", "estimated", "full_text", MO93),
   par("nicardipine", "Q", 0.826, "L/h/kg (row C_d)", "estimated", "full_text", MO93),
   par("diltiazem", "tPeak", 3.1, "min (bolus equivalent of 4.3 min after a 2-min infusion, Salerno 1989)", "derived", "full_text", SA89),
+  par("landiolol", "CL", 30.7, "mL/min/kg", "estimated", "full_text", KU15),
+  par("landiolol", "V1", 65.0, "mL/kg", "estimated", "full_text", KU15),
+  par("landiolol", "Q", 48.3, "mL/min/kg", "estimated", "full_text", KU15),
+  par("landiolol", "V2", 54.4, "mL/kg", "estimated", "full_text", KU15),
+  par("landiolol", "lag time (not represented)", 0.633, "min", "estimated", "full_text", KU15),
+  par("landiolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 0.2 and 0.3 mg/kg given at 0.1 mg/kg per 15 s, Table 4)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
   par("esmolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 1 mg/kg over 30 s)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
   par("metoprolol", "tPeak", 5, "min (Ritchie 1998: peak effects observed 5-10 min after a bolus; fixed at 5 on the user's decision)", "fixed", "full_text", doi("10.1021/js9702776")),
   par("phenylephrine", "tPeak", 0.7, "min (Schwinn 1989: MAP, CO and SVR changes maximal about 42 s after a bolus)", "estimated", "abstract", pubmed(2541637)),
