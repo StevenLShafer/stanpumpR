@@ -40,6 +40,11 @@ reg <- function(model_id, drug_class, context, analyte, assay, route,
 
 registry <- rbind(
   # --- Implemented (research-ready; concentration or INR only) ---------------
+  reg("tm_mouksassi_2015_sepsis", "recombinant soluble thrombomodulin",
+      "IV, sepsis with suspected DIC (phase IIb) and healthy volunteers", "thrombomodulin alfa plasma",
+      "ELISA (LLOQ 1 ng/mL)", "IV", "research_ready", "thrombomodulinAlfa",
+      "Not approved in the US. Concentration only: no protein C, coagulation or DIC endpoint. Sparse sampling in patients; patients on renal replacement therapy excluded.",
+      "https://doi.org/10.1002/cpdd.163"),
   reg("ufh_jia_2015_cpb", "unfractionated heparin",
       "IV, cardiopulmonary bypass", "anti-IIa activity", "chromogenic anti-IIa (IU/mL)",
       "IV", "research_ready", "heparin",
@@ -191,8 +196,12 @@ BER  <- "189 patients over 75 (PROPHRE.75), Berges 2007"
 DEL  <- "orthopaedic-surgery patients (GETHCAM/POP-A-RIX), Delavenne 2010"
 HAM  <- "150 patients (Study I+II), Hamberg 2007"
 VER  <- "24 healthy White subjects (single dose), Verstuyft 2012"
+MOUK <- "24 healthy volunteers and 368 adults with sepsis and suspected DIC, Mouksassi 2015"
 
 parameters <- rbind(
+  par("thrombomodulinAlfa", "CL", 0.14, "L/h (x (WT/68)^0.56 x (CrCl/72.6)^0.27)", "estimated", MOUK, "https://doi.org/10.1002/cpdd.163"),
+  par("thrombomodulinAlfa", "V", 5.47, "L (x (WT/68)^0.50)", "estimated", MOUK, "https://doi.org/10.1002/cpdd.163"),
+
   par("heparin", "CL", 1.18, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Vc", 3.04, "L", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
   par("heparin", "Q", 0.171, "L/h", "estimated", JIA, "https://doi.org/10.1186/s12967-015-0404-5"),
