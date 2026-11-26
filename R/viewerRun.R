@@ -585,7 +585,7 @@ viewerRun <- function(entry, minimum, maximum, category = NA_character_,
     # The physiology panel the plot was drawn at, shown under the title
     physiology = viewerPhysiology(physiology),
     # With physiology events, the settings in force from each time (seconds)
-    physiologySteps = viewerPhysiologySteps(physiologyEvents, minimum),
+    physiologySteps = viewerPhysiologySteps(physiologyEvents, minimum, end = maximum),
     pk = list(v1 = k$v1, v2 = k$v2, v3 = k$v3, cl1 = k$cl1, cl2 = k$cl2, cl3 = k$cl3),
     # The volumes (L) and CL1 (L/min) in force at each time, where a clinical
     # event changes them inside the window; else absent, and `pk` holds.
@@ -654,9 +654,6 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   gr <- entry$gasRun
   g <- entry$drug
   times <- viewerTimes(minimum, maximum)
-  props <- gasPropertiesAt(gr$body$temperature)
-  pr <- props[props$gas == g, ]
-  ltg <- gasPartitionTissueGas(pr)
   body <- gr$body
   state <- gr$state
   # Physiology events (R/physiologyEvents.R): a body in force from each step.
@@ -667,17 +664,32 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   # (R/endobronchial.R): the run carries it per time as `lungsCapacity`, and
   # the tissues' are unchanged.  A step in temperature changes every tissue's
   # capacity (its tissue:gas coefficient), which the viewer draws as one width
-  # for the run, so such a run is not drawn.
+  # for the run, so such a run is not drawn.  Only the bodies in force inside
+  # the window drawn count (ChatGPT's round-2 gas audit, E-01: a cooling event
+  # after the window, or one before it, refused a window whose temperature
+  # never changed, and a tube in force only outside the window sent the
+  # arterial values): the one in force at its start, then each later step
+  # before its end.
   steps <- gr$bodySteps
+  inWindow <- NULL
   rowBody <- function(i) body
   if (!is.null(steps)) {
-    same <- vapply(steps$body, function(b) identical(b$temperature, body$temperature), TRUE)
+    first <- max(1L, findInterval(minimum, steps$time))
+    last <- max(first, findInterval(maximum, steps$time, left.open = TRUE))
+    inWindow <- first:last
+    body <- steps$body[[first]]
+    same <- vapply(steps$body[inWindow],
+                   function(b) identical(b$temperature, body$temperature), TRUE)
     if (!all(same))
       stop("The Visualizer cannot yet draw an inhaled agent whose body temperature ",
            "changes during the run (physiology events); it can draw one ",
            "whose cardiac output, altitude or intubation changes.")
     rowBody <- function(i) steps$body[[gr$bodyRow[[i]]]]
   }
+  # The tissues' capacities at the temperature of the window drawn
+  props <- gasPropertiesAt(body$temperature)
+  pr <- props[props$gas == g, ]
+  ltg <- gasPartitionTissueGas(pr)
   bodyAt <- function(t) if (is.null(steps)) body else
     steps$body[[max(1L, findInterval(t, steps$time))]]
   # The alveolar gas volume in force at each of the viewer's times: one lung's
@@ -686,7 +698,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   alveolar <- if (is.null(steps)) NULL else vapply(times, function(t) bodyAt(t)$V_alveolar, 0)
   alveolarSteps <- !is.null(alveolar) && diff(range(alveolar)) > 0
   shunted <- gasShunt(body) > 0 ||
-    (!is.null(steps) && any(vapply(steps$body, gasShunt, 0) > 0))
+    (!is.null(steps) && any(vapply(steps$body[inWindow], gasShunt, 0) > 0))
   # The cardiac-output slider splits the brain and heart (state 3) from the
   # rest of the vessel-rich group (state 6; gasTissueShares()).  The viewer
   # draws the whole group: its volume, and the partial pressure that holds the
@@ -750,7 +762,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     physiology = viewerPhysiology(physiology, body = body),
     # With physiology events, the settings in force from each time (seconds)
     physiologySteps = if (!is.null(steps))
-      viewerPhysiologySteps(gr$physiologyEvents, minimum, body = body),
+      viewerPhysiologySteps(gr$physiologyEvents, minimum, body = body, end = maximum),
     circuit = gr$circuit,
     volume = as.list(vol), partition = as.list(lambda), capacity = as.list(capacity),
     t = times * 60, p = p, venous = at(venous),
@@ -761,8 +773,8 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     lungsCapacity = if (alveolarSteps) alveolar else NULL,
     # The arterial saturation and PaO2 where an endobronchial tube shunts
     # blood (R/arterialOxygen.R; Shafer, 2026-11-19), shown under the title
-    saturation = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$SaO2) else NULL,
-    paO2 = if (!is.null(gr$arterialOxygen)) at(gr$arterialOxygen$PaO2) else NULL,
+    saturation = if (shunted && !is.null(gr$arterialOxygen)) at(gr$arterialOxygen$SaO2) else NULL,
+    paO2 = if (shunted && !is.null(gr$arterialOxygen)) at(gr$arterialOxygen$PaO2) else NULL,
     # One number, or with physiology events the output in force at each time
     cardiacOutput = if (is.null(steps)) (if (is.null(gr$Qco)) body$Q_cardiac else gr$Qco)
                     else if (!is.null(gr$cardiacOutput)) gr$cardiacOutput
@@ -817,16 +829,18 @@ viewerFollowsPhysiologyEvents <- function(entry)
 #' @param events physiologyEventsFrom()'s data frame
 #' @param start the run's first time, minutes
 #' @param body a gas run's body, to add the altitude and the intubation
+#' @param end the run's last time, minutes: a step at or after it is not in
+#'   the run (ChatGPT's round-2 gas audit, E-01)
 #' @returns a list of settings with `time`, the first at `start`, or NULL
 #' @keywords internal
-viewerPhysiologySteps <- function(events, start, body = NULL)
+viewerPhysiologySteps <- function(events, start, body = NULL, end = Inf)
 {
   if (!is.data.frame(events) || nrow(events) == 0) return(NULL)
   states <- physiologyEventStates(events)
   times <- c(0, events$Time)
-  # The step in force at the run's start, then each later one
+  # The step in force at the run's start, then each later one before its end
   first <- max(which(times <= start))
-  keep <- seq_along(times) >= first
+  keep <- seq_along(times) >= first & (seq_along(times) == first | times < end)
   lapply(which(keep), function(i) {
     x <- states[[i]]
     step <- lapply(x[c(PHYSIOLOGY_FACTORS, "temperature")], unname)

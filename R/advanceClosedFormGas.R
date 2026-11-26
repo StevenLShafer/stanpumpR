@@ -322,7 +322,9 @@
 # and growing by 1.02 to a twentieth of the plot's step, in that induction,
 # its emergence, and the same in a 4 kg infant, on plots of an hour, a day
 # and a week: the largest error at any plotted point was 0.36% of the reading
-# (0.59% in the infant), against 1.6%, 13.4% and 6.3% before, for 15 to 130
+# (0.59% in the infant; 0.67% at 0.136 minute in a 3-month-old 4 kg infant at
+# its default 0.67 L/min against a finer reference, ChatGPT's round-2 gas
+# audit, B-01), against 1.6%, 13.4% and 6.3% before, for 15 to 130
 # more steps than the 601.  In the audit's matched ideal-circuit sevoflurane case the
 # 30-minute alveolar value moves from 1.71176014% with 31 steps to
 # 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
@@ -1608,6 +1610,17 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
   if (isTRUE(all.equal(r1, r2, tolerance = 1e-12))) return(state)
   a1 <- r1 * gasHumidityRatio(from)
   a2 <- r2 * gasHumidityRatio(to)
+  # [decision] (ChatGPT's round-2 gas audit, B-02, 2026-11-26; put to Steven
+  # Shafer that day): in the semi-closed circuit a rise in pressure scales
+  # the circuit's own gas up and fills the lungs from it, so gas enters with
+  # no source of its own, whatever the fresh gas flow: at no flow and no
+  # ventilation a step from 3000 m to sea level adds 2.37 L of nitrogen to
+  # the circuit and lungs, and 0.60 L with 0.5 L/min of oxygen.  The comment
+  # above calls it the fresh gas the circuit "nearly matches", which holds
+  # only at a high flow.  Only R reaches this (the app runs the ideal
+  # circuit), and GasMan, whose comparison the semi-closed circuit is kept
+  # for, has no altitude.  Recommended: refuse a step in altitude with the
+  # semi-closed circuit; else draw fresh gas as the ideal circuit does.
   for (g in names(state)) {
     y <- state[[g]]
     # The composition of the gas drawn in, as a fraction of its dry gas (x 100)

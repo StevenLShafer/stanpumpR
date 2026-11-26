@@ -1,0 +1,9 @@
+[agent]
+name,Sevoflurane
+[patient]
+weight_kg,5
+dt_ms,6000
+[settings]
+va,fgf,circuit,time,co,del,inject
+1,1,Semi,0:00:00,1,0,0
+4,20,Semi,0:01:00,1,2,0

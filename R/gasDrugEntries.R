@@ -121,8 +121,9 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     # Every potent gas's is defined at 37 C and follows MAC with temperature
     # too (gasThresholdForTemperature(); Shafer, 2026-11-24): the time until
     # threshold moves it to the temperature in force when the agent is turned
-    # off, and the panel draws it at the temperature in force at time 0, as
-    # the band is drawn.
+    # off.  The value here is at the temperature in force at time 0; the
+    # panel's line steps with each later temperature (endCeSteps below,
+    # thresholdSteps(); ChatGPT's round-2 gas audit, D-02).
     endCe <- gasThresholdForAge(g, endCe, age)
     recovery <- NULL
     if (!is.null(washout) && g %in% names(washout$rate) && endCe > 0)

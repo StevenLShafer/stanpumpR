@@ -7,10 +7,16 @@
 # subset that guards the result:
 #
 #   * against GasMan as it runs, at its native 6-second tick, the engine is
-#     within a few percent of each compartment's peak -- the gap being GasMan's
-#     own operator-splitting error, largest in the first minutes of a change;
+#     within a few percent of each compartment's peak -- the gap being mostly
+#     GasMan's own operator-splitting error, largest in the first minutes of a
+#     change;
 #   * against the limit GasMan's equations converge to as the tick shrinks, the
-#     engine at the APP'S resolution agrees to about a thousandth of the peak.
+#     engine at the APP'S resolution agrees to about a thousandth of the peak,
+#     in scenarios 1 and 5, which the test below checks.  Scenario 4's ideal
+#     circuit does not converge to GasMan's: at fresh gas flow equal to the
+#     ventilation it rebreathes to make up the uptake, which GasMan's ideal
+#     circuit does not (inst/validation/VALIDATION.md; ChatGPT's round-2 gas
+#     audit, A-06).
 #
 # (Claude Code, Claude Fable 5.1, 2026-10-05; run on R 4.6.1.)
 
