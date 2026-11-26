@@ -50,10 +50,19 @@
 # combined (Table S4, footnote e); ventilation acts within pneumonia
 # (footnote f).  Table 3's footnote prints the ventilation term as
 # (1 + (Flag - 0.23 Ventilation)); Table 3 itself gives +0.23 with a 95% CI
-# of 0.02 to 0.45, so the footnote's minus is a misprint.  The supplement's
-# "finalmodel.txt" is an embedded file that did not survive into its PDF, so
-# the control stream, and with it the weight in the Cockcroft-Gault equation
-# and any cap on it, was not read.  Race was tested and not retained.
+# of 0.02 to 0.45, so the footnote's minus is a misprint.  The final control
+# stream ("finalmodel.txt", an object embedded in the Word version of the
+# supplement, CTS-15-396-s001.docx, supplied by Shafer on 2026-11-26; it did
+# not survive into the supplement's PDF) confirms the structure: CL_IP =
+# theta(1) x (WT/75)^theta(17) x (CRCL/105.5)^theta(9) x (1 + theta(10) for
+# pneumonia), V1_IP = theta(2) x (WT/75)^theta(18) x (1 + theta(13) for
+# pneumonia) x (1 + theta(16) for ventilation, initial estimate +0.215, so
+# the footnote's minus is a misprint), V2 and Q with no covariate, and the
+# reference the healthy, cIAI and cUTI groups ("Healthy/IAI/UTI").  CRCL is a
+# column of the data set, computed before the fit, so the stream applies no
+# cap and does not say which weight entered Cockcroft-Gault.  Its $THETA
+# values are initial estimates; the final ones are Table 3's.  Race was
+# tested and not retained.
 #
 # THE INFECTION (R/infection.R)
 # =============================
@@ -75,7 +84,7 @@
 # creatinine (adultEquivalentCreatinine(); a blank creatinine is the assumed
 # normal for age and sex), at the pharmacokinetic weight with the fat-free-
 # mass switch on and at total body weight with it off.  No cap is applied:
-# the source fitted CrCl to 452 mL/min and prints none.  Fitted in adults and
+# the source fitted CrCl to 452 mL/min and its control stream caps none.  Fitted in adults and
 # offered at every age, as the library's other adult antibiotic models are;
 # a child is put on the adult creatinine scale.  The power 0.48 takes
 # clearance to zero only with the creatinine clearance; a patient on dialysis
