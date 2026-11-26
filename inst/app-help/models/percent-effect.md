@@ -35,3 +35,13 @@ Both published irbesartan models describe the fall in systolic pressure in normo
 ## What it does not do
 
 The panel is a percentage, never a pressure or a rate. It does not add a baseline, and it changes nothing else: the drug's band, MEAC and time until threshold are unchanged. Tolerance, where a drug has a tolerance model, is drawn on its own panel and does not reduce this one.
+
+## Why there is no EEG endpoint
+
+A good deal has been published on propofol's effect-site concentration against BIS, the A-line ARX index and the spectral edge, and none of it is drawn here. The reason is not that the numbers are poor but that **the EEG is not solely a measure of drug effect**.
+
+On emergence the EEG is nearly unchanged for several minutes after the drug is stopped. Then the patient opens their eyes and it changes instantly, showing brain arousal with the return of consciousness. What the monitor reports is a combination of the drug's effect and the state of the brain, so a curve of concentration against index credits the drug with a change the brain made.
+
+The drugs also do not move the EEG in one direction, which matters because an anaesthetic combines them. Ketamine and midazolam activate the EEG. Opioids do little to it except in very large doses, where they depress it. The hypnotics -- propofol, the inhaled agents, etomidate -- activate it and then depress it. A panel showing % effect against one drug's concentration would suggest a single monotone relation that does not exist at the bedside.
+
+Steven L. Shafer, 2026-11-26.
