@@ -263,7 +263,8 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 # scatter, and over a factor on total clearance because the steepest human
 # values (midazolam in volunteers, propofol and cisatracurium on bypass)
 # carry falls in blood flow that the Cardiac output slider already models.
-# Michelsen's exponential is the one fit that spans the slider's 28-37 C.
+# Michelsen's exponential is the one fit that spans 28-37 C (the slider
+# reaches 38 C since 2026-11-25, one degree extrapolated).
 # Read after the decision: remifentanil within patients, 32, 25 and 35
 # mL/min/kg before, during (28-30 C) and after hypothermic bypass, about
 # 4%/C (Russell 1997, Br J Anaesth 79:456); chlorzoxazone (CYP2E1) in rats
@@ -431,6 +432,21 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 #' @noRd
 PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 
+#' The vessel-rich group's share of resting output in the reference body
+#' (getGasBody()'s f_brain, GasMan's 76%), against which the brain and heart's
+#' share is held: they are part of the group, lean tissue whose flow scales
+#' with the group's (by fat-free mass to the 0.75 under body-composition
+#' scaling), so they keep PHYSIOLOGY_GAS_PROTECTED_SHARE / 0.76 of the
+#' group's flow.  With the group at its reference share (the reference man,
+#' and every body scaled linearly by weight) that is exactly
+#' PHYSIOLOGY_GAS_PROTECTED_SHARE of output, so nothing changes there; a
+#' composed body whose fat takes more of the output (CodeRabbit on #941: 500
+#' kg, 20 cm, age 0 left the group 5.9%, below the fixed 16%, and a cardiac
+#' output off normal stopped the simulation) keeps the same split of its
+#' smaller group.
+#' @noRd
+GAS_REFERENCE_VRG_SHARE <- 0.76
+
 #' The gas engine's body at a multiple of normal cardiac output
 #'
 #' Scales \code{Q_cardiac} by \code{cardiac} and redistributes it: the brain
@@ -459,7 +475,10 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
   # every body (gasBodySteps()); at normal output the two groups fill exactly
   # as the one did
   if (cardiac == 1 && !isTRUE(split)) return(body)
-  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
+  # The brain and heart's share of normal output: a fixed fraction of the
+  # vessel-rich group's (GAS_REFERENCE_VRG_SHARE), 16% of output when the
+  # group has its reference 76%
+  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE * body$f_brain / GAS_REFERENCE_VRG_SHARE
   # Normal flows as fractions of normal output.
   rest0 <- c(vrg = body$f_brain - share, muscle = body$f_muscle,
              fat = body$f_fat)
@@ -540,17 +559,19 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
 #
 # FEVER (Gemini's gas-engine audit of 2026-11-23, C-03).  DECIDED (Shafer,
 # 2026-11-25): the slider's top becomes 38 C, the relations above extended
-# one degree past the 37 C where every source stops (Michelsen 2001 20-35 C,
-# Zhou 2002 17-37 C, Liu 2001 31-37 C).  Shafer: "Thermal stress starts around
+# past the human fits, which stop at or below 37 C (Michelsen 2001 20-35 C,
+# Zhou 2002 17-37 C, Liu 2001 31-37 C; of the sources applied only
+# Antognini 1994's rats reached 38 C).  Shafer: "Thermal stress starts around
 # 38 degrees. Let's make 38 the top, which extrapolation probably supports."
-# A question-mark help icon beside the slider says that above 38 C enzymatic
-# action starts to fail, which cannot be extrapolated.  To be built in its own
-# pull request; until then the top is 37 C.
+# The slider's help tip says that above 38 C enzymatic action starts to fail,
+# which cannot be extrapolated.  Built 2026-11-25: PHYSIOLOGY_TEMPERATURE_MAX
+# below, which every check of a temperature reads (the slider, a physiology
+# event, a link, simulateGases(), getDrugPK(physiology =)).
 
 #' Body temperature range and default, degrees C
 #' @noRd
 PHYSIOLOGY_TEMPERATURE_MIN <- 28
-PHYSIOLOGY_TEMPERATURE_MAX <- 37
+PHYSIOLOGY_TEMPERATURE_MAX <- 38
 PHYSIOLOGY_TEMPERATURE_DEFAULT <- 37
 PHYSIOLOGY_TEMPERATURE_STEP <- 0.5
 
@@ -1033,7 +1054,11 @@ physiologyPanel <- function()
             "raises their solubility in blood and tissue, which slows the rise",
             "of the end-tidal and brain concentrations, and lowers their MAC,",
             "about 4.6% a degree. It does not change",
-            "cardiac output or ventilation, which have their own controls."),
+            "cardiac output or ventilation, which have their own controls.",
+            "Fever up to 38 \u00b0C extrapolates these relations, whose human",
+            "measurements stop at or below 37 \u00b0C. The slider stops at 38",
+            "\u00b0C because thermal stress starts around there: above it",
+            "enzymatic action starts to fail, which cannot be extrapolated."),
       placement = "right"
     ),
     # Altitude and endobronchial intubation act on the inhaled agents only,
@@ -1067,19 +1092,41 @@ physiologyPanel <- function()
                     value = FALSE),
       paste("The tube in one main bronchus: that lung takes all the",
             "ventilation, and the other, unventilated, is still perfused, so",
-            "half the cardiac output passes it and takes up no agent (Eger",
-            "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
-            "reads higher than arterial, and the brain rises more slowly,",
-            "most for the poorly soluble agents (nitrous oxide, desflurane).",
-            "Arterial oxygen falls: the shunted blood carries no oxygen from",
-            "the lungs, and more inspired oxygen hardly helps. Hypoxic",
-            "pulmonary vasoconstriction is not modelled."),
+            "up to half the cardiac output passes it and takes up no agent",
+            "(Eger and Shafer's chapter on inhaled anesthetic kinetics).",
+            "End-tidal reads higher than arterial, and the brain rises more",
+            "slowly, most for the poorly soluble agents (nitrous oxide,",
+            "desflurane). Arterial oxygen falls: the shunted blood carries no",
+            "oxygen from the lungs, and more inspired oxygen hardly helps.",
+            "The Shunt fraction slider sets how much blood passes the",
+            "unventilated lung."),
       placement = "right"
     ),
-    # The haemoglobin sets how far the shunt desaturates the arterial blood
-    # (R/arterialOxygen.R; Shafer, 2026-11-19), so it is shown with the box
+    # The shunt fraction (R/endobronchial.R; Shafer, 2026-11-25) and the
+    # haemoglobin, which sets how far the shunt desaturates the arterial blood
+    # (R/arterialOxygen.R; Shafer, 2026-11-19), act only through the tube, so
+    # they are shown with the box
     conditionalPanel(
       condition = "input.endobronchialIntubation",
+      fieldHelp(
+        sliderInput(
+          inputId = "physiology_shunt",
+          label = "Shunt fraction (%)",
+          min = 0,
+          max = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
+          value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
+          step = ENDOBRONCHIAL_SHUNT_STEP_PERCENT,
+          ticks = FALSE
+        ),
+        paste("The share of cardiac output that passes the unventilated lung.",
+              "It starts at 50%, Eger and Shafer's idealisation, the most it",
+              "can be. Hypoxic pulmonary vasoconstriction diverts blood from",
+              "the unventilated lung, which this slider stands in for: lower",
+              "it toward 0% and watch the arterial oxygen improve. At 0% the",
+              "unventilated lung takes no blood, and only the smaller volume",
+              "of the ventilated lung remains of the tube's effect."),
+        placement = "right"
+      ),
       fieldHelp(
         sliderInput(
           inputId = "physiology_haemoglobin",
@@ -1090,11 +1137,11 @@ physiologyPanel <- function()
           step = HAEMOGLOBIN_STEP,
           ticks = FALSE
         ),
-        paste("With half the cardiac output shunted, the oxygen the shunt",
-              "fails to carry is a larger share of a smaller capacity, so an",
-              "anaemic patient desaturates more: on pure oxygen the arterial",
-              "saturation is about 69% at 7 g/dL and 87% at 17 g/dL. Without",
-              "a shunt it changes nothing the plot shows."),
+        paste("With cardiac output shunted, the oxygen the shunt fails to",
+              "carry is a larger share of a smaller capacity, so an anaemic",
+              "patient desaturates more: with half the output shunted, on pure",
+              "oxygen the arterial saturation is about 69% at 7 g/dL and 87%",
+              "at 17 g/dL. Without a shunt it changes nothing the plot shows."),
         placement = "right"
       )
     )
@@ -1187,11 +1234,13 @@ physiologyFromInputs <- function(values)
 #' @param temperature the body temperature, C, or NULL (37)
 #' @param altitude metres above sea level, or NULL (sea level)
 #' @param endobronchial TRUE for an endobronchial tube
+#' @param shunt its shunt fraction, or NULL (the default)
 #' @returns a data frame of Covariate and Value
 #' @noRd
 physiologyCovariateRows <- function(physiology, temperature = NULL,
                                     altitude = NULL, endobronchial = FALSE,
-                                    events = NULL, haemoglobin = NULL)
+                                    events = NULL, haemoglobin = NULL,
+                                    shunt = NULL)
 {
   # With physiology events (R/physiologyEvents.R) the simulation ran at
   # normal physiology from time 0 and each event's settings from its time;
@@ -1217,11 +1266,16 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                            "Body temperature (C)",
                            "Altitude (m), inhaled anesthetics",
                            "Endobronchial intubation, inhaled anesthetics",
+                           "Shunt fraction (%), with an endobronchial tube",
                            "Haemoglobin (g/dL), arterial oxygen with an endobronchial tube"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
                        if (isTRUE(endobronchial)) "yes" else "no",
+                       {
+                         s <- tryCatch(checkShunt(shunt), error = function(e) NULL)
+                         if (is.null(s)) "unreadable" else format(round(100 * s, 1))
+                       },
                        format(haemoglobinFromInput(haemoglobin))),
              stringsAsFactors = FALSE)
 }
@@ -1565,7 +1619,7 @@ helpPhysiologyTemperatureTable <- function()
   label <- c(isoflurane = "Isoflurane 1.2%", sevoflurane = "Sevoflurane 2%",
              desflurane = "Desflurane 6%", nitrousOxide = "Nitrous oxide 67%")
   rows <- character(0)
-  for (g in names(agents)) for (T in c(37, 34, 31, 28)) {
+  for (g in names(agents)) for (T in c(38, 37, 34, 31, 28)) {
     dt <- if (g == "nitrousOxide")
       data.frame(Drug = c(g, "oxygen", "ventilation"), Time = 0, Dose = c(4, 2, 6))
     else

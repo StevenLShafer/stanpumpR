@@ -38,12 +38,22 @@ test_that("outside the studied 0.45-2.1 m2, clearance and volume are proportiona
   }
 })
 
-test_that("both switch positions pinned", {
+test_that("both switch positions pinned, and they agree", {
   on <- temozolomidePanetta(40, 140, 10, "female")$PK$default
   off <- temozolomidePanetta(40, 140, 10, "female", FALSE)$PK$default
-  s <- pkSizeFactors(40, 140, 10, "female", TRUE)
-  expect_equal(on$v1, temozolomidePanettaClV(bsaMosteller(s$pkWeight, 140))$v)
+  # BSA comes from TOTAL weight either way (Shafer, 2026-11-25, Group B item 11), so the
+  # fat-free-mass switch cannot reach this drug.  Until that day the switch-on case used
+  # pkSizeFactors()$pkWeight, which applied the size adjustment twice: Panetta fitted his
+  # BSA covariate against the children's actual weight.
+  expect_equal(on$v1, temozolomidePanettaClV(bsaMosteller(40, 140))$v)
   expect_equal(off$v1, temozolomidePanettaClV(bsaMosteller(40, 140))$v)
+  expect_equal(on$v1, off$v1)
+  expect_equal(on$cl1, off$cl1)
+  # and the switch is inert at a size where FFM differs most from total weight
+  heavy_on <- temozolomidePanetta(95, 150, 16, "female")$PK$default
+  heavy_off <- temozolomidePanetta(95, 150, 16, "female", FALSE)$PK$default
+  expect_equal(heavy_on$v1, heavy_off$v1)
+  expect_equal(heavy_on$cl1, heavy_off$cl1)
 })
 
 test_that("a 200 mg/m2 dose in a child of 1.1 m2", {

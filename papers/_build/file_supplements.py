@@ -32,7 +32,19 @@ from recycle import recycle
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCHIVE = os.path.dirname(HERE)
-DOWNLOADS = os.path.join(os.path.expanduser("~"), "Downloads")
+# WHERE PAPERS ARRIVE (changed 2026-11-25, Shafer): C:\dev\Pending Uploads, and
+# nowhere else.  Downloads is NO LONGER SCANNED.  It had accumulated hundreds of
+# PDFs with no relation to stanpumpR -- the last run that read it reported 136
+# recent ones it could not place -- and every run re-read and re-hashed them.
+# Shafer moves what he wants filed into Pending Uploads; a file that files
+# successfully is recycled from there, so the folder stays short.  A file that
+# CANNOT be identified is left and reported, never deleted: deleting it silently
+# would lose a paper nobody had noticed was unidentifiable.
+# This script had Downloads hard-coded and NO --dir, so it could not be pointed
+# anywhere else at all; update.bat passes no arguments, so after the inbox moved it
+# would have scanned the wrong folder for ever and reported "Filed 0" every run.
+DOWNLOADS = (sys.argv[sys.argv.index("--dir") + 1] if "--dir" in sys.argv[1:]
+             else os.path.join("C:", os.sep, "dev", "Pending Uploads"))
 MAP_PATH = os.path.join(HERE, "supplement_map.json")
 WAITING_PATH = os.path.join(HERE, "supplements_waiting.json")
 LOG_PATH = os.path.join(HERE, "filing_log.json")

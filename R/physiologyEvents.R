@@ -83,11 +83,11 @@
 #   the same "will appear to be a bug because it isn't what the physiology
 #   teaches", and a Y axis that rescales can hide a change that the ribbon
 #   shows within one panel.  The threshold line stays and, on the gas panels,
-#   steps with the temperature in force.  To be built in its own pull
-#   request (a nominal-physiology simulation at the drug's own times, the
-#   ribbon from the lower curve to the higher at each moment, kept in order
-#   across an event's repeated time, from the panel's lowest positive value
-#   on a log axis, never clicked or hovered, off under normalization).
+#   steps with the temperature in force.  Built 2026-11-25: R/physiologyRibbon.R
+#   (physiologyRibbons(), thresholdSteps()), app_server()'s nominalDrugs(),
+#   simulationPlot(nominal =), and a gas entry's endCeSteps.  The ribbon
+#   follows the line the panel draws, effect site where shown, rather than
+#   the alveolar line the working assumption named for an inhaled agent.
 #
 #   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
 #   overlay, 2026-11-19) when Shafer opened it after using the sliders, the
@@ -118,13 +118,13 @@ PHYSIOLOGY_EVENT_MAX <- 50L
 #' The settings one physiology event records, in order
 #' @keywords internal
 PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial",
-                             "haemoglobin")
+                             "haemoglobin", "shunt")
 
 #' Normal physiology as a physiology event's settings
 #' @keywords internal
 physiologyEventNormal <- function()
   c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0,
-    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN, shunt = ENDOBRONCHIAL_SHUNT_FRACTION)
 
 #' Check one physiology event's settings
 #'
@@ -149,6 +149,8 @@ checkPhysiologyEvent <- function(x)
   if (!out[["endobronchial"]] %in% c(0, 1))
     stop("Invalid physiology event settings: endobronchial must be 0 or 1")
   out[["haemoglobin"]] <- checkHaemoglobin(out[["haemoglobin"]])
+  # The shunt fraction (a fraction, 0 to 0.5) acts only through the tube
+  out[["shunt"]] <- checkShunt(out[["shunt"]])
   out
 }
 
@@ -272,7 +274,8 @@ physiologyEventSummary <- function(x, gas = TRUE)
                          barometricPressure(x[["altitude"]]))
                else "Sea level",
                if (x[["endobronchial"]] == 1)
-                 sprintf("Endobronchial intubation, haemoglobin %s g/dL", format(x[["haemoglobin"]]))
+                 sprintf("Endobronchial intubation, shunt %s%%, haemoglobin %s g/dL",
+                         format(round(100 * x[["shunt"]], 1)), format(x[["haemoglobin"]]))
                else "Tracheal intubation")
   paste(parts, collapse = ", ")
 }

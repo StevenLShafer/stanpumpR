@@ -14,6 +14,24 @@ trachea.
 For the reasoning behind each rule and the evidence for it, see
 [Physiology and pharmacokinetics: the evidence](help:models/physiology-and-pharmacokinetics).
 
+## What the plot shows
+
+When the physiology is away from normal, by the sliders or by physiology
+events, each drug it changes loses its shaded band, and a **grey ribbon**
+fills the space between the drug's curve at normal physiology and its curve
+at the physiology entered. The drug's own line is the changed curve; the other
+edge of the ribbon is where the curve would be with normal physiology. A drug
+the physiology does not change keeps its band. The ribbon follows the line the
+panel draws: the effect-site line where it is shown, the plasma line
+otherwise. It is not drawn under normalization. (Steven Shafer, 25 November
+2026: a band that stayed the same "will appear to be a bug because it isn't
+what the physiology teaches", and a Y axis that rescales can hide a change
+that the ribbon shows.)
+
+For an inhaled agent with *time until threshold* shown, the threshold line
+steps with the temperature in force after a physiology event, as the time
+until threshold does.
+
 ## Sliders and covariates
 
 Where a published model includes a feature of the patient (weight, age,
@@ -236,7 +254,10 @@ brain and heart does not fall with cardiac output: it follows the same
 autoregulated relation as the effect site of the intravenous drugs, cardiac
 output to the power 0.35 (see above). The brain and heart take 16% of resting
 output (brain 12%, heart 4%, the 35-year-old reference man of Williams and
-Leggett 1989, Table 17). What is left of the
+Leggett 1989, Table 17), whose vessel-rich group takes 76%. They are part of
+that group, so in a body scaled by composition they keep 16/76 of the group's
+flow: a 150 kg man of 170 cm, whose group takes 70% of his output, gives them
+14.7%. What is left of the
 output is shared among the rest of the vessel-rich group, muscle and fat in
 their normal proportions. At a tenth of normal output the brain and heart
 receive 7% of normal output, nearly three quarters of all there is, and the
@@ -271,7 +292,7 @@ dose-table row.
 
 ## Body temperature and the inhaled anesthetics
 
-**Body temperature** (28 to 37 °C) acts on the volatile agents through the two
+**Body temperature** (28 to 38 °C) acts on the volatile agents through the two
 effects of hypothermia that Eger and Shafer's chapter names, and so does
 nitrous oxide, less.
 
@@ -422,10 +443,10 @@ follows: the intubated lung receives all the ventilation, twice its normal
 share, and the other lung is not ventilated but is still perfused. Its blood
 takes up no agent and joins the arterial blood at the mixed venous partial
 pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
-diverge. stanpumpR takes the chapter's idealisation: half the cardiac output
-passes the unventilated lung, and the ventilated lung holds half the alveolar
-gas. (The half is the chapter's, kept on Shafer's decision of
-2026-11-19.)
+diverge. stanpumpR starts from the chapter's idealisation: half the cardiac
+output passes the unventilated lung, and the ventilated lung holds half the
+alveolar gas. (The half is the chapter's, kept on Shafer's decision of
+2026-11-19; the **Shunt fraction** slider, below, lowers it.)
 
 How much the arterial rise is delayed depends on solubility. For a poorly
 soluble agent the end-tidal tension approaches the inspired whatever the blood
@@ -465,7 +486,30 @@ Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
 3 L/min gives 69%, at 12 L/min 75%).
 
-**Haemoglobin.** Ticking the box shows a **Haemoglobin** slider (4 to 20 g/dL,
+**Shunt fraction.** Ticking the box shows a **Shunt fraction** slider, 0 to
+50% of cardiac output, starting at 50%, its maximum (Steven Shafer, 25
+November 2026). In practice hypoxic pulmonary vasoconstriction diverts blood
+from the unventilated lung, so the shunt is less than half; the slider stands
+in for it. Lower it and watch the oxygenation improve. At 30 minutes, as in the
+table above:
+
+| Shunt fraction | PaO2 on oxygen | SaO2 on oxygen | PaO2 on air | SaO2 on air |
+|---|---|---|---|---|
+| 50% | 50 mmHg | 85% | 40 mmHg | 75% |
+| 40% | 66 mmHg | 93% | 47 mmHg | 83% |
+| 30% | 103 mmHg | 98% | 55 mmHg | 88% |
+| 20% | 265 mmHg | 100% | 66 mmHg | 93% |
+| 10% | 485 mmHg | 100% | 81 mmHg | 96% |
+| 0% | 666 mmHg | 100% | 107 mmHg | 98% |
+
+On oxygen the PaO2 climbs steeply below a shunt of about 30%, as the
+saturated blood from the ventilated lung comes to outweigh the shunted blood.
+The agents' arterial partial pressures come toward end-tidal in the same way.
+At 0% the unventilated lung takes no blood, and only the ventilated lung's
+smaller alveolar volume remains of the tube. A physiology event records the
+slider with the box.
+
+**Haemoglobin.** Ticking the box also shows a **Haemoglobin** slider (4 to 20 g/dL,
 15 by default). The oxygen the shunted half fails to carry is the same number
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
@@ -478,9 +522,11 @@ with the barometric pressure, so the hypoxaemia deepens with altitude. On air
 the SaO2 is 75% at sea level, 66% at 3000 m and 43% at 5000 m; on oxygen 85%,
 82% and 80%.
 
-**Not modelled.** Hypoxic pulmonary vasoconstriction, which diverts part of the
-blood from the unventilated lung, so the shunt is about half only at first and
-the hypoxaemia then eases; the lungs' unequal sizes; the slow absorption of the
+**Not modelled.** Hypoxic pulmonary vasoconstriction as a process: it
+diverts part of the blood from the unventilated lung over minutes, so the shunt
+is about half only at first and the hypoxaemia then eases, which the Shunt
+fraction slider, or a physiology event that lowers it, can only step through;
+the lungs' unequal sizes; the slow absorption of the
 gas trapped in the unventilated lung; the blood's own oxygen store, so the
 arterial oxygen changes at once with the tube or the fresh gas rather than over
 a circulation time; and the dissociation curve's shift with temperature and pH.
@@ -490,9 +536,9 @@ a circulation time; and the dissociation curve's shift with temperature and pH.
 Cooling slows the elimination of most intravenous drugs, because enzymes and
 filtration work more slowly in the cold. stanpumpR multiplies each drug's
 capacity to eliminate it by exp(−0.0658 (37 − T)), 6.4% less for each degree
-below 37 °C, so 55% of normal at 28 °C. The figure is Michelsen and
-colleagues' fit to remifentanil in patients on bypass between 20 and 35 °C,
-the one human study that spans the whole slider. The rest of the evidence
+below 37 °C, so 55% of normal at 28 °C, and 6.8% more at 38 °C. The figure is
+Michelsen and colleagues' fit to remifentanil in patients on bypass between 20
+and 35 °C, the one human study across most of the slider. The rest of the evidence
 agrees within its scatter, about 6 to 8% per degree: CYP enzymes in liver
 tissue, glucuronidation, filtration by the kidney (amoxicillin, ceftazidime
 and doxacurium), esterases (remifentanil) and the chemical breakdown of
@@ -506,6 +552,16 @@ colleagues found propofol clearance at 42% of normal at 28 °C, because flow
 falls too. Lower the Cardiac output slider as well to reproduce that: at 0.4
 of normal, propofol falls to 44%. Only drugs with a physiology row respond;
 volumes, intercompartmental clearances and ke0 do not change.
+
+## Fever
+
+The slider reaches 38 °C, where thermal stress starts. Every relation above
+was measured in people at or below 37 °C (only Antognini's rats reached 38
+°C), so the degree above 37 is an extrapolation of each of them: elimination
+capacity 6.8% higher, the volatile agents 3 to 4% less soluble, and MAC 4.6%
+higher (nitrous oxide's 2.1%). The slider stops at 38 °C because above it
+enzymatic action starts to fail, which cannot be extrapolated (Steven Shafer,
+25 November 2026).
 
 The sliders move in small steps on a log scale, so the multiple a slider
 shows is rounded: x0.50 applies 0.501, x2.00 applies 1.995. The difference is

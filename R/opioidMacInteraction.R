@@ -207,6 +207,10 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   if (is.null(mac)) return(gasEntries)
   series <- mac$results[mac$results$Site == "Plasma", c("Time", "Y")]
   if (is.null(totalOpioidMEAC(drugs, series$Time))) return(gasEntries)
+  # The summed brain MAC, the panel's effect-site line (gasBrainMac()), at the
+  # same times; the opioid reduces the MAC it is a multiple of in the same way
+  brain <- mac$results[mac$results$Site == "Effect Site", c("Time", "Y")]
+  if (!identical(brain$Time, series$Time)) brain <- series
 
   # Time until threshold, if it is being shown.  The opioid-adjusted MAC is the
   # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
@@ -257,9 +261,12 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   if (!is.null(aug)) extra <- aug$extra
   if (length(extra) > 0) {
     o <- order(c(series$Time, extra))
+    brain <- data.frame(Time = c(brain$Time, extra),
+                        Y = c(brain$Y, seriesStepAt(brain$Time, brain$Y, extra)))[o, , drop = FALSE]
     series <- data.frame(Time = c(series$Time, extra),
                          Y = c(series$Y, seriesStepAt(series$Time, series$Y, extra)))[o, , drop = FALSE]
     rownames(series) <- NULL
+    rownames(brain) <- NULL
   }
   R <- opioidMacReduction(totalOpioidMEAC(drugs, series$Time)$U)
   recovery <- NULL
@@ -268,13 +275,14 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
     recovery <- macRecoveryTime(w, mac$age, mac$endCe * (1 - R))
   }
   series$Y <- series$Y / (1 - R)
+  brain$Y <- brain$Y / (1 - R)
 
   # Rebuilt through gasEntry() so that the normalisation series, the equispaced
   # values behind the hover readout, and the maxima all follow.
   gasEntries[["MAC"]] <- gasEntry(
     drug         = "MAC",
     alveolar     = series,
-    brain        = series,
+    brain        = brain,
     xout         = mac$equiSpace$Time,
     drugDefaults = NULL,
     unitLabel    = "opioid-adjusted",
