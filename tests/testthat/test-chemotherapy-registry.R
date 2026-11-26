@@ -140,17 +140,34 @@ test_that("the help page's generated blocks render from the registry", {
   md <- helpChemotherapyRegistryMarkdown()
   expect_match(md, "| Drug | Product |", fixed = TRUE)
   expect_equal(length(strsplit(md, "\n")[[1]]), nrow(registry) + 2)
+  # The to-obtain block: test the RENDERER against a fixture, and the live registry
+  # only by an invariant that holds at any count.
+  #
+  # This assertion named "Periclou" until 2026-11-25 and broke the moment that paper
+  # was obtained, verified and its row cleared -- the test failed BECAUSE the work
+  # succeeded. Moving the canary to a PMID-less entry only made that rarer, not
+  # impossible: nothing stops a request without a PMID being filled by hand, and a
+  # count of ">= 2" still fails when one request remains, or when all are complete,
+  # which is the goal state (CodeRabbit on PR #936). So: no example row at all.
+  fx <- data.frame(
+    drug      = c("alpha", "beta", "gamma"),
+    wave      = c("first", "second", "first"),
+    to_obtain = c("Smith 1990 (no PMID): a page reference", NA_character_,
+                  "Jones 1991 (PMID 12345): the full text"),
+    stringsAsFactors = FALSE)
+  out <- helpChemotherapyToObtainMarkdown(registry = fx)
+  expect_equal(length(strsplit(out, "\n")[[1]]), 2)             # the NA row is omitted
+  expect_match(out, "- **alpha**: Smith 1990", fixed = TRUE)    # a request with no PMID renders
+  expect_match(out, "- **gamma**: Jones 1991", fixed = TRUE)
+  expect_false(grepl("beta", out, fixed = TRUE))
+  expect_equal(helpChemotherapyToObtainMarkdown(registry = fx[2, , drop = FALSE]), "")
+  # the live registry: one bullet per distinct pending request, whatever that number
+  # is -- zero included, so clearing the last row cannot break this test
   want <- helpChemotherapyToObtainMarkdown()
-  # A canary for the to-obtain block, and it must name an entry with NO PMID.
-  # It named Periclou until 2026-11-25, and then broke the moment that paper was
-  # obtained, verified and its row cleared -- i.e. the test failed BECAUSE the work
-  # succeeded.  Anything carrying a PMID is a paper somebody is trying to get, so
-  # arrivals.py will one day report it as arrived and its row will be cleared; the
-  # carboplatin erratum has no PMID and no row can clear it on arrival.
-  expect_match(want, "Duffull 1997 erratum", fixed = TRUE)
-  # ...and the block really is a bullet list of entries, whichever rows are in it
-  expect_true(sum(grepl("^- [*][*]", strsplit(want, "
-")[[1]])) >= 2)
+  pending <- length(unique(registry$to_obtain[!is.na(registry$to_obtain) &
+                                              nzchar(registry$to_obtain)]))
+  bullets <- if (nzchar(want)) sum(grepl("^- [*][*]", strsplit(want, "\n")[[1]])) else 0L
+  expect_equal(bullets, pending)
   html <- helpPageHTML("models/chemotherapy")
   expect_match(html, "MTXPK.org", fixed = TRUE)  # a paper still to obtain
   expect_false(grepl("<!-- generated", html, fixed = TRUE))
