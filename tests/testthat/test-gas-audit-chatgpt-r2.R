@@ -53,3 +53,40 @@ test_that("E-01: the physiology steps stop at the end of the run", {
   expect_equal(vapply(steps, function(s) s$time, 0), c(0, 600))
   expect_length(viewerPhysiologySteps(events, 0), 3)
 })
+
+test_that("B-02: the semi-closed circuit takes no physiology GasMan lacks", {
+  # Steven Shafer, 2026-11-26: "we should not permit it to reflect any
+  # physiology not available to GasMan"
+  normal <- physiologyEventNormal()
+  high <- normal
+  high[["altitude"]] <- 3000
+  ev <- data.frame(Time = c(0, 30))
+  for (nm in names(normal)) ev[[nm]] <- c(high[[nm]], normal[[nm]])
+  d <- data.frame(Drug = c("oxygen", "ventilation"), Time = 0, Dose = c(0.5, 6))
+  semi <- function(...) simulateGases(d, weight = 70, age = 40, maximum = 31,
+                                      circuit = "semi-closed", ...)
+  refused <- "takes no physiology GasMan lacks"
+  # The step in altitude created gas: 0.60 L of nitrogen here at 8c1ea1b
+  expect_error(semi(physiologyEvents = ev), refused)
+  expect_error(semi(altitude = 3000), "altitude")
+  expect_error(semi(temperature = 32), "body temperature")
+  expect_error(semi(endobronchial = TRUE), "endobronchial")
+  expect_error(semi(physiology = c(cardiac = 0.5)), "cardiac-output slider")
+  expect_error(semi(haemoglobin = 8), "haemoglobin")
+  expect_error(semi(height = 160, sex = "female"), "body composition")
+  cardiac <- ev
+  cardiac$altitude <- 0
+  cardiac$cardiac <- c(1, 0.5)
+  expect_error(semi(physiologyEvents = cardiac), "cardiac-output slider")
+  # What GasMan has is taken: its own cardiac output, the reference man's
+  # composed body (GasMan's standard), linear scaling, and normal settings
+  expect_silent(semi(cardiacOutput = 4))
+  expect_silent(simulateGases(d, weight = 70, age = 35, maximum = 31, circuit = "semi-closed",
+                              height = 170, sex = "male"))
+  expect_silent(semi(height = 160, sex = "female", adjustToFFM = FALSE))
+  expect_silent(semi(temperature = 37, altitude = 0))
+  # The ideal circuit, which the app runs, takes all of it as before
+  expect_silent(simulateGases(d, weight = 70, age = 40, maximum = 31, physiologyEvents = ev,
+                              temperature = 32, endobronchial = TRUE,
+                              height = 160, sex = "female"))
+})

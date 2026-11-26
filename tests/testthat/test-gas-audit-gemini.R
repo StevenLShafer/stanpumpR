@@ -201,15 +201,12 @@ test_that("C-07: a rise in pressure draws fresh gas into the alveoli", {
                  tolerance = 1e-12, label = g)
   alveolar <- sum(vapply(s$state, function(m) m[step[2], 2], 0))
   expect_lte(alveolar, 100 + 1e-9)
-  # A semi-closed circuit's own stored gas is what fills them
-  sc <- simulateGases(d, weight = 70, age = 40, maximum = 30, circuit = "semi-closed",
-                      physiologyEvents = geminiAltitudeStep(5000, 0))
-  k <- which(sc$timeLine == 10)
-  expect_equal(sc$state$sevoflurane[k[2], 2],
-               sc$state$sevoflurane[k[1], 2] + sc$state$sevoflurane[k[1], 1] / r * (1 - a1),
-               tolerance = 1e-12)
-  expect_equal(sc$state$sevoflurane[k[2], 1], sc$state$sevoflurane[k[1], 1] / r,
-               tolerance = 1e-12)
+  # The semi-closed circuit, GasMan's, takes no altitude (Shafer,
+  # 2026-11-26; ChatGPT's round-2 gas audit, B-02: scaling its stored gas up
+  # created gas; test-gas-audit-chatgpt-r2.R)
+  expect_error(simulateGases(d, weight = 70, age = 40, maximum = 30, circuit = "semi-closed",
+                             physiologyEvents = geminiAltitudeStep(5000, 0)),
+               "takes no physiology GasMan lacks")
 })
 
 

@@ -24,7 +24,7 @@ and B-03 are reached only from R. Its severity labels follow the prompt's rule
 that anything untrue about GasMan is S1, so several S1 items are one sentence.
 
 **Ready for James Philip?** Its verdict was "yes, after the blocking items".
-With the fixes below in, the one item left is B-02, a decision.
+With the fixes below in, and B-02 decided the same day, none is left.
 
 ## Summary
 
@@ -39,7 +39,7 @@ With the fixes below in, the one item left is B-02, a decision.
 | A-07 | wrong statement, S2 | Confirmed: the bullet omits its settings; its 17.6% reads 4 L/min as minute ventilation | Settings stated, with the app's own 1.11 and 1.73 |
 | A-08 | wrong statement, S3 | Confirmed: 5.04, not 5.05 | Fixed |
 | B-01 | wrong statement, S3 | Production value reproduced; the reference accepted | Reworded: under 0.7% |
-| B-02 | defect, S1 | Confirmed to the digit; R only, not the app | **For Dr Shafer** |
+| B-02 | defect, S1 | Confirmed to the digit; R only, not the app | Decided: the semi-closed circuit takes no physiology GasMan lacks |
 | B-03 | wrong statement, S1 | Confirmed (88.243%); R only | Help scoped to the ideal circuit |
 | D-01 | wrong statement, S1 | Confirmed; #941 missed this page | Fixed |
 | D-02 | wrong statement, S3 | Confirmed; #940 missed this page and a comment | Fixed |
@@ -97,16 +97,19 @@ the end times 84 and 180 s; 0.789155 for `Semi`, 0.72834 for `Semi-closed` and
 
 ## For Dr Shafer
 
-1. **B-02, a rise in pressure with the semi-closed circuit.** At a step down
-   in altitude, `gasStateAcrossPressure()` scales the semi-closed circuit's own
-   gas up and fills the lungs from it, so gas appears with no source: 2.37 L of
+1. **B-02, decided 2026-11-26.** At a step down in altitude,
+   `gasStateAcrossPressure()` scaled the semi-closed circuit's own gas up and
+   filled the lungs from it, so gas appeared with no source: 2.37 L of
    nitrogen at no flow and no ventilation (3000 m to sea level), 0.60 L at 0.5
-   L/min of oxygen. Its comment calls the gas the fresh gas the circuit "nearly
-   matches", true only at high flow. The app never runs this circuit; it is
-   GasMan's, kept for the comparison, and GasMan has no altitude. Recommended:
-   refuse a step in altitude with the semi-closed circuit. The alternative is
-   to draw fresh gas there as the ideal circuit does. Recorded as a
-   `[decision]` in `gasStateAcrossPressure()`.
+   L/min of oxygen. The app never runs this circuit; it is GasMan's, kept for
+   the comparison, and GasMan has no altitude. Dr Shafer decided more widely
+   than the finding: "If the semi-closed system is only used for comparison
+   with GasMan, then we should not permit it to reflect any physiology not
+   available to GasMan." `advanceClosedFormGas()` now refuses the semi-closed
+   circuit a temperature other than 37 °C, an altitude, an endobronchial tube,
+   the cardiac-output slider, a haemoglobin other than the default, and body
+   composition (`gasNotGasMansBody()`); GasMan's own cardiac output setting
+   and linear scaling by weight stay. Tests in `test-gas-audit-chatgpt-r2.R`.
 2. **GasMan's licence.** Its repository's root `LICENSE` is GPL-3.0; its API's
    README (line 572) says "Code released under the MIT License". Worth
    mentioning to Dr Philip with the two defect reports. stanpumpR copies no

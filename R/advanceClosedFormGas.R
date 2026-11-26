@@ -1157,6 +1157,21 @@ advanceClosedFormGas <- function(
   # hundredfold, which matters because this runs on every dose-table keystroke.
   changes <- sort(unique(c(0, gasDose$Time, bodySteps$time, maximum)))
   changes <- changes[changes >= 0 & changes <= maximum]
+  # The semi-closed circuit is GasMan's, kept only for the comparison with
+  # GasMan; the app never runs it.  So it takes no physiology GasMan lacks
+  # (Steven Shafer, 2026-11-26: "we should not permit it to reflect any
+  # physiology not available to GasMan"), which ChatGPT's round-2 gas audit
+  # (B-02) found where a step in altitude created gas with no source, 2.37 L
+  # of nitrogen at no flow from 3000 m to sea level.
+  if (circuit == "semi-closed") {
+    inRun <- if (is.null(bodySteps)) list(body) else bodySteps$body[bodySteps$time <= maximum]
+    problems <- unique(unlist(lapply(inRun, gasNotGasMansBody)))
+    if (length(problems) > 0)
+      stop("The semi-closed circuit is GasMan's, kept only for the comparison with ",
+           "GasMan, and takes no physiology GasMan lacks (here ",
+           paste(problems, collapse = ", "), "). Use the ideal circuit, the default.",
+           call. = FALSE)
+  }
   bodyIndex <- 1L
   if (length(changes) < 2) changes <- c(0, maximum)
 
@@ -1574,10 +1589,12 @@ gasStateAcrossBodies <- function(state, from, to)
 #' lungs and the circuit keep their volume.  Where the pressure falls, gas
 #' leaves each of them at its own composition, so every tension is scaled by
 #' the new total over the old.  Where it rises, gas enters: the alveoli keep
-#' what they hold and draw in gas to make up the difference.  In the
-#' semi-closed circuit that gas is the circuit's own, compressed, and the
-#' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
-#' The ideal and open circuits hold no gas, so the only gas the lungs can
+#' what they hold and draw in gas to make up the difference.  The
+#' semi-closed circuit, GasMan's, is not stepped: \code{advanceClosedFormGas()}
+#' refuses a step in altitude with it (Steven Shafer, 2026-11-26; ChatGPT's
+#' round-2 gas audit, B-02), since GasMan has no altitude and scaling its
+#' stored gas up created gas with no source.  The ideal and open circuits
+#' hold no gas, so the only gas the lungs can
 #' draw is fresh gas at the new pressure, in the share of the inspired gas it
 #' makes up (\code{gasCircuitBlend()}; the engine computes it,
 #' \code{inspired}): all of the rise where the flow covers what they draw,
@@ -1599,8 +1616,8 @@ gasStateAcrossBodies <- function(state, from, to)
 #' @param inspired for the ideal and open circuits, by gas, what the lungs
 #'   draw in where the pressure rises, as percent of the gas drawn: the fresh
 #'   gas's composition times its share of the inspired gas after the step,
-#'   so less than 100 in all where the flow does not cover the draw.  NULL,
-#'   or the semi-closed circuit, draws the circuit's own gas.
+#'   so less than 100 in all where the flow does not cover the draw.  NULL
+#'   draws the circuit's own gas.
 #' @returns the state after the step
 #' @keywords internal
 gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired = NULL)
@@ -1610,27 +1627,52 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
   if (isTRUE(all.equal(r1, r2, tolerance = 1e-12))) return(state)
   a1 <- r1 * gasHumidityRatio(from)
   a2 <- r2 * gasHumidityRatio(to)
-  # [decision] (ChatGPT's round-2 gas audit, B-02, 2026-11-26; put to Steven
-  # Shafer that day): in the semi-closed circuit a rise in pressure scales
-  # the circuit's own gas up and fills the lungs from it, so gas enters with
-  # no source of its own, whatever the fresh gas flow: at no flow and no
-  # ventilation a step from 3000 m to sea level adds 2.37 L of nitrogen to
-  # the circuit and lungs, and 0.60 L with 0.5 L/min of oxygen.  The comment
-  # above calls it the fresh gas the circuit "nearly matches", which holds
-  # only at a high flow.  Only R reaches this (the app runs the ideal
-  # circuit), and GasMan, whose comparison the semi-closed circuit is kept
-  # for, has no altitude.  Recommended: refuse a step in altitude with the
-  # semi-closed circuit; else draw fresh gas as the ideal circuit does.
+  # The semi-closed circuit never steps the altitude: advanceClosedFormGas()
+  # refuses it (Steven Shafer, 2026-11-26; ChatGPT's round-2 gas audit,
+  # B-02).  Scaling its stored gas up at a rise in pressure, as this did,
+  # created gas with no source: 2.37 L of nitrogen at no flow from 3000 m to
+  # sea level.
+  if (circuit == "semi-closed")
+    stop("gasStateAcrossPressure(): the semi-closed circuit does not step the altitude",
+         call. = FALSE)
   for (g in names(state)) {
     y <- state[[g]]
     # The composition of the gas drawn in, as a fraction of its dry gas (x 100)
-    drawn <- if (circuit == "semi-closed" || is.null(inspired) || is.na(inspired[g]))
-      y[1] / r1 else unname(inspired[g])
-    if (circuit == "semi-closed") y[1] <- y[1] * r2 / r1
+    drawn <- if (is.null(inspired) || is.na(inspired[g])) y[1] / r1 else unname(inspired[g])
     y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + drawn * (a2 - a1)
     state[[g]] <- y
   }
   state
+}
+
+#' What a gas body carries that GasMan's does not
+#'
+#' The semi-closed circuit takes only GasMan's body (Steven Shafer,
+#' 2026-11-26; \code{advanceClosedFormGas()}): no temperature but 37 C, no
+#' altitude, no endobronchial tube, no cardiac-output slider (a cardiac output
+#' given as GasMan's own setting, \code{simulateGases(cardiacOutput =)}, is
+#' GasMan's), no haemoglobin but the default, and GasMan's linear scaling by
+#' weight, not body composition (the 70 kg, 170 cm, 35-year-old man, whose
+#' composed body is GasMan's standard, is GasMan's).
+#'
+#' @param body a gas body
+#' @returns the names of what the body carries that GasMan's does not, or
+#'   NULL
+#' @keywords internal
+gasNotGasMansBody <- function(body)
+{
+  out <- character(0)
+  if (!is.null(body$temperature) && body$temperature != 37) out <- c(out, "body temperature")
+  if (!is.null(body$altitude) && body$altitude != ALTITUDE_DEFAULT) out <- c(out, "altitude")
+  if (isTRUE(body$endobronchial)) out <- c(out, "endobronchial intubation")
+  if (!is.null(body$V_vrgRest) || (!is.null(body$cardiac) && body$cardiac != 1))
+    out <- c(out, "the cardiac-output slider")
+  if (!is.null(body$haemoglobin) && body$haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    out <- c(out, "haemoglobin")
+  if (!is.null(body$composition) &&
+      !isTRUE(all.equal(unname(body$composition), c(1, 1))))
+    out <- c(out, "body composition (GasMan scales linearly with weight)")
+  if (length(out) == 0) NULL else out
 }
 
 #' The bodies of a gas run with physiology events
