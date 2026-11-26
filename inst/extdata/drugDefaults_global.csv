@@ -9,6 +9,7 @@ pethidine,mcg,mg,mg/hr,mg,"mg,mg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h",#5155FF,0
 hydromorphone,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg IM,mg IN,Plasma target,Effect site target,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h,mg IM qd,mg IM bid,mg IM tid,mg IM qid,mg IM q4h,mg IN qd,mg IN bid,mg IN tid,mg IN qid,mg IN q4h",#032FED,1.2,3,1.8,1.5,1.5,IV,Opioids
 methadone,mcg,mg,mg/hr,mg,"mg,mg/hr,mg PO,mg PO liquid,mg/kg PO liquid,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#71C5E8,0.048,0.12,0.072,0.06,0.06,IV,Opioids
 ketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,Plasma target,Effect site target",#FFCC00,0.1,0.16,0.12,0,0.1,IV,Hypnotics and sedatives
+esketamine,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr",#D4A017,0,0,0,0,0,IV,Hypnotics and sedatives
 dexmedetomidine,ng,mcg,mcg/kg/hr,mcg/kg/hr,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#791AEE,0.4,0.8,0.6,0,0.4,IV,Hypnotics and sedatives
 midazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#E36C0A,0.101,0.304,0.208,0,0.101,IV,Hypnotics and sedatives
 etomidate,mcg,mg,mg/kg/min,mg,"mg,mg/kg/min,Plasma target,Effect site target",#FFCC00,0.4,0.8,0.5,0,0.4,IV,Hypnotics and sedatives
@@ -375,3 +376,4 @@ nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids
 efmoroctocogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#0D47A1,80,120,100,0,0,IV,Hemostasis and reversal
 eftrenonacogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#6A1B9A,60,100,80,0,0,IV,Hemostasis and reversal
 fibrinogen,mgdL,mg/kg,,mg/kg,"mg/kg,g,mg",#F9A825,100,450,200,0,0,IV,Hemostasis and reversal
+immunoglobulin,gL,g/kg,mg/kg/min,g/kg,"g/kg,g,mg/kg/min",#5D4037,0,0,0,0,0,IV,Other

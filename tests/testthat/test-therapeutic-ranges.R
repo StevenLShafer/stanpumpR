@@ -7,7 +7,7 @@ dd <- getDrugDefaultsGlobal()
 tr <- therapeuticRanges()
 
 # The concentration unit each row's limits must be in
-rangeUnits <- c(mcg = "mg/L", ng = "ng/mL", pg = "pg/mL", IU = "IU/mL", IUdL = "IU/dL", mgdL = "mg/dL", mcU = "mcU/mL",
+rangeUnits <- c(mcg = "mg/L", ng = "ng/mL", pg = "pg/mL", IU = "IU/mL", IUdL = "IU/dL", mgdL = "mg/dL", gL = "g/L", mcU = "mcU/mL",
                 mmol = "mmol/L", mOsm = "mOsm/kg", INR = "INR", ACT = "s", "%" = "%")
 
 test_that("every drug in the covered categories, and its metabolites, has a row", {

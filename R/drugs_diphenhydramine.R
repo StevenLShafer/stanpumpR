@@ -56,9 +56,13 @@
 # concentration in the first minutes after a bolus, which is when intravenous
 # diphenhydramine sedates (Meredith: "All subjects experienced sedation 1 to
 # 2 min after injection").  Blyden 1986 sampled from 5 minutes but printed no
-# exponents; Albert 1975 (J Pharmacokinet Biopharm 3:159-170, PMID 1159620),
-# which fitted polyexponentials, is not yet in the archive
-# (papers/pending-work.csv).
+# exponents.  Albert 1975 (below), supplied by Shafer on 2026-11-25, bears
+# this out: at the end of a 1-hour infusion the model is 38% and 28% below
+# his two men, though their clearance agrees with Meredith's.  It cannot
+# replace the model: two subjects whose fits disagree (one has a 12.5-min
+# distribution half-life, the other none faster than 1.6 h), no sample in the
+# 30 minutes after the infusion, and, in the authors' words, "insufficient
+# information in these data to make a judicious choice" of model.
 #
 # DOSE BASIS
 # ==========
@@ -93,6 +97,25 @@
 # (Blyden's own Table II).  An assay that counted the metabolite as drug would
 # read concentrations high and clearance LOW, so the assays cannot explain
 # Blyden's lower value; the difference is recorded, not reconciled.
+#
+# Albert KS, Hallmark MR, Sakmar E, Weidler DJ, Wagner JG.  Pharmacokinetics
+# of diphenhydramine in man.  J Pharmacokinet Biopharm 1975;3:159-170
+# (PMID 1159620, doi 10.1007/BF01067905; read on the page images).  Two healthy
+# men, 27 years, 76 and 95 kg, 50 mg hydrochloride (assayed 43.7 mg base)
+# infused over 1 hour, plasma by a specific GC assay to 24 h (Table II):
+#
+#     h          0.25  0.5   1     1.5   2     4     6     12    24
+#     subject 1  120   222   258   150   132   83.8  61.6  19.4  6.49
+#     subject 2  31.0  89.1  179   170   147   80.3  41.5  18.2  8.19
+#
+# Its clearances, 37.0 and 41.1 L/h on the base (footnote 5), are 42.3 and
+# 47.0 L/h on the hydrochloride: 9.3 and 8.2 mL/min/kg, against Meredith's
+# 9.78.  The model (switch off, 178 cm) gives 160 and 128 ng/mL at the end of
+# the infusion, 62% and 72% of what was measured, and runs high from 12 h
+# (1.6-1.8x and 1.15-1.3x), where Albert's assay, 5 ng/mL at best, gave him
+# terminal half-lives of 4 to 7 h that he himself called inadequate.  Albert
+# also saw sleep above about 70 ng/mL, and Table VI gives 1.3-1.8% unbound
+# and a blood:plasma ratio of 0.82.
 #
 # THE EFFECT SITE
 # ===============
