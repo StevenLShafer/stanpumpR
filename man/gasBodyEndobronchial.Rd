@@ -4,13 +4,20 @@
 \alias{gasBodyEndobronchial}
 \title{The gas body with one lung intubated}
 \usage{
-gasBodyEndobronchial(body, endobronchial = FALSE)
+gasBodyEndobronchial(
+  body,
+  endobronchial = FALSE,
+  shunt = ENDOBRONCHIAL_SHUNT_FRACTION
+)
 }
 \arguments{
 \item{body}{output of \code{getGasBody()}, possibly through
 \code{gasBodyPhysiology()}}
 
 \item{endobronchial}{TRUE for an endobronchial tube}
+
+\item{shunt}{the share of cardiac output through the unventilated lung,
+0 to ENDOBRONCHIAL_SHUNT_FRACTION (the default)}
 }
 \value{
 the body, with \code{shunt} set and the alveolar volume that of

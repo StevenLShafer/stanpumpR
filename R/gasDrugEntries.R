@@ -86,8 +86,9 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
 
   # At the body's temperature (gasPropertiesAt()) and the patient's age
   # (gasTypicalBand()), so the band follows MAC.  A band is one range for the
-  # whole plot, so with a temperature event it is drawn at the temperature in
-  # force at time 0.
+  # whole plot, at the temperature in force at time 0; with physiology off
+  # normal the plot replaces it with the physiology ribbon
+  # (R/physiologyRibbon.R), and the threshold line steps (endCeSteps).
   props <- gasPropertiesAt(sim$body$temperature)
   # (sim$body is the body in force at time 0, an event at 0 included,
   # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
@@ -126,6 +127,7 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     recovery <- NULL
     if (!is.null(washout) && g %in% names(washout$rate) && endCe > 0)
       recovery <- gasRecoveryTime(washout, g, endCe)
+    endCeAtAge <- endCe
     endCe <- gasThresholdForTemperature(g, endCe, sim$body$temperature)
 
     out[[g]] <- gasEntry(
@@ -141,6 +143,17 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     )
     # PaO2 and SaO2 for the oxygen panel's hover
     if (!is.null(arterialO2)) out[[g]]$arterialOxygen <- arterialO2
+    # After a physiology event that changes the temperature, the threshold
+    # line steps with it, as the time until threshold does (thresholdSteps();
+    # Shafer, 2026-11-25, Gemini's gas-engine audit, C-01)
+    if (!is.null(recovery) && !is.null(sim$bodySteps)) {
+      temps <- vapply(sim$bodySteps$body, function(b)
+        if (is.null(b$temperature)) PHYSIOLOGY_TEMPERATURE_DEFAULT else b$temperature, numeric(1))
+      if (length(unique(temps)) > 1)
+        out[[g]]$endCeSteps <- data.frame(
+          Start = sim$bodySteps$time,
+          endCe = vapply(temps, function(t) gasThresholdForTemperature(g, endCeAtAge, t), numeric(1)))
+    }
     # The muscle group (state 4) and the fat group (state 5), the gas's
     # counterparts of V2 and V3, as tensions in % of an atmosphere, for the
     # compartment panels (R/compartments.R).  Oxygen has no tissue states.
@@ -169,7 +182,12 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
     }
   }
 
-  # MAC gets its own series when any potent agent is running.
+  # MAC gets its own series when any potent agent is running: the summed
+  # end-tidal MAC as its "plasma" line, which the time until threshold
+  # reads, and the summed brain (vessel-rich group) MAC as its "effect site"
+  # line (gasBrainMac(); Shafer, 2026-11-25, Gemini's gas-engine audit of
+  # 2026-11-23, C-04 and D-05: "I think Ted Eger would have approved").
+  # Until then the effect-site line was the end-tidal MAC again.
   potent <- intersect(potentAgents(), report)
   if (length(potent) > 0)
   {
@@ -179,7 +197,7 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
       out[["MAC"]] <- gasEntry(
         drug         = "MAC",
         alveolar     = mac,
-        brain        = mac,
+        brain        = gasBrainMac(sim),
         xout         = xout,
         drugDefaults = drugDefaults,
         unitLabel    = "age-adjusted",

@@ -82,7 +82,22 @@
 # objective function, entered the final model as theta x (1 + theta_cov) on
 # CL/F (+23.2%, 95% CI 10.8-34.8) and Vc/F (+28.1%, 7.3-51.8), Table 2;
 # trimester had no significant effect.  So with the Pregnant field ticked,
-# CL/F x 1.232 and VC/F x 1.281 (LUMEFANTRINE_PREGNANCY_CL, _VC).  The
+# CL/F x 1.232 and VC/F x 1.281 (LUMEFANTRINE_PREGNANCY_CL, _VC).
+#
+# HOW FAR EACH FACTOR TRAVELS (Shafer, 2026-11-25, Group B item 13).  These are
+# relative factors from JUMA's structure -- 70 kg reference, three transit
+# compartments, saturable F -- applied to DING's, which has a 45 kg reference,
+# five transits and a linear dose term on F.  They are kept, but the two do not
+# transfer equally well and should not be read as equally firm.  A relative
+# CLEARANCE factor is fairly robust across structures, clearance being the one
+# parameter that measures a physiological process (AGENTS.md, "Comparing sources:
+# only clearance is real").  A relative VOLUME factor is not: it depends on how a
+# model partitions absorption and distribution, and these two models differ
+# precisely there.  So trust the 1.232 and hold the 1.281 more loosely.  If Juma
+# is ever implemented as a candidate in its own right, the pregnancy factors
+# should be taken from it directly rather than inherited through this one.
+#
+# The
 # pregnant women's exposure was lower (AUC GMR 0.76, day-7 concentration
 # 0.69).  Kloprogge 2018's pooled estimate (ka x 1.35 in pregnancy, 20%
 # lower day-7 levels) has the same direction; its first-order absorption is
@@ -132,6 +147,9 @@ LUMEFANTRINE_PREGNANCY_VC <- 1.281  # Juma 2026, Table 2: Vc/F x (1 + 0.281)
 #' A component of Coartem: see R/combination-products.R.
 #'
 #' @inheritParams cefazolin
+#' @param pregnant is the patient pregnant?  \code{TRUE} multiplies CL/F by
+#'   1.232 and VC/F by 1.281 (Juma 2026, Table 2; see the file's header).  The
+#'   model has no renal term.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 lumefantrine <- function(weight, height, age, sex, adjustToFFM = TRUE,

@@ -465,9 +465,10 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 6),
+  expect_identical(utils::tail(args, 10),
                    c("physiology", "temperature", "altitude", "endobronchial",
-                     "physiologyEvents", "haemoglobin"))
+                     "physiologyEvents", "haemoglobin", "shunt", "height", "sex",
+                     "adjustToFFM"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
@@ -531,10 +532,11 @@ test_that("an oral tPeak counts every depot carrying drug, each with its lag", {
 test_that("the email workbook records the physiology sliders", {
   rows <- physiologyCovariateRows(c(cardiac = 0.5), 32)
   # The factors, the body temperature, the altitude (R/altitude.R) and
-  # endobronchial intubation (R/endobronchial.R) and the haemoglobin
-  # (R/arterialOxygen.R)
-  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 4)
+  # endobronchial intubation with its shunt fraction (R/endobronchial.R)
+  # and the haemoglobin (R/arterialOxygen.R)
+  expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 5)
   expect_equal(rows$Value[grepl("Haemoglobin", rows$Covariate)], "15")
+  expect_equal(rows$Value[grepl("Shunt fraction", rows$Covariate)], "50")
   expect_equal(rows$Value[grepl("Endobronchial", rows$Covariate)], "no")
   expect_equal(rows$Value[grepl("Altitude", rows$Covariate)], "0 (760 Torr)")
   expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
@@ -543,7 +545,7 @@ test_that("the email workbook records the physiology sliders", {
   expect_equal(rows$Value[rows$Covariate == "Liver function (multiple of normal)"], "normal")
   n <- length(PHYSIOLOGY_FACTORS)
   expect_true(all(physiologyCovariateRows(NULL)$Value[seq_len(n)] == "normal"))
-  expect_true(all(utils::head(physiologyCovariateRows("x", "y", "z")$Value, -2) == "unreadable"))
+  expect_true(all(utils::head(physiologyCovariateRows("x", "y", "z")$Value, -3) == "unreadable"))
 })
 
 # ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
@@ -890,4 +892,42 @@ test_that("the local anaesthetics (2026-11-18)", {
   expect_false(is.null(physiologyRow("mepivacaine")))
   expect_true(physiologyUnsupported(lidocaine(70, 170, 35, "male")))
   expect_true(physiologyUnsupported(ropivacaine(70, 170, 35, "male")))
+})
+
+test_that("fever reaches 38 C, one degree extrapolated, and no further", {
+  # Shafer, 2026-11-25 (Gemini's gas-engine audit, C-03): the top is 38 C,
+  # where thermal stress starts; the relations are extended one degree.
+  expect_equal(PHYSIOLOGY_TEMPERATURE_MAX, 38)
+  expect_equal(checkBodyTemperature(38), 38)
+  expect_error(checkBodyTemperature(38.5), "38 C")
+  expect_equal(bodyTemperatureFromInput(38), 38)
+  expect_equal(bodyTemperatureFromInput(41), 38)
+  # Elimination capacity rises 6.8% (1 / (1 - 0.0637)) at 38 C
+  ph <- PHYSIOLOGY_DEFAULT
+  ph[["temperature"]] <- 38
+  expect_equal(physiologyTemperatureFactor(ph), 1 / (1 - 0.0637))
+  # The volatile agents dissolve less and need more
+  p37 <- gasPropertiesAt(37)
+  p38 <- gasPropertiesAt(38)
+  sevo <- p38$gas == "sevoflurane"
+  expect_equal(p38$lambda_blood[sevo], p37$lambda_blood[sevo] * exp(-0.0295))
+  expect_equal(gasMacTemperatureFactor(38), (38 - 1.203 / 0.0784) / (37 - 1.203 / 0.0784))
+  expect_gt(gasMacTemperatureFactor(38, "nitrousOxide"), 1)
+  # A physiology event records it and reads it back
+  s <- physiologyEventEncode(c(temperature = 38))
+  expect_equal(s, "temperature=38")
+  expect_equal(physiologyEventDecode(s)[["temperature"]], 38)
+  expect_null(physiologyEventDecode("temperature=38.5"))
+  # The gas engine runs at 38 C, the end-tidal rising a little faster
+  dt <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
+                   Dose = c(2, 3, 3, 6))
+  at <- function(T) {
+    r <- simulateGases(dt, weight = 70, age = 40, maximum = 10, temperature = T)$results
+    x <- r[r$Drug == "sevoflurane" & r$Site == "Alveolar", ]
+    stats::approx(x$Time, x$Y, 2)$y
+  }
+  expect_gt(at(38), at(37))
+  # The slider's tip says why it stops there
+  tip <- gsub("\\s+", " ", as.character(physiologyPanel()))
+  expect_match(tip, "enzymatic action starts to fail, which cannot be extrapolated", fixed = TRUE)
 })

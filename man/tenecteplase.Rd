@@ -4,14 +4,7 @@
 \alias{tenecteplase}
 \title{Tenecteplase pharmacokinetics (intravenous bolus)}
 \usage{
-tenecteplase(
-  weight,
-  height,
-  age,
-  sex,
-  adjustToFFM = TRUE,
-  creatinine = NULL
-)
+tenecteplase(weight, height, age, sex, adjustToFFM = TRUE, creatinine = NULL)
 }
 \arguments{
 \item{weight}{weight in kg}

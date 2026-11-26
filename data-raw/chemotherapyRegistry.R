@@ -227,7 +227,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C34", "P16", "C21", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
+FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c(
@@ -235,6 +235,11 @@ PARAMETERS_VERIFIED <- c(
   # 2026-11-16: each row already recorded "PDF read (supplied 2026-11-10)" with the
   # equations or tables confirmed on the page, while the derived `to_obtain` still asked
   # for the PDF.  The arrivals report (stanpumpRPapers/_build/arrivals.py) found them.
+  # P16 (Perez-Blanco 2016), C21 (Periclou 1996) and C34 (Langenhorst 2019) joined on
+  # 2026-11-25, the same case as C09/C10/N10 above: each card records the PDF read and the
+  # model's parameters confirmed on the rendered page images, while the derived `to_obtain`
+  # still asked for the PDF.  The arrivals report found them as stale rows.
+  "P16", "C21", "C34",
   "P20", "C12", "P03", "P07", "C14", "C38b", "C40", "C09", "C10", "N10", "C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
   pubmedSources$source_id %in% PARAMETERS_VERIFIED, "parameters_verified",
@@ -441,9 +446,9 @@ registry <- rbind(
     readiness = "implemented", stanpumpr_drug = "fluorouracilTan"),
   m("fluorouracil__adult__briki2026", "fluorouracil", "fluorouracil", "IV",
     "726 patients from three studies (individual-patient meta-analysis)", "5-FU",
-    "two compartments with parallel Michaelis-Menten and linear elimination; BSA on CL, V lower in women and with age",
+    "two compartments with parallel Michaelis-Menten and linear elimination; the authors' alternative model (supplement Table S3): lean body mass and age on Vmax, BSA on CL, weight on V2",
     "first", "michaelis_menten", "P10",
-    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. First read in the PubMed Central text, whose Table 3 had lost its subscripts; the PDF's Table 3 and printed equations confirm every identification. DPD deficiency is not represented.",
+    "Run by advanceMichaelisMenten() with clLinear and one peripheral compartment. First read in the PubMed Central text, whose Table 3 had lost its subscripts; the PDF's Table 3 and printed equations confirm every identification. Since 2026-11-25 the supplement's Table S3 model, lean body mass on Vmax in place of sex (Shafer's decision), read from the supplement's Word file. DPD deficiency is not represented.",
     readiness = "implemented", stanpumpr_drug = "fluorouracil"),
 
   m("busulfan__infant_adult__mccune2014", "busulfan", "busulfan", "IV",
@@ -482,7 +487,7 @@ registry <- rbind(
     "33 adults 32-75 years, BSA 1.4-2.6 m2, randomised between 5-HT3 antagonists", "unbound and bound platinum",
     "two compartments for unbound platinum forming one compartment of bound platinum (the Urien 2004 structure); visit on V1 and lorazepam on Q",
     "second", "linear_metabolite", "P05",
-    "PDF read (supplied 2026-11-10). Combined model: V1_u 31.2 L (x e^2.04 at the first visit), V2_u 484 L, CL2_u 64.0 L/h (x e^0.298 with lorazepam), V1_b 1.10 L, CL1_b 0.508 L/h, fb 0.990, CL1_u 1.64 L/h. Whether 1.64 is the total unbound clearance or its non-binding part is ambiguous; only the former reproduces Figure 5, and even then it is a twentieth of Urien's 35.5 L/h. Covariates (first cycle, lorazepam) have no Patient Profile field. Urien 2004 is kept.",
+    "PDF read (supplied 2026-11-10). Combined model: V1_u 31.2 L (x e^2.04 at the first visit), V2_u 484 L, CL2_u 64.0 L/h (x e^0.298 with lorazepam), V1_b 1.10 L, CL1_b 0.508 L/h, fb 0.990, CL1_u 1.64 L/h. Whether 1.64 is the total unbound clearance or its non-binding part is ambiguous; only the former reproduces Figure 5, and even then it is a twentieth of Urien's 35.5 L/h. Covariates (first cycle, lorazepam) have no Patient Profile field. READ AND REJECTED, and the question is closed (Shafer, 2026-11-25, Group B item 16): Urien 2004 is kept and no Thompson parameter set is used. The authors call their own covariate models poor and the numbers are the argument -- V2_u 1.19e9 L with CV 709% in the first covariate attempt, CVs over 20% for all six final parameters, V1_b 1.10 L (CV 42%) against 7.37 L in the base combined model, and eta shrinkage of 0.92-0.98 on V2_u and 0.88 on CL1_b. Those figures are recorded here so the question is not reopened by an audit that reads only the abstract.",
     readiness = "complete_not_implemented"),
   m("cisplatin__children__erdlenbruch2001", "cisplatin", "cisplatin", "IV",
     "12 children (25 courses)", "free platinum",
@@ -536,8 +541,12 @@ registry <- rbind(
     "44 adults with non-Hodgkin lymphoma on R-CHOP", "doxorubicin and doxorubicinol",
     "three compartments (CL 62.4 L/h, V1 17.7, V2 1830, V3 71 L fixed from Kontny 2013, Q2 50.7, Q3 28.4 L/h) forming two-compartment doxorubicinol (Fm 0.22, CLm 26.8 L/h, V4 79.8, V5 653 L fixed, Q5 424 L/h); no covariates",
     "second", "linear_metabolite", "P16",
-    "Tables read in the PubMed Central text (2026-11-07). Added as a third doxorubicin model on Shafer's decision (2026-11-09), as doxorubicinPerezBlanco with doxorubicinolPerezBlanco. The fixed volumes are cited to the wrong reference (Rudek; Kontny is ref 15); sampling ends 3 h after the infusion, so the terminal phase is the fixed volumes'. Doses as labelled with no conversion and mwRatio 1, as the paper's own mass arithmetic. Table 3's total-AUC unit is a misprint (mg.h/L).",
-    readiness = "implemented", stanpumpr_drug = "doxorubicinPerezBlanco"),
+    "Tables read in the PubMed Central text (2026-11-07) and confirmed on the PDF page images (papers/digests/PMID_27447545.md, 2026-11-17): every parameter the model uses matches Table 2 on the rendered page. Added as a third doxorubicin model on Shafer's decision (2026-11-09), as doxorubicinPerezBlanco with doxorubicinolPerezBlanco. The fixed volumes are cited to the wrong reference (Rudek; Kontny is ref 15); sampling ends 3 h after the infusion, so the terminal phase is the fixed volumes'. Doses as labelled with no conversion and mwRatio 1, as the paper's own mass arithmetic. Table 3's total-AUC unit is a misprint (mg.h/L).",
+    readiness = "implemented", stanpumpr_drug = "doxorubicinPerezBlanco",
+    to_obtain = paste("PubMed Central HTML of Table 1 (PMC5099548): the PDF's Table 1 prints",
+                      "the row \"66 (15), 26-84\" with no label, and the model-selection range",
+                      "for doxorubicinPerezBlanco takes it as age in years. The PDF cannot",
+                      "settle the label; everything else is confirmed on it.")),
   m("doxorubicin__breast__joerger2007", "doxorubicin", "doxorubicin (conventional)", "IV",
     "65 women with breast cancer (with cyclophosphamide)", "doxorubicin and doxorubicinol",
     "two compartments forming one-compartment doxorubicinol: CL 47.6 L/h x (BSA/1.8)^1.4 x (AST/21)^-0.24 x (age/56)^-0.54, V1 12.3 L, Q 60.3 L/h, V2 421 L; CL_DOL/fm 108 x (CLcr/80)^0.54 L/h, V3/fm 1580 L",
@@ -578,7 +587,8 @@ registry <- rbind(
     "109 adults", "irinotecan, SN-38, SN-38 glucuronide",
     "irinotecan three compartments proportional to BSA (CL 16.9, Q2 61.0, Q3 4.75 L/h/m2; V1 36.7, V2 35.9, V3 67.9 L/m2) forming SN-38 (two compartments, CL/Fm 712, Q2/Fm 1530 L/h, V1/Fm 408, V2/Fm 71600 L) forming SN-38G (two compartments, CL/Fm 66.8, Q2/Fm 23.9 L/h, V1/Fm 37, V2/Fm 48.4 L)",
     "second", "linear_metabolite", "C40",
-    "PDF read (supplied 2026-11-17). 109 adults 34-75 years (38-115 kg, BSA 1.29-2.40 m2), 100-350 mg/m2 over 0.75-2.25 h, 44 with a second course; fitted sequentially (irinotecan's parameters fixed for SN-38's, SN-38's for SN-38G's). Irinotecan CL 31.6 L/h and Vss 263 L at the median BSA. SN-38's V2/Fm of 71,600 L is a terminal tail the 60-h sampling barely defines. Sex and age not significant. [decision, asked 2026-11-17] The library's irinotecan is Klein 2002, on Shafer's choice of 2026-11-06, with no covariates (its covariates could not be rebuilt); Xie 2002 has more patients and BSA on every parameter, and irinotecan forming SN-38 is what the metabolite route already carries (SN-38G, a third generation, would not be). Replace Klein, or leave it?",
+    "PDF read (supplied 2026-11-17). 109 adults 34-75 years (38-115 kg, BSA 1.29-2.40 m2), 100-350 mg/m2 over 0.75-2.25 h, 44 with a second course; fitted sequentially (irinotecan's parameters fixed for SN-38's, SN-38's for SN-38G's). Irinotecan CL 31.6 L/h and Vss 263 L at the median BSA. SN-38's V2/Fm of 71,600 L is a terminal tail the 60-h sampling barely defines. Sex and age not significant. NOT ADOPTED, and the question is closed (Shafer, 2026-11-25, Group B item 15). The library's irinotecan stays Klein 2002, his choice of 2026-11-06. Xie has more patients and BSA on every parameter, and the reason for keeping Klein is simply that NOTHING SUGGESTS KLEIN IS FAILING: replacing a working model with another changes this drug's body-size basis from Klein's weight and fat-free mass to per square metre, and a change of basis wants a reason beyond the newer paper having more patients. Recorded as read and complete so that a later audit does not reopen it; the point is that Klein is sound, not that Xie is defective.
+      # NOT A REASON, and this row said otherwise until 2026-11-25: that a per-square-metre basis would make irinotecan inconsistent with the rest of the library. It would not. Twenty-three models carry a BSA term, methotrexatePediatric scaling every volume and clearance by BSA/1.73 and fluorouracilBriki carrying BSA on clearance, and temozolomidePanetta, edited in the same pull request, is BSA throughout. Per m2 is ordinary here, especially in chemotherapy. The claim was mine and it was wrong (CodeRabbit on PR #932); it is written down so that nobody reinstates it as grounds for refusing a per-m2 model.",
     readiness = "complete_not_implemented"),
   m("etoposide__adult__nguyen1998", "etoposide", "etoposide", "IV and PO",
     "100 adults 25-85 years (35-106 kg, BSA 1.21-2.64 m2)", "total and unbound etoposide",
@@ -658,7 +668,7 @@ registry <- rbind(
     "52 children 2 months-19 years with leukaemia", "cytarabine and Ara-U",
     "Model I (ara-C alone): two compartments, every parameter linear in AGE x BSA: CL 2.59, Q 2.01 L/h, V1 0.48, V2 38.1 L per year-m2 (abstract; Table 1 I-2 prints 2.60, 1.82, 0.46, 34.6); Model II-3 (with ara-U): k12 1.16, k21 0.08 /h, k13 (conversion to ara-U, the only elimination) 1.53 x AGE /h, V1 1.37 L with no size term, ara-U k30 0.41 /h, V3 4.98 L",
     "expansion", "linear_metabolite", "C21",
-    "PDF read (supplied 2026-11-07). Implemented (2026-11-10) as the children's half of cytarabine, Model I with the Results' estimates, under 19 years, on Shafer's decision to combine it with Krogh-Madsen 2012 for adults under one name, accepting the jump at the boundary. Its limits, stated on the help page: (1) every term is linear in age with no plateau, so CL is 0 at birth and grows without bound; at 18 years it is 38-79 L/h against Krogh-Madsen 2012's adult 272 L/h (a 3.5-7-fold jump at the age boundary); (2) Model I's half-lives are 4 min and 23 h at every age (all four parameters scale together), against the 17 min and 4 h the paper quotes from the two-stage analyses; (3) the abstract and Table 1 disagree; (4) Model II-3 has a central volume of 1.37 L whatever the child's size. Under the model-selection rule it would be cytarabine's candidate for 0.17-19 years beside Krogh-Madsen for adults. Not an intracellular Ara-CTP model.",
+    "PDF read (supplied 2026-11-07); the Results/abstract estimates CL 2.59, Q 2.01 L/h, Vd1 0.48, Vd2 38.1 L per year-m2, which the model uses, confirmed on the rendered page images (papers/digests/PMID_8995498.md, 2026-11-19). Implemented (2026-11-10) as the children's half of cytarabine, Model I with the Results' estimates, under 19 years, on Shafer's decision to combine it with Krogh-Madsen 2012 for adults under one name, accepting the jump at the boundary. Its limits, stated on the help page: (1) every term is linear in age with no plateau, so CL is 0 at birth and grows without bound; at 18 years it is 38-79 L/h against Krogh-Madsen 2012's adult 272 L/h (a 3.5-7-fold jump at the age boundary); (2) Model I's half-lives are 4 min and 23 h at every age (all four parameters scale together), against the 17 min and 4 h the paper quotes from the two-stage analyses; (3) the abstract and Table 1 disagree; (4) Model II-3 has a central volume of 1.37 L whatever the child's size. Under the model-selection rule it would be cytarabine's candidate for 0.17-19 years beside Krogh-Madsen for adults. Not an intracellular Ara-CTP model.",
     readiness = "implemented", stanpumpr_drug = "cytarabine"),
   m("cytarabine__aml__kroghmadsen2012", "cytarabine", "cytarabine", "IV",
     "23 adults with AML", "cytarabine",
@@ -700,7 +710,7 @@ registry <- rbind(
     "258 HCT recipients 0.3-74 years", "F-ara-A",
     "three compartments allometric in weight about 70 kg: CL (3.24 + 0.782 x eGFR [L/h]) x (WT/70)^0.75, V1 39, V2 20, V3 50 L, Q2 8.6, Q3 3.8 L/h; eGFR Cockcroft-Gault or Schwartz 1976, capped by age",
     "expansion", "linear", "C34",
-    "Tables and Eq. 7 read in the PubMed Central text (2026-11-07). On Shafer's decisions (2026-11-07): eGFR read in L/h per 70 kg (the abstract's reading; Eq. 7's 'l/h/kg' would make the renal share 2% against the paper's 65%), and doses entered as fludarabine phosphate (label, 365.2 g/mol) with the model run in F-ara-A (x 285.24/365.21), the only basis that reproduces the adult median AUC (26.1 against 26 mg.h/L).",
+    "Tables and Eq. 7 read in the PubMed Central text (2026-11-07) and confirmed on the PDF page images (papers/digests/PMID_30327943.md, 2026-11-18): every model number matches Table 2. On Shafer's decisions (2026-11-07): eGFR read in L/h per 70 kg (the abstract's reading; Eq. 7's 'l/h/kg' would make the renal share 2% against the paper's 65%), and doses entered as fludarabine phosphate (label, 365.2 g/mol) with the model run in F-ara-A (x 285.24/365.21), the only basis that reproduces the adult median AUC (26.1 against 26 mg.h/L).",
     readiness = "implemented", stanpumpr_drug = "fludarabine"),
   m("thiotepa__highdose__dejonge2004", "thiotepa", "thiotepa", "IV",
     "49 adults (86 courses; 16-59 years, 52-96 kg, 42 women), high-dose cyclophosphamide, thiotepa and carboplatin", "thiotepa and TEPA",

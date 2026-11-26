@@ -36,6 +36,31 @@ FACTOR_BASELINE_FIELDS <- list(
     min = 0,
     max = 300,
     step = 0.5
+  ),
+  factorIXBaseline = list(
+    label = "Factor IX baseline",
+    units = "IU/dL",
+    min = 0,
+    max = 300,
+    step = 0.5
+  ),
+  # Fibrinogen is a mass, plotted in mg/dL (Shafer, 2026-11-25); its bounds
+  # take in afibrinogenaemia (0) and three times the top of normal (about 450)
+  fibrinogenBaseline = list(
+    label = "Fibrinogen baseline",
+    units = "mg/dL",
+    min = 0,
+    max = 1500,
+    step = 10
+  ),
+  # Serum IgG, plotted in g/L after intravenous immunoglobulin (Shafer,
+  # 2026-11-25); bounds from none to about three times the top of normal
+  igGBaseline = list(
+    label = "IgG baseline",
+    units = "g/L",
+    min = 0,
+    max = 60,
+    step = 0.5
   )
 )
 

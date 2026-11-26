@@ -214,6 +214,10 @@ helpConcentrationUnits <- function(units) {
          # A factor concentrate: the patient's own activity plus the infused
          # (R/factorBaselines.R), in IU/dL, which is % of normal.
          "IUdL" = "IU/dL (activity, % of normal, baseline included)",
+         # Fibrinogen concentrate: the patient's own level plus the infused
+         "mgdL" = "mg/dL (baseline included)",
+         # Intravenous immunoglobulin: serum IgG, the patient's own included
+         "gL" = "g/L (serum IgG, baseline included)",
          "INR" = "INR (international normalized ratio)",
          # Heparin on bypass is plotted as the activated clotting time (R/act.R).
          "ACT" = "ACT (s, activated clotting time)",

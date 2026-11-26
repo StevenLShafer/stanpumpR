@@ -221,14 +221,86 @@ Small items left in the pregnancy registry (B-04): the isoflurane row's n = 32
 does not say how it was counted; nitrous oxide's, desflurane's and
 sevoflurane's rows copy fields from studies of other agents, as their cards say
 is extrapolated context; and a note's "the age adjustment in R/gasRecovery.R" is
-in `R/gasProperties.R` (`macForAge()`). Gin and Chan's `evidence_read` stays
-`abstract` on purpose.
+in `R/gasProperties.R` (`macForAge()`; the note corrected on 2026-11-25). Gin
+and Chan's `evidence_read` stays `abstract` on purpose.
+
+## Decisions of 2026-11-25
+
+Dr Shafer answered all ten on 2026-11-24 and 25. Each is recorded in the file
+where its answer lives; the five to be built are each their own pull request.
+
+1. **Band and threshold line under a physiology change** (C-01). When a drug's
+   physiology is changed, by the sliders or by events, the shaded band is
+   removed from its panel, and a grey semi-transparent ribbon is drawn between
+   the drug's curve at normal physiology and its curve at the physiology
+   entered: no extra line, the drug's own colours kept, the normal curve only
+   the ribbon's edge (on the effect-site line, the plasma line where there is
+   none, the alveolar line of an inhaled agent, the MAC line on the MAC panel).
+   The threshold line stays, stepping with temperature on the gas panels. In
+   his words, a band that stays the same "will appear to be a bug because it
+   isn't what the physiology teaches". To be built; `R/physiologyEvents.R`.
+2. **The MAC panel's dashed line** (C-04, D-05): option 2, the summed brain
+   (vessel-rich group) MAC, the end-tidal line and its time until threshold
+   unchanged. "I think Ted Eger would have approved." To be built;
+   `R/advanceClosedFormGas.R`, `R/gasDrugEntries.R`.
+3. **The endobronchial shunt** (C-05): a **Shunt fraction** slider, 0-50%,
+   starting at 50% (its maximum), shown while the box is ticked, so the user can
+   lower it and watch oxygenation improve. No hypoxic vasoconstriction, as
+   decided on 2026-11-19. To be built; `R/endobronchial.R`.
+4. **Fever** (C-03): the temperature slider's top becomes 38 C, the same
+   relations extrapolated one degree. "Thermal stress starts around 38 degrees.
+   Let's make 38 the top, which extrapolation probably supports." A help icon
+   beside the slider says that above 38 C enzymatic action starts to fail,
+   which cannot be extrapolated. To be built; `R/physiology.R`.
+5. **Body size in the gas compartments** (B-01, F-01): option 2, by body
+   composition with the library's fat-free mass, the fat group by fat mass with
+   its flow following its volume as Weber 2021 scaled it, anchored so that the
+   70 kg, 170 cm, 35-year-old man is GasMan's standard exactly; a GasMan-scaling
+   option kept for the validation at other weights. "Ted Eger would have
+   approved." To be built; `getGasBody()` in `R/gasProperties.R`.
+6. **Infant MAC** (B-03, F-03): deferred until Lerman 1994, Taylor and Lerman
+   1991, Cameron 1984 and LeDez and Lerman 1987 are read. All four need
+   interlibrary loan (Stanford holds no electronic copy); `papers/pending-work.csv`
+   holds a row for each. Mapleson's relation stays below 1 year meanwhile.
+   **Pregnancy**: no factor on MAC, with the evidence recorded as thin. His
+   reasons: he cannot envision a mechanism by which pregnancy would alter MAC,
+   and the studies are not controlled in a way that separates the
+   investigators' expectation from their findings. `inst/app-help/models/gas-engine.md`
+   and the four inhaled-agent rows of the pregnancy registry say so.
+7. **Drugs other than opioids on MAC** (D-02, D-04, F-02): option 1, opioids
+   only, on the one MEAC scale; `inst/app-help/models/opioid-mac.md` says that
+   other drugs lower MAC and the app does not show it. Option 2 is recorded as a
+   literature search, not begun: MAC reduction with sevoflurane by
+   dexmedetomidine, midazolam, ketamine and propofol.
+8. **The opioid's own washout in the time until threshold** (D-03): option 3,
+   left for the anaesthetic drug interaction model below. Measured that day:
+   remifentanil 0.2 mcg/kg/min with 2% sevoflurane for 60 minutes, both stopped,
+   threshold 0.1 MAC, reads 24.6 minutes where the time with remifentanil
+   washing out alongside is 22.5 (about 9% long). The help page says so.
+9. **The lung's V/Q scatter** (E-02, F-04): the single mixed lung stays. He
+   accepts Peyton's measurements ("data are data") but has concerns about his
+   mathematics of uptake and distribution. The five Peyton papers (11408406,
+   11408407, 11408408, 18292675, 21270630) are now in the archive, not yet
+   carded, each with a row in `papers/pending-work.csv`; his model is to be
+   scrutinised first, and a two-region lung built only if that mathematics
+   checks out.
+10. **GasMan's own defects** (A-01, A-03): a report of both, with the
+    reproducing scenario, the numbers and a suggested fix, was drafted for him
+    to send to James Philip or post at github.com/rasman/gasmanonline;
+    `inst/validation/VALIDATION.md` says so.
+
+**Review when the anaesthetic interaction model arrives.** Dr Shafer will
+introduce a large anaesthetic drug interaction model he has been developing
+offline, once the current work has settled. The opioid-MAC interaction
+(`R/opioidMacInteraction.R`), decision 7 and decision 8 are to be reviewed then;
+the file's header says so.
 
 ## Papers
 
 Gemini read from elsewhere on the Drive, outside stanpumpRPapers: Liu 2001
 (PMID 11374601), Peyton 2008 (18292675) and 2011 (21270630), Nordmann 2006
-(16613927) and McKay 2005 (15728054). Seven papers the code cites as read are
+(16613927) and McKay 2005 (15728054). Both Peyton papers, with his modelling
+trio of 2001, were filed in the archive on 2026-11-25. Seven papers the code cites as read are
 not in the archive (Liu 2001, Zhou 2002, Allott 1973, Antognini 1994, West 1996,
 Severinghaus 1979, Williams & Leggett 1989); `PROMPT.md` section 9 lists them,
 and the session that wrote the prompt has put their recording in

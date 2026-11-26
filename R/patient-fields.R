@@ -210,6 +210,21 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The patient's own factor VIII activity, in IU/dL (% of normal), before",
       "any concentrate. The factor VIII curve is this activity plus the",
       "activity infused, so a perioperative target can be read on it."
+    ),
+    factorIXBaseline = paste(
+      "The patient's own factor IX activity, in IU/dL (% of normal), before",
+      "any concentrate. The factor IX curve is this activity plus the",
+      "activity infused, so a perioperative target can be read on it."
+    ),
+    fibrinogenBaseline = paste(
+      "The patient's own plasma fibrinogen (Clauss), in mg/dL, before any",
+      "concentrate. The fibrinogen curve is this level plus the fibrinogen",
+      "infused, so a target can be read on it."
+    ),
+    igGBaseline = paste(
+      "The patient's own serum IgG, in g/L, before any intravenous",
+      "immunoglobulin. The immunoglobulin curve is this level plus the IgG",
+      "infused."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -230,8 +245,10 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "not represented."
   ) else if (arg %in% names(FACTOR_BASELINE_FIELDS)) paste(
     "Leave blank to take the baseline of the population the model was",
-    "fitted in, which the drug's help page gives (severe haemophilia A for",
-    "factor VIII): a patient with a higher activity is then drawn too low."
+    "fitted in, which the drug's help page gives (severe haemophilia A or B",
+    "for factors VIII and IX, afibrinogenaemia for fibrinogen, Guillain-Barre",
+    "syndrome for immunoglobulin): a patient with a different level is then",
+    "drawn too high or too low."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",
     EPIRUBICIN_REFERENCE_AST

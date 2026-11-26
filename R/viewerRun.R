@@ -836,6 +836,8 @@ viewerPhysiologySteps <- function(events, start, body = NULL)
       step$altitude <- unname(x[["altitude"]])
       step$pressure <- round(barometricPressure(step$altitude))
       step$endobronchial <- x[["endobronchial"]] == 1
+      # The shunt fraction, percent (R/endobronchial.R)
+      if (step$endobronchial) step$shunt <- round(100 * unname(x[["shunt"]]), 1)
     }
     step
   })
@@ -864,6 +866,8 @@ viewerPhysiology <- function(physiology = NULL, body = NULL)
     out$altitude <- if (is.null(body$altitude)) ALTITUDE_DEFAULT else body$altitude
     out$pressure <- round(barometricPressure(out$altitude))
     out$endobronchial <- isTRUE(body$endobronchial)
+    # The shunt fraction, percent (R/endobronchial.R; Shafer, 2026-11-25)
+    if (out$endobronchial) out$shunt <- round(100 * gasShunt(body), 1)
   }
   out
 }

@@ -99,3 +99,75 @@ test_that("the box shows only with an inhaled agent, and the Visualizer is told"
     expect_false(endobronchial())
   })
 })
+
+test_that("the Shunt fraction slider sets the tube's shunt, 0 to 50% (Shafer, 2026-11-25)", {
+  # The default and the maximum is the chapter's half
+  expect_equal(checkShunt(NULL), 0.5)
+  expect_equal(checkShunt(0), 0)
+  expect_error(checkShunt(0.6), "shunt")
+  expect_error(checkShunt(-0.1), "shunt")
+  expect_equal(shuntFromInput(30), 0.3)
+  expect_equal(shuntFromInput(80), 0.5)
+  expect_equal(shuntFromInput(-5), 0)
+  expect_equal(shuntFromInput("junk"), 0.5)
+  expect_equal(shuntFromInput(NULL), 0.5)
+  # The body carries it; without the tube it does nothing
+  body <- gasBodyEndobronchial(getGasBody(70), TRUE, 0.2)
+  expect_equal(gasShunt(body), 0.2)
+  expect_equal(gasShunt(gasBodyEndobronchial(getGasBody(70), FALSE, 0.2)), 0)
+  expect_identical(gasRun("sevoflurane", 2, FALSE, shunt = 0.2)$state,
+                   gasRun("sevoflurane", 2, FALSE)$state)
+  # The default is the old tube exactly
+  expect_identical(gasRun("sevoflurane", 2, TRUE, shunt = 0.5)$state,
+                   gasRun("sevoflurane", 2, TRUE)$state)
+  # Lowering it brings arterial toward end-tidal and the oxygen up
+  art <- function(s) {
+    a <- at(gasRun("nitrousOxide", NA, TRUE, shunt = s), "nitrousOxide", 5)
+    a[["art"]] / a[["et"]]
+  }
+  expect_lt(art(0.5), art(0.25))
+  expect_lt(art(0.25), art(0.1))
+  expect_equal(art(0), 1)
+  oxygen <- function(s) {
+    o <- gasArterialOxygen(gasRun("sevoflurane", 2, TRUE, shunt = s))
+    o$SaO2[nrow(o)]
+  }
+  expect_lt(oxygen(0.5), oxygen(0.2))
+  expect_lt(oxygen(0.2), oxygen(0.05))
+  # At 0 nothing is shunted: arterial oxygen is end-capillary, and the
+  # Visualizer is sent no arterial line of its own
+  o0 <- gasArterialOxygen(gasRun("sevoflurane", 2, TRUE, shunt = 0))
+  expect_equal(o0$PaO2, o0$PAO2)
+  expect_null(gasRunArterialOxygen(gasRun("sevoflurane", 2, TRUE, shunt = 0)))
+  # A physiology event records it, reads it back and runs on it
+  s <- physiologyEventEncode(c(endobronchial = 1, shunt = 0.3))
+  expect_equal(s, "endobronchial=1;shunt=0.3")
+  expect_equal(physiologyEventDecode(s)[["shunt"]], 0.3)
+  expect_null(physiologyEventDecode("endobronchial=1;shunt=0.7"))
+  expect_match(physiologyEventSummary(physiologyEventDecode(s)), "shunt 30%", fixed = TRUE)
+  ev <- data.frame(Time = 10, t(physiologyEventDecode(s)))
+  steps <- gasBodySteps(70, ev)
+  expect_equal(gasShunt(steps$body[[2]]), 0.3)
+  # An event written before the slider existed keeps the chapter's half
+  expect_equal(physiologyEventDecode("endobronchial=1")[["shunt"]], 0.5)
+  # The panel shows it with the box, and the workbook records it
+  html <- as.character(physiologyPanel())
+  expect_match(html, 'id="physiology_shunt"', fixed = TRUE)
+  expect_lt(regexpr('id="endobronchialIntubation"', html, fixed = TRUE),
+            regexpr('id="physiology_shunt"', html, fixed = TRUE))
+  rows <- physiologyCovariateRows(PHYSIOLOGY_DEFAULT, endobronchial = TRUE, shunt = 0.3)
+  expect_equal(rows$Value[rows$Covariate == "Shunt fraction (%), with an endobronchial tube"], "30")
+  # The Visualizer is told
+  sim <- gasRun("sevoflurane", 2, TRUE, shunt = 0.3)
+  expect_equal(viewerPhysiology(NULL, sim$body)$shunt, 30)
+  # The server reads the slider, and an event records it only with the tube
+  shiny::testServer(app_server, {
+    session$setInputs(physiology_shunt = 25)
+    session$elapse(PHYSIOLOGY_DEBOUNCE_MS + 100)
+    expect_equal(shunt(), 0.25)
+    session$setInputs(endobronchialIntubation = FALSE)
+    expect_equal(physiologyPanelSettings()[["shunt"]], 0.5)
+    session$setInputs(endobronchialIntubation = TRUE)
+    expect_equal(physiologyPanelSettings()[["shunt"]], 0.25)
+  })
+})

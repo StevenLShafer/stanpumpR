@@ -35,8 +35,10 @@
 #
 # POPULATION: children and adolescents, to 21 years and 83 kg.  It is the only
 # population model of anakinra in the archive, so the program uses it at every
-# age, by the nearest-population rule, and the help page says so (a
-# [decision] for Shafer on the card, with the adult checks below).
+# age, by the nearest-population rule, and the help page says so (decided by
+# Steven L. Shafer, 2026-11-25: a source reaching 21 years and 83 kg should
+# extrapolate well to adults through its allometric weight terms evaluated at
+# the fat-free-mass-based pharmacokinetic weight; the adult checks below).
 #
 # BODY SIZE: the source's own weight terms, kept as fitted, evaluated at the
 # pharmacokinetic weight with the switch on and at total weight with it off.
@@ -47,8 +49,12 @@
 # clearance 16%, 50%, 70% and 75% lower in mild, moderate and severe renal
 # impairment and end-stage renal disease, which the label repeats (12.3).
 # Urien's patients had normal renal function, so the curve is that of a patient
-# with normal renal function; whether to add a renal term from Yang is a
-# [decision] for Shafer (card).
+# with normal renal function.  No renal term is grafted onto this paediatric
+# fit (Shafer, 2026-11-25, accepting the card's recommendation): Yang 2003 is
+# to be read first, and an adult model carrying its renal relation would be a
+# second candidate for the selector.  Likewise no intravenous route is derived
+# from these apparent SC parameters: an IV route waits for a good
+# intravenous model (Shafer, 2026-11-25), Yang 2003's IV arm the candidate.
 #
 # PREGNANCY: no pharmacokinetic study (inst/extdata/pregnancyRegistry.csv).
 # Clearance is largely renal, but the model has no renal term to carry the rise
