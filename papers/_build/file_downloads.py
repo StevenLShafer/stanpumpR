@@ -871,7 +871,7 @@ if unplaced:
     if not dry:
         with open(UNPLACED_PATH, "w", encoding="utf-8") as f:
             f.write("Files left in the inbox that file_downloads.py could not match to any stanpumpR reference (%s).\n"
-                    "File one that IS a reference by hand as PMID_<pmid>.pdf; move the rest out of Downloads.\n\n"
+                    "File one that IS a reference by hand as PMID_<pmid>.pdf; move the rest out of the inbox, or they are listed again next run.\n\n"
                     % datetime.datetime.now().isoformat(timespec="minutes"))
             for path, note in sorted(unplaced):
                 f.write("%s\n    %s\n" % (path, note))
