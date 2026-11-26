@@ -67,7 +67,7 @@
 # are scaled by fat-free mass (volumes by the volume factor, clearances by
 # the clearance factor); with the switch off they are the published values.
 #
-# PREGNANCY: applied.  The delivery group's CL and Vss (Table 3) under the
+# PREGNANCY: applied (Shafer's decision, 2026-11-26).  The delivery group's CL and Vss (Table 3) under the
 # Pregnant flag: CL x 1.38/0.665 = 2.075, Vss (so Vcentral and Vperiph) x
 # 14.3/7.72 = 1.852, Q unchanged.  These are measured in the target
 # population, hereditary deficiency at delivery (the label's peri-partum

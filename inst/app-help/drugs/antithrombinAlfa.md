@@ -21,7 +21,7 @@ The band is the label's target, 80 to 120% of normal (IU/dL).
 
 ### Covariates
 
-- **Pregnancy**: under the Patient Profile's **Pregnant** (third trimester or term), the delivery values above: clearance × 2.08 and both volumes × 1.85. The label's dosing rule for pregnant women gives larger doses for the same reason.
+- **Pregnancy**: under the Patient Profile's **Pregnant** (third trimester or term), the delivery values above: clearance × 2.08 and both volumes × 1.85 (Steven L. Shafer's decision, 2026-11-26). The label's dosing rule for pregnant women gives larger doses for the same reason.
 - **Weight**: the source printed no body size and no covariate was retained, so its values belong to the 70 kg reference man and are scaled to the patient's fat-free mass. With the switch off they are the published values whatever the weight.
 - **Heparin** was not studied as a covariate; the label warns that anticoagulants, surgery, delivery and bleeding may change the half-life.
 

@@ -59,8 +59,8 @@
 # median patient it simulates (Results); the cohort's mean was 59.  In the
 # volume, BASE is held within 25 to 93 IU/dL, the cohort's mean +/- 2 SD
 # (59 +/- 2 x 17), because the paper prints no range and the power of a
-# baseline of 0 would be an infinite volume.  [decision] for Shafer: those
-# bounds; a patient below 25 IU/dL is given the volume at 25.  The plotted
+# baseline of 0 would be an infinite volume.  [decided] by Shafer, 2026-11-26:
+# those bounds; a patient below 25 IU/dL is given the volume at 25.  The plotted
 # baseline is the value typed, unheld.
 #
 # WHO IT DESCRIBES: children under 19 years, mostly infants, critically ill,
@@ -112,7 +112,7 @@ ANTITHROMBIN_BASE_REF <- 60  # IU/dL
 # The heparin rate the model is run at (units/h): held at 0, see the header
 ANTITHROMBIN_HEPARIN_HELD <- 0
 # The baseline the volume reads is held to the cohort's mean +/- 2 SD,
-# 59 +/- 2 x 17 IU/dL (Table 2; no range printed): [decision] for Shafer
+# 59 +/- 2 x 17 IU/dL (Table 2; no range printed): decided by Shafer, 2026-11-26
 ANTITHROMBIN_BASE_MIN <- 25
 ANTITHROMBIN_BASE_MAX <- 93
 # Blank: the source's reference baseline
