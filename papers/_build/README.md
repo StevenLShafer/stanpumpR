@@ -59,6 +59,29 @@ python check_in_step.py [--repo <path>] [--archive <path>]
 **After changing a script in the archive, copy it here and commit it**, saying in the message what
 changed and why. The next `update.bat` will tell you if you forgot.
 
+### Subfolders are in the record only if they are named
+
+`check_in_step.py` walks `_build` and **one level** of subfolder, and only the subfolders
+`SUB_FOLDERS` names — today just `test_digest_run`, the tests for `digest_run.py`'s deadline,
+per-card logging and queue order. Those tests had never been committed or compared, because both
+this mirror and the check used a flat `os.listdir`: the gap this folder exists to close, reopened
+one directory down. A named subfolder takes `.txt` and `.md` as well as the script suffixes, since
+a test folder's README records what its tests slice out of the shipped code and is useless apart
+from them.
+
+**The list is explicit for a reason, and widening it is not a tidy-up.** The first version of this
+took *any* subfolder whose files had a recorded suffix, and the run that found the tests also
+listed about 2,000 files from `_build/text` — `pdftotext` output for every paper in the archive —
+as "not in git", advising that they be committed. That would have put copyrighted paper text into
+a public repository, the one thing `papers/README.md` says must never happen and the reason the
+digests can be published at all. `_build/context` holds a JSON extraction per paper and would have
+followed. A named folder cannot do that; a suffix rule was one new directory away from doing it
+again. So: to bring a new subfolder into the record, add it to `SUB_FOLDERS` deliberately, having
+looked at what is in it.
+
+Deeper than one level is not walked. Nothing has needed it, and a stated limit beats a recursion
+whose reach nobody knows.
+
 ## The filing cache and the queue, an invariant worth keeping
 
 `file_downloads.py` caches a verdict per file and replays it, so the cache signature decides when
