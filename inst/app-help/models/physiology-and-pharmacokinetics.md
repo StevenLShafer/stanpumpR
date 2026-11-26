@@ -205,11 +205,13 @@ The form and the slope are those of Michelsen and colleagues (2001), who
 fitted remifentanil clearance in 68 patients undergoing coronary artery
 surgery on cardiopulmonary bypass as CL × exp(θ (T − 37)). Their
 temperatures ran from 20 to 35 °C, with 16 patients below 28 °C, so theirs
-is the one human study that spans the whole range stanpumpR offers (28 to
-37 °C). Remifentanil is cleared by nonspecific esterases in blood and
-tissue, with almost no hepatic or renal component, so the fit describes
-an enzymatic capacity largely free of the confounding effect of organ
-blood flow.
+is the one human study that spans the whole hypothermic part of the range
+stanpumpR offers. That range is 28 to 38 °C: between 35 and 37 °C the
+factor rests on the form of their fit, which is 1 at 37 °C, and the degree
+above 37 °C is an extrapolation (sections 4.4 and 6). Remifentanil is
+cleared by nonspecific esterases in blood and tissue, with almost no
+hepatic or renal component, so the fit describes an enzymatic capacity
+largely free of the confounding effect of organ blood flow.
 
 ### 4.2 The evidence, route by route
 
@@ -310,7 +312,9 @@ breakdown in blood falls 7.0% per degree from 37 to 25 °C but averages
 similarly more steeply below 28 °C (Gruber 2002). Several microsomal
 Arrhenius plots break near 20 °C (Puntarulo 1989; Masson and Balny 1986).
 Within 28 to 37 °C an exponential is adequate; below 28 °C, which
-stanpumpR does not offer, it would overstate the remaining capacity.
+stanpumpR does not offer, it would overstate the remaining capacity. The
+slider reaches 38 °C, one degree extrapolated; above that, thermal stress
+begins and enzymatic action starts to fail, which no exponential describes.
 
 ### 4.5 Why enzymes slow in the cold
 
@@ -421,8 +425,9 @@ Each step above is a simplification, and several rest on weak evidence.
   rests on three small studies and is contradicted on bypass.
 - **One temperature factor for every route.** The routes agree within
   their scatter, but the scatter is wide, and individual drugs may differ.
-- **The range.** The factor is applied only between 28 and 37 °C; below
-  that the measured curves steepen.
+- **The range.** The factor is applied only between 28 and 38 °C; below
+  that the measured curves steepen, and above it thermal stress begins. The
+  degree above 37 °C is an extrapolation.
 - **What is not modelled.** Protein binding, which changes with
   hemodilution on bypass (remimazolam's unbound fraction rose threefold
   when bypass began; Inoue and colleagues 2026); the suppression of drug
