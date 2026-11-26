@@ -253,7 +253,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "fitted in, which the drug's help page gives (severe haemophilia A or B",
     "for factors VIII and IX, afibrinogenaemia for fibrinogen, Guillain-Barre",
     "syndrome for immunoglobulin, 60 IU/dL in the children antithrombin was",
-    "fitted in): a patient with a different level is then",
+    "fitted in, hereditary deficiency for antithrombin alfa): a patient with",
+    "a different level is then",
     "drawn too high or too low."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",
