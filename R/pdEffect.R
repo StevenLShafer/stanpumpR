@@ -41,6 +41,45 @@
 # (mcgPerMlScale()), so a Drug Library switch between mcg/mL and ng/mL
 # changes nothing.
 #
+#
+# WHY PROPOFOL CARRIES NO EEG-INDEX ENDPOINT (Steven L. Shafer, 2026-11-26)
+#
+# No drug carries one today.  What Shafer DECIDED on 2026-11-26 is propofol; whether
+# any drug should is queued for a future session.  The reasoning below is general,
+# and is why the queued question is unlikely to be answered yes, but it has not been
+# put to him for the other drugs and must not be recorded as though it had.
+#
+# Several papers digested on 2026-11-25/26 report propofol Ce50 values against
+# BIS, the A-line ARX index and the spectral edge, and they raised the obvious
+# question: should propofol declare an EEG endpoint here?  It should NOT, and
+# the reason is about what the EEG measures, not about the numbers.
+#
+# The EEG is not solely a measure of drug effect.  Shafer's clinical observation
+# on emergence: the EEG is nearly unchanged for several minutes after the drug
+# is stopped, and then, as the patient opens their eyes, it changes at once,
+# showing arousal with the return of consciousness.  The argument does not need
+# that sequence to be invariable -- other reports have EEG measures moving
+# before eye opening -- only that the index can move while the concentration
+# does not.  What the monitor reports is a combination of drug effect and brain
+# state, so a sigmoid Emax model of concentration against index would attribute
+# to the drug a change the brain made.
+#
+# Nor do the drugs act on it in one direction, which matters because clinical
+# anaesthesia combines them.  Ketamine and midazolam ACTIVATE the EEG.  Opioids
+# do little to the measures used for anaesthetic depth -- the spectral edge and
+# the indices derived from it -- except in huge doses, where they DEPRESS them,
+# which is what the Stanford opioid experiments relied on to determine their
+# ke0; smaller spectral changes at clinical doses are a different measurement
+# and do not give a usable depth signal.  The hypnotics,
+# propofol and the inhaled agents and etomidate, ACTIVATE and then DEPRESS it.
+# A per-drug % effect panel would draw each of these as a monotone function of
+# that drug's own concentration, which the index is not.
+#
+# This settles propofol.  Whether any EEG endpoint belongs in stanpumpR at all
+# is QUEUED for a future session: do not add one without his decision.  The
+# cards that raised it are papers/digests/PMID_15220769.md, PMID_16129974.md
+# and PMID_23157660.md.
+#
 # A drug may carry several rows for one endpoint, one per published model.
 # The first applied row with role "drawn" is drawn; rows with role
 # "alternative" are listed on the help page so the disagreement between

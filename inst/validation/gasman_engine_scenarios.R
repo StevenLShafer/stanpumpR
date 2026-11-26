@@ -49,9 +49,11 @@
 #      coupling changes sign.
 #   4. Desflurane, wash-in at 4 L/min then low-flow maintenance at 0.5 L/min.
 #      The circuit equation dominates and rebreathing matters most.
-#   5. A 100 kg patient at GasMan's own weight-scaled defaults.  Nothing other
-#      than 70 kg has been compared before, and the allometric defaults adopted
-#      on 2026-10-05 are live here.  Same dial and flow as the old grid's case 3,
+#   5. A 100 kg patient at the desktop GasMan's weight-scaled defaults, given
+#      to GasMan's API explicitly (its own defaults do not scale with weight:
+#      InitDocument computes the factor at 70 kg; ChatGPT's round-2 gas audit,
+#      A-02).  Nothing other than 70 kg had been compared before, and the
+#      allometric defaults adopted on 2026-10-05 are live here.  Same dial and flow as the old grid's case 3,
 #      so the difference from that case is the weight scaling alone.
 #
 # Usage

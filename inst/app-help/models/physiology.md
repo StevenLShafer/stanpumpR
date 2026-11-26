@@ -473,8 +473,10 @@ loads into its blood then equals the body's use exactly, the same oxygen the
 gas engine draws from the alveoli. The result is the oxygen panel's second
 line; the hover gives the PaO2 and the SaO2, and the Visualizer shows them
 under its title while the tube is in. For a 70 kg patient at a cardiac output
-of 5 L/min and oxygen use of 0.25 L/min, half the cardiac output shunted gives,
-at 30 minutes and haemoglobin 15 g/dL:
+of 5 L/min and oxygen use of 0.25 L/min, breathing 2% sevoflurane in 6 L/min of
+fresh gas at a minute ventilation of 6 L/min, half the cardiac output shunted
+gives, at 30 minutes and haemoglobin 15 g/dL (the sevoflurane dilutes the
+oxygen: without it the PaO2 at a 20% shunt is 277 mmHg, not 265):
 
 | Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
 |---|---|---|---|

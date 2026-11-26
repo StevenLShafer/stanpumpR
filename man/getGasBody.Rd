@@ -68,8 +68,11 @@ or without height, age or sex, the scaling is GasMan's, which the
 validation against GasMan at other weights uses.
 
 Cardiac output is GasMan's default: 5 L/min at 70 kg (gasman.ini
-\code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
-as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
+\code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75},
+as the desktop GasMan does when the user changes the weight.  GasMan's API
+does not: \code{InitDocument} computes the factor at 70 kg and
+\code{SetWeight} leaves the defaults alone, so the validation scenarios
+give GasMan both flows (ChatGPT's round-2 gas audit, A-02).  Adopted 2026-10-05 at Shafer's direction ("for
 now I want to be identical with GasMan; later on we will update with more
 current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,

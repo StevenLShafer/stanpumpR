@@ -29,10 +29,12 @@
 #
 # STATUS: the ODE structure has been verified numerically (see
 # tests/testthat/test-gas-engine.R -- closed form vs. RK4, mass balance, and
-# analytic single-compartment limits).  The partition coefficients and MAC
-# values below for sevoflurane, isoflurane and desflurane equal GasMan's own
-# (Weber et al. 2021, J Clin Monit Comput 35:343-354, Table 1).  Nitrous
-# oxide and nitrogen are not in that table.  The circuit volume is marked
+# analytic single-compartment limits).  The partition coefficients below for
+# sevoflurane, isoflurane and desflurane equal GasMan's own (Weber et al.
+# 2021, J Clin Monit Comput 35:343-354, Table 1).  Their MAC at 40 is not
+# GasMan's since 2026-11-23: it is Mapleson 1996's (MAC40 and GASMAN_MAC40
+# below; ChatGPT's round-2 gas audit, A-01, found this sentence saying both
+# were GasMan's).  Nitrous oxide and nitrogen are not in that table.  The circuit volume is marked
 # TODO(fixture) in getGasBody().
 # -----------------------------------------------------------------------------
 
@@ -222,8 +224,11 @@ gasPartitionTissueGas <- function(props)
 #' validation against GasMan at other weights uses.
 #'
 #' Cardiac output is GasMan's default: 5 L/min at 70 kg (gasman.ini
-#' \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
-#' as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
+#' \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75},
+#' as the desktop GasMan does when the user changes the weight.  GasMan's API
+#' does not: \code{InitDocument} computes the factor at 70 kg and
+#' \code{SetWeight} leaves the defaults alone, so the validation scenarios
+#' give GasMan both flows (ChatGPT's round-2 gas audit, A-02).  Adopted 2026-10-05 at Shafer's direction ("for
 #' now I want to be identical with GasMan; later on we will update with more
 #' current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 #' on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,

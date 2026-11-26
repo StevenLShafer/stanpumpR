@@ -448,6 +448,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "fibrinogen",
     "immunoglobulin",
     "antithrombin",
+    "antithrombinAlfa",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",
