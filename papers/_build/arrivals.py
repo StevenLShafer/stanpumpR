@@ -239,11 +239,18 @@ def wanted_pmids():
 
 
 def pending_work():
-    """The `pending` rows of papers/pending-work.csv, read from origin/master.
+    """The LIVE rows of papers/pending-work.csv, read from origin/master.
 
     A row records work that was ready except for one paper, kept when its pull request was merged
     and closed so that closing cost nothing.  Read from master deliberately: a row still sitting on
-    a closed branch is invisible, which is the one way this register can fail."""
+    a closed branch is invisible, which is the one way this register can fail.
+
+    A row is LIVE unless its status records completion ("done <pull request URL>").  It used to
+    have to say exactly "pending", which is how three rows written "open" -- among them
+    antithrombin's DeJongh 2014, the adult source Shafer chose to wait for -- became invisible to
+    this report (found 2026-11-26, when that paper was filed because it was noticed in the inbox
+    and not because the register said so).  The register's only failure mode is a row nobody sees,
+    so no spelling of a live status may hide one: an unfamiliar status is reported, not dropped."""
     import csv
     import io
     text = git("show", "%s:papers/pending-work.csv" % REF)
@@ -251,7 +258,7 @@ def pending_work():
         return []
     out = []
     for r in csv.DictReader(io.StringIO(text)):
-        if (r.get("status") or "").strip().lower() != "pending":
+        if (r.get("status") or "").strip().lower().startswith("done"):
             continue
         pmid = re.sub(r"\D", "", r.get("pmid") or "")
         if pmid:

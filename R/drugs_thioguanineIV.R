@@ -12,7 +12,7 @@
 #
 # THE SOURCE
 # ==========
-# Kitchen BJ, Balis FM, Poplack DG, O'Brien M, Jacobs RF, Adamson PC.  A
+# Kitchen BJ, Balis FM, Poplack DG, O'Brien M, Craig CE, Adamson PC.  A
 # pediatric phase I trial and pharmacokinetic study of thioguanine
 # administered by continuous i.v. infusion.  Clin Cancer Res 1997;3:713-717.
 # 18 patients 4-25 years (median 18; 12 male) with refractory solid tumours
