@@ -77,3 +77,37 @@ test_that("the simulation, its physiology events and its washout run on the comp
   w <- gasWashout(composed, dt[, c("Time", "Drug", "Dose")])
   expect_true(all(is.finite(gasRecoveryTime(w, "sevoflurane", 0.18))))
 })
+
+test_that("every legal patient's composed body passes the brain-and-heart split", {
+  # CodeRabbit on #941: 500 kg, 20 cm, age 0 left the vessel-rich group 5.9% of
+  # output, below the fixed 16% the brain and heart took, and a cardiac output
+  # off normal stopped the simulation
+  extreme <- getGasBody(500, height = 20, age = 0, sex = "male")
+  expect_lt(extreme$f_brain, PHYSIOLOGY_GAS_PROTECTED_SHARE)
+  for (cardiac in c(0.1, 0.5, 1, 2)) {
+    b <- gasBodyPhysiology(extreme, cardiac, split = TRUE)
+    shares <- c(b$f_brain, b$f_vrgRest, b$f_muscle, b$f_fat)
+    expect_true(all(shares >= 0))
+    expect_equal(sum(shares), 1)
+  }
+  dt <- data.frame(Drug = c("oxygen", "sevoflurane", "ventilation"), Time = 0, Dose = c(6, 2, 6))
+  physiology <- PHYSIOLOGY_DEFAULT
+  physiology[["cardiac"]] <- 0.5
+  expect_silent(simulateGases(dt, weight = 500, age = 0, maximum = 30, height = 20,
+                              sex = "male", physiology = physiology))
+  # The brain and heart keep 16/76 of the group's flow: 16% of output for the
+  # reference man and every body scaled linearly, as before
+  for (b in list(getGasBody(70, height = 170, age = 35, sex = "male"), getGasBody(150))) {
+    expect_equal(gasBodyPhysiology(b, 1, split = TRUE)$f_brain, PHYSIOLOGY_GAS_PROTECTED_SHARE)
+  }
+  obese <- getGasBody(150, height = 170, age = 35, sex = "male")
+  expect_equal(gasBodyPhysiology(obese, 1, split = TRUE)$f_brain,
+               PHYSIOLOGY_GAS_PROTECTED_SHARE * obese$f_brain / GAS_REFERENCE_VRG_SHARE)
+})
+
+test_that("the composition ratios are named lean and fat whatever the weight is named", {
+  # CodeRabbit on #941: a named weight gave "lean.patient"
+  expect_named(gasBodyComposition(c(patient = 70), 170, 35, "male"), c("lean", "fat"))
+  expect_named(getGasBody(c(patient = 90), height = 170, age = 35, sex = "male")$composition,
+               c("lean", "fat"))
+})

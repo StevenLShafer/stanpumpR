@@ -337,7 +337,8 @@ gasBodyComposition <- function(weight, height = NULL, age = NULL, sex = NULL,
   ffm <- ffmAlSallami(weight, height, age, sex)
   ffm <- min(ffm, 0.99 * weight)
   fmReference <- FFM_REFERENCE_WEIGHT - FFM_REFERENCE
-  c(lean = ffm / FFM_REFERENCE, fat = (weight - ffm) / fmReference)
+  # unname(): a named weight (c(patient = 70)) would give "lean.patient"
+  c(lean = unname(ffm / FFM_REFERENCE), fat = unname((weight - ffm) / fmReference))
 }
 
 
