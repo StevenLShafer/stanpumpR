@@ -378,4 +378,5 @@ eftrenonacogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#6A1B9A,60,
 fibrinogen,mgdL,mg/kg,,mg/kg,"mg/kg,g,mg",#F9A825,100,450,200,0,0,IV,Hemostasis and reversal
 immunoglobulin,gL,g/kg,mg/kg/min,g/kg,"g/kg,g,mg/kg/min",#5D4037,0,0,0,0,0,IV,Other
 antithrombin,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,Hemostasis and reversal
+desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal

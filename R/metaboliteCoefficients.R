@@ -462,12 +462,16 @@ internalDoseScale <- function(concentrationUnits)
 #' read unconverted, a drug moved to ng/mL was 1000-fold high there.
 #'
 #' @param units a drug's `Concentration.Units`
-#' @returns 1/1000 for ng (internalDoseScale()), otherwise 1: mcg, and the
-#'   units no such drug is plotted in
+#' @returns 1/1000 for ng (internalDoseScale()), 1e-6 for pg (desmopressin's
+#'   % effect, 2026-11-26), otherwise 1: mcg, and the units no such drug is
+#'   plotted in
 #' @keywords internal
 mcgPerMlScale <- function(units)
 {
-  if (identical(as.character(units), "ng")) internalDoseScale("ng") else 1
+  units <- as.character(units)
+  if (identical(units, "ng")) return(internalDoseScale("ng"))
+  if (identical(units, "pg")) return(1e-6)
+  1
 }
 
 
