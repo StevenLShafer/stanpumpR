@@ -1487,6 +1487,7 @@ app_server <- function(input, output, session) {
         altitude = altitude(),
         endobronchial = endobronchial(),
         haemoglobin = haemoglobin(),
+        shunt = shunt(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
         maximum = plotMaximum()
@@ -1562,6 +1563,11 @@ app_server <- function(input, output, session) {
   haemoglobin <- debounce(reactive({
     haemoglobinFromInput(input$physiology_haemoglobin)
   }), PHYSIOLOGY_DEBOUNCE_MS)
+  # The share of cardiac output through the unventilated lung, a fraction
+  # (R/endobronchial.R; Shafer, 2026-11-25)
+  shunt <- debounce(reactive({
+    shuntFromInput(input$physiology_shunt)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
 
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
@@ -1571,6 +1577,7 @@ app_server <- function(input, output, session) {
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
     updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    updateSliderInput(session, "physiology_shunt", value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
@@ -1632,7 +1639,11 @@ app_server <- function(input, output, session) {
       temperature = bodyTemperatureFromInput(input$physiology_temperature),
       altitude = altitudeFromInput(input$physiology_altitude),
       endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)),
-      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin))
+      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin),
+      # The shunt acts only through the tube: without it the default, so an
+      # event's settings do not carry a hidden slider's value
+      shunt = if (endobronchialFromInput(input$endobronchialIntubation))
+        shuntFromInput(input$physiology_shunt) else ENDOBRONCHIAL_SHUNT_FRACTION)
   }
 
   observeEvent(input$physiologyCreateEventBtn, {
@@ -2357,6 +2368,7 @@ app_server <- function(input, output, session) {
       altitude = altitude(),
       endobronchial = endobronchial(),
       haemoglobin = haemoglobin(),
+      shunt = shunt(),
       physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).

@@ -1074,19 +1074,41 @@ physiologyPanel <- function()
                     value = FALSE),
       paste("The tube in one main bronchus: that lung takes all the",
             "ventilation, and the other, unventilated, is still perfused, so",
-            "half the cardiac output passes it and takes up no agent (Eger",
-            "and Shafer's chapter on inhaled anesthetic kinetics). End-tidal",
-            "reads higher than arterial, and the brain rises more slowly,",
-            "most for the poorly soluble agents (nitrous oxide, desflurane).",
-            "Arterial oxygen falls: the shunted blood carries no oxygen from",
-            "the lungs, and more inspired oxygen hardly helps. Hypoxic",
-            "pulmonary vasoconstriction is not modelled."),
+            "up to half the cardiac output passes it and takes up no agent",
+            "(Eger and Shafer's chapter on inhaled anesthetic kinetics).",
+            "End-tidal reads higher than arterial, and the brain rises more",
+            "slowly, most for the poorly soluble agents (nitrous oxide,",
+            "desflurane). Arterial oxygen falls: the shunted blood carries no",
+            "oxygen from the lungs, and more inspired oxygen hardly helps.",
+            "The Shunt fraction slider sets how much blood passes the",
+            "unventilated lung."),
       placement = "right"
     ),
-    # The haemoglobin sets how far the shunt desaturates the arterial blood
-    # (R/arterialOxygen.R; Shafer, 2026-11-19), so it is shown with the box
+    # The shunt fraction (R/endobronchial.R; Shafer, 2026-11-25) and the
+    # haemoglobin, which sets how far the shunt desaturates the arterial blood
+    # (R/arterialOxygen.R; Shafer, 2026-11-19), act only through the tube, so
+    # they are shown with the box
     conditionalPanel(
       condition = "input.endobronchialIntubation",
+      fieldHelp(
+        sliderInput(
+          inputId = "physiology_shunt",
+          label = "Shunt fraction (%)",
+          min = 0,
+          max = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
+          value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
+          step = ENDOBRONCHIAL_SHUNT_STEP_PERCENT,
+          ticks = FALSE
+        ),
+        paste("The share of cardiac output that passes the unventilated lung.",
+              "It starts at 50%, Eger and Shafer's idealisation, the most it",
+              "can be. Hypoxic pulmonary vasoconstriction diverts blood from",
+              "the unventilated lung, which this slider stands in for: lower",
+              "it toward 0% and watch the arterial oxygen improve. At 0% the",
+              "unventilated lung takes no blood, and only the smaller volume",
+              "of the ventilated lung remains of the tube's effect."),
+        placement = "right"
+      ),
       fieldHelp(
         sliderInput(
           inputId = "physiology_haemoglobin",
@@ -1097,11 +1119,11 @@ physiologyPanel <- function()
           step = HAEMOGLOBIN_STEP,
           ticks = FALSE
         ),
-        paste("With half the cardiac output shunted, the oxygen the shunt",
-              "fails to carry is a larger share of a smaller capacity, so an",
-              "anaemic patient desaturates more: on pure oxygen the arterial",
-              "saturation is about 69% at 7 g/dL and 87% at 17 g/dL. Without",
-              "a shunt it changes nothing the plot shows."),
+        paste("With cardiac output shunted, the oxygen the shunt fails to",
+              "carry is a larger share of a smaller capacity, so an anaemic",
+              "patient desaturates more: with half the output shunted, on pure",
+              "oxygen the arterial saturation is about 69% at 7 g/dL and 87%",
+              "at 17 g/dL. Without a shunt it changes nothing the plot shows."),
         placement = "right"
       )
     )
@@ -1194,11 +1216,13 @@ physiologyFromInputs <- function(values)
 #' @param temperature the body temperature, C, or NULL (37)
 #' @param altitude metres above sea level, or NULL (sea level)
 #' @param endobronchial TRUE for an endobronchial tube
+#' @param shunt its shunt fraction, or NULL (the default)
 #' @returns a data frame of Covariate and Value
 #' @noRd
 physiologyCovariateRows <- function(physiology, temperature = NULL,
                                     altitude = NULL, endobronchial = FALSE,
-                                    events = NULL, haemoglobin = NULL)
+                                    events = NULL, haemoglobin = NULL,
+                                    shunt = NULL)
 {
   # With physiology events (R/physiologyEvents.R) the simulation ran at
   # normal physiology from time 0 and each event's settings from its time;
@@ -1224,11 +1248,16 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                            "Body temperature (C)",
                            "Altitude (m), inhaled anesthetics",
                            "Endobronchial intubation, inhaled anesthetics",
+                           "Shunt fraction (%), with an endobronchial tube",
                            "Haemoglobin (g/dL), arterial oxygen with an endobronchial tube"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
                        if (isTRUE(endobronchial)) "yes" else "no",
+                       {
+                         s <- tryCatch(checkShunt(shunt), error = function(e) NULL)
+                         if (is.null(s)) "unreadable" else format(round(100 * s, 1))
+                       },
                        format(haemoglobinFromInput(haemoglobin))),
              stringsAsFactors = FALSE)
 }
