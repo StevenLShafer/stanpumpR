@@ -69,25 +69,25 @@
 #   event, so they keep acting on the plot.  That departs from his rule above
 #   ("At time 0 the sliders are all set to 1"), so it is his to decide.
 #
-#   [decision] The inhaled agents' MAC band at a temperature event.  The band
-#   is one pair of numbers per panel, set from the body at time 0
-#   (gasDrugEntries(): gasPropertiesAt(sim$body$temperature)), so after an
-#   event that cools the patient the band stays at its 37 C values while the
-#   MAC panel steps (each row takes its own temperature).  Without an event
-#   the band does move with the slider: 2% sevoflurane, 70 kg, 40 years,
-#   37 C to 30 C, band 1.47-2.73% to 0.99-1.85%, MAC multiple at 30 min
-#   0.83 to 1.19.  Making it step needs a band that varies in time
-#   (simulationPlot() draws a constant rectangle per facet).  Whether to
-#   build that is his call.  Since 2026-11-24 the same holds for the time
-#   until threshold's line: every potent gas's threshold moves with
-#   temperature (gasThresholdForTemperature(), his decision of that day), and
-#   the time is counted to the threshold in force at each moment, but the
-#   line is drawn at the body at time 0 (gasDrugEntries()'s endCe).  After a
-#   cooling event to 28 C at 30 minutes the line stays at 0.18% sevoflurane
-#   while the time is counted to 0.105%: at 60 minutes 16.3 minutes, where
-#   timing to the drawn line would read 11.7 (CodeRabbit on PR #858; Gemini's
-#   gas-engine audit of 2026-11-23, C-01).  A stepped band and a stepped
-#   line are one piece of work.
+#   DECIDED (Shafer, 2026-11-25; the question put as above, Gemini's
+#   gas-engine audit C-01): the MAC band at a temperature event, and every
+#   drug's band under changed physiology.  The band stays constant on a
+#   panel whose drug the physiology does not change.  On a panel whose drug
+#   it changes, at any time in the plot (the sliders or an event), the band
+#   is REMOVED, and a grey, semi-transparent RIBBON is drawn from the drug's
+#   curve under nominal (normal) physiology to its curve under the
+#   physiology given, on the effect-site line (plasma where the drug has
+#   none; for an inhaled agent the alveolar line, and on the MAC panel the
+#   MAC line).  There is no extra line: the drug keeps its own colours, and
+#   the nominal curve is only the ribbon's edge.  Shafer: a band that stays
+#   the same "will appear to be a bug because it isn't what the physiology
+#   teaches", and a Y axis that rescales can hide a change that the ribbon
+#   shows within one panel.  The threshold line stays and, on the gas panels,
+#   steps with the temperature in force.  Built 2026-11-25: R/physiologyRibbon.R
+#   (physiologyRibbons(), thresholdSteps()), app_server()'s nominalDrugs(),
+#   simulationPlot(nominal =), and a gas entry's endCeSteps.  The ribbon
+#   follows the line the panel draws, effect site where shown, rather than
+#   the alveolar line the working assumption named for an inhaled agent.
 #
 #   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
 #   overlay, 2026-11-19) when Shafer opened it after using the sliders, the
@@ -118,13 +118,13 @@ PHYSIOLOGY_EVENT_MAX <- 50L
 #' The settings one physiology event records, in order
 #' @keywords internal
 PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchial",
-                             "haemoglobin")
+                             "haemoglobin", "shunt")
 
 #' Normal physiology as a physiology event's settings
 #' @keywords internal
 physiologyEventNormal <- function()
   c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0,
-    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN, shunt = ENDOBRONCHIAL_SHUNT_FRACTION)
 
 #' Check one physiology event's settings
 #'
@@ -149,6 +149,8 @@ checkPhysiologyEvent <- function(x)
   if (!out[["endobronchial"]] %in% c(0, 1))
     stop("Invalid physiology event settings: endobronchial must be 0 or 1")
   out[["haemoglobin"]] <- checkHaemoglobin(out[["haemoglobin"]])
+  # The shunt fraction (a fraction, 0 to 0.5) acts only through the tube
+  out[["shunt"]] <- checkShunt(out[["shunt"]])
   out
 }
 
@@ -272,7 +274,8 @@ physiologyEventSummary <- function(x, gas = TRUE)
                          barometricPressure(x[["altitude"]]))
                else "Sea level",
                if (x[["endobronchial"]] == 1)
-                 sprintf("Endobronchial intubation, haemoglobin %s g/dL", format(x[["haemoglobin"]]))
+                 sprintf("Endobronchial intubation, shunt %s%%, haemoglobin %s g/dL",
+                         format(round(100 * x[["shunt"]], 1)), format(x[["haemoglobin"]]))
                else "Tracheal intubation")
   paste(parts, collapse = ", ")
 }

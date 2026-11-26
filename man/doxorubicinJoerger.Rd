@@ -10,6 +10,7 @@ doxorubicinJoerger(
   age,
   sex,
   adjustToFFM = TRUE,
+  ast = NULL,
   pregnant = FALSE
 )
 }
@@ -29,6 +30,8 @@ patient's fat-free mass as described in the
 file's header says what the switch changes for that model; for cefazolin
 it also sets the weight the creatinine-clearance estimate uses.}
 
+\item{ast}{serum AST in U/L, or NULL for the equation's reference, 21 U/L}
+
 \item{pregnant}{TRUE in late pregnancy: Janssen 2021's factors}
 }
 \value{
@@ -36,6 +39,6 @@ a list in the shape \code{getDrugPK()} expects
 }
 \description{
 Two compartments, forming doxorubicinol; body surface area and age on
-clearance, AST held at the reference.  See the header of
+clearance, and the Patient Profile's Serum AST.  See the header of
 \code{R/drugs_doxorubicinJoerger.R}.
 }

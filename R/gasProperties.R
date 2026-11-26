@@ -186,9 +186,40 @@ gasPartitionTissueGas <- function(props)
 
 #' Body and breathing-circuit geometry for the inhaled-gas model
 #'
-#' Tissue volumes and cardiac output scale with weight from the 70 kg standard.
-#' Circuit volume is a property of the anaesthesia machine, not the patient, so
-#' it does not scale.
+#' Tissue volumes and cardiac output scale with body size from the 70 kg
+#' standard, by body composition when the patient's height, age and sex are
+#' given and \code{adjustToFFM} is TRUE (below), otherwise linearly with
+#' weight as GasMan does.  Circuit volume is a property of the anaesthesia
+#' machine, not the patient, so it does not scale.
+#'
+#' BODY COMPOSITION (Shafer, 2026-11-25, built the same day).  With the
+#' library's fat-free mass (\code{ffmAlSallami()}), FFM, and the fat mass
+#' FM = weight - FFM, each over the reference man's (70 kg, 170 cm, 35
+#' years: FFM 54.48 kg, FM 15.52 kg; \code{FFM_REFERENCE}):
+#' \itemize{
+#'   \item the vessel-rich group, the muscle group and the alveolar volume
+#'     (functional residual capacity) scale with FFM;
+#'   \item the fat group's volume scales with FM;
+#'   \item the vessel-rich and muscle groups' blood flows scale with FFM to the
+#'     0.75 (the clearance exponent of \code{pkSizeFactors()}), and the fat
+#'     group's flow with its volume to the 0.75, Weber 2021's Equation 1
+#'     (excess fat perfused at the standard fat's flow scaled allometrically);
+#'   \item cardiac output is the sum of the three flows, and each group's
+#'     share of it follows.
+#' }
+#' At the reference man this is GasMan's standard exactly (6.0, 33.0 and 14.5
+#' L; 76, 18 and 6\% of 5 L/min).  Fat added to him leaves the lean volumes,
+#' their flows and the lungs as they were and raises cardiac output by the
+#' fat's flow alone, as Weber 2021 built its obese GasMan models (Table 2: at
+#' 100 kg, 44.87 L of fat; Equation 1 gives 0.70 L/min where its table, with
+#' its shares rounded to whole per cent, prints 0.77).  Weber kept the lean
+#' volumes unchanged and so does this; it did not scale a child, which the
+#' lean terms here do.  Oxygen consumption stays 3.5 mL/kg/min of total
+#' weight, and the default ventilation stays allometric in weight
+#' (\code{defaultGasVentilation()}): neither is a compartment.  With
+#' \code{adjustToFFM} FALSE (the Patient Profile's fat-free-mass switch off),
+#' or without height, age or sex, the scaling is GasMan's, which the
+#' validation against GasMan at other weights uses.
 #'
 #' Cardiac output is GasMan's default: 5 L/min at 70 kg (gasman.ini
 #' \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
@@ -197,6 +228,14 @@ gasPartitionTissueGas <- function(props)
 #' current data"), replacing the linear 75 mL/kg (5.25 L/min at 70 kg) he chose
 #' on 2026-09-02.  Tissue and alveolar volumes still scale linearly with weight,
 #' which is also what GasMan does (\code{fWtFactor = fWeight / STD_WEIGHT}).
+#' DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit, B-01 and F-01):
+#' the compartments are to scale by body composition, with the library's own
+#' fat-free mass (Al-Sallami): the vessel-rich group and muscle by fat-free
+#' mass, the fat group by fat mass, its blood flow following its volume as
+#' Weber 2021 scaled it, anchored so that the 70 kg, 170 cm, 35-year-old man
+#' is GasMan's standard exactly, with a GasMan-scaling option kept for the
+#' validation cases at other weights.  Shafer: "Ted Eger would have approved."
+#' Built 2026-11-25, as above.
 #' Cardiac output is returned here as a single covariate-derived constant, but
 #' \code{advanceClosedFormGas()} accepts it per segment, so making it
 #' time-varying later requires no change to the engine.
@@ -207,14 +246,19 @@ gasPartitionTissueGas <- function(props)
 #'   dial and the inspired concentration, and is what makes low-flow anaesthesia
 #'   behave differently from high-flow.
 #'   TODO(fixture): confirm the value GasMan 4.2 uses.
+#' @param height,age,sex the patient's height (cm), age (years) and sex, for
+#'   the body-composition scaling; any NULL gives GasMan's linear scaling
+#' @param adjustToFFM FALSE for GasMan's linear scaling whatever is given
 #'
 #' @returns a list of geometry and flow parameters
 #' @export
-getGasBody <- function(weight = 70, circuitVolume = 8)
+getGasBody <- function(weight = 70, circuitVolume = 8, height = NULL, age = NULL,
+                       sex = NULL, adjustToFFM = TRUE)
 {
   scale <- weight / 70
+  composition <- gasBodyComposition(weight, height, age, sex, adjustToFFM)
 
-  list(
+  body <- list(
     # Gas-phase volumes, litres
     V_circuit  = circuitVolume,   # machine, not weight-scaled
     V_alveolar = 2.5 * scale,     # functional residual capacity
@@ -254,6 +298,47 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
     # nitrous oxide is present.
     VO2        = 0.0035 * weight
   )
+  if (is.null(composition)) return(body)
+
+  # By body composition (the documentation above): lean volumes and the lungs
+  # by FFM, fat by FM, flows allometric in each, cardiac output their sum
+  lean <- composition[["lean"]]
+  fat <- composition[["fat"]]
+  body$V_alveolar <- 2.5 * lean
+  body$V_brain <- 6.0 * lean
+  body$V_muscle <- 33.0 * lean
+  body$V_fat <- 14.5 * fat
+  flow <- GAS_DEFAULT_CO_70KG * c(brain = 0.76 * lean^GAS_DEFAULT_VA_WEIGHT_EXPO,
+                                  muscle = 0.18 * lean^GAS_DEFAULT_VA_WEIGHT_EXPO,
+                                  fat = 0.06 * fat^GAS_DEFAULT_VA_WEIGHT_EXPO)
+  body$Q_cardiac <- sum(flow)
+  body$f_brain <- unname(flow[["brain"]] / body$Q_cardiac)
+  body$f_muscle <- unname(flow[["muscle"]] / body$Q_cardiac)
+  body$f_fat <- unname(flow[["fat"]] / body$Q_cardiac)
+  body$composition <- composition
+  body
+}
+
+#' The patient's fat-free and fat mass over the reference man's
+#'
+#' For \code{getGasBody()}'s body-composition scaling.  The fat mass is held
+#' at a hundredth of the weight at least, so no fat group is empty.
+#' @inheritParams getGasBody
+#' @returns c(lean, fat), the two ratios, or NULL for GasMan's linear scaling
+#'   (\code{adjustToFFM} FALSE, or any of height, age and sex missing)
+#' @keywords internal
+gasBodyComposition <- function(weight, height = NULL, age = NULL, sex = NULL,
+                               adjustToFFM = TRUE)
+{
+  if (!isTRUE(adjustToFFM) || is.null(height) || is.null(age) || is.null(sex) ||
+      length(height) != 1 || length(age) != 1 || length(sex) != 1 ||
+      !is.finite(height) || !is.finite(age) || is.na(sex))
+    return(NULL)
+  ffm <- ffmAlSallami(weight, height, age, sex)
+  ffm <- min(ffm, 0.99 * weight)
+  fmReference <- FFM_REFERENCE_WEIGHT - FFM_REFERENCE
+  # unname(): a named weight (c(patient = 70)) would give "lean.patient"
+  c(lean = unname(ffm / FFM_REFERENCE), fat = unname((weight - ffm) / fmReference))
 }
 
 
@@ -264,7 +349,19 @@ getGasBody <- function(weight = 70, circuitVolume = 8)
 #'
 #' Mapleson (Br J Anaesth 1996;76:179-185) fitted ages from 1 year up.  Below
 #' 1 year the relation is extrapolated, and changes MAC by under 1% from its
-#' value at 1 year; it does not model the lower MAC of neonates.
+#' value at 1 year.  It does not model the MAC measured in infants: higher
+#' than this relation gives in term neonates and infants (sevoflurane 3.3% in
+#' neonates and 3.2% at 1-6 months, Lerman 1994, against 2.31% here at
+#' birth), peaking within the first year for isoflurane and desflurane
+#' (isoflurane 1.87% at 1-6 months, Cameron 1984; desflurane 9.92% at 6-12
+#' months, Taylor and Lerman 1991), and lower in preterm neonates (isoflurane
+#' 1.28% under 32 weeks' gestation and 1.41% at 32-37 weeks, LeDez and Lerman
+#' 1987, against 1.50% here at birth): figures from the PubMed abstracts, not
+#' yet read.  Whether measured
+#' infant MAC replaces this relation below 1 year was put to Shafer on
+#' 2026-11-25 (Gemini's gas-engine audit, B-03 and F-03) and DEFERRED until
+#' the papers are read; they need interlibrary loan (PMIDs 8024136, 1741518,
+#' 6703367 and, for preterm neonates, 3631603; \code{papers/pending-work.csv}).
 #'
 #' @param MAC40 MAC at age 40, % of 1 atm
 #' @param age patient age in years
@@ -339,6 +436,15 @@ GAS_DEFAULT_VA_WEIGHT_EXPO <- 0.75
 #' The minute ventilation whose alveolar part is GasMan's default alveolar
 #' ventilation: 4 L/min at 70 kg, scaled by \code{(weight / 70)^0.75}.  With a
 #' dead space of 30% that is 5.7 L/min at 70 kg.
+#'
+#' DECIDED (Shafer, 2026-11-25): this default stays scaled with total
+#' weight, "That is how clinicians think about it", although the gas
+#' compartments now follow fat-free and fat mass (getGasBody()).  The
+#' question as put: a 150 kg man of 170 cm gets 10.1 L/min against 5.7 at
+#' 70 kg, and his 90% fall of brain sevoflurane after five hours at 2.5%
+#' inspired is 17 minutes against 27.5 at 70 kg (56 at a fixed 5.7 L/min; 114
+#' with the old linear compartments at 5.7); following fat-free mass would
+#' have given him about 7.5 L/min.
 #'
 #' @param weight patient weight, kg.  Falls back to 70 kg if missing or invalid.
 #' @param deadSpace dead space as a fraction of minute ventilation

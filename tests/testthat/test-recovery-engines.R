@@ -445,6 +445,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "milrinonePediatric",
     "digoxinIVPediatric",
     "methyleneBlue",
+    "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
     "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
@@ -475,6 +476,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # anakinra (Urien 2013, 2026-11-25): plasma only
     "anakinra",
     "factorVIII",
+    "efmoroctocogAlfa",
+    "eftrenonacogAlfa",
+    "fibrinogen",
+    "immunoglobulin",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",

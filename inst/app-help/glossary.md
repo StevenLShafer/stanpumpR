@@ -50,7 +50,7 @@
 
 **MAC.** Minimum alveolar concentration: the alveolar concentration of an inhaled agent at which half of patients do not move to incision. A property of the agent, falling with age.
 
-**MAC equivalents.** The patient's alveolar concentration as a multiple of the age-adjusted MAC, summed over agents present.
+**MAC equivalents.** The patient's alveolar concentration as a multiple of the age-adjusted MAC, summed over agents present. The panel's effect-site line is the same multiple of the brain tension.
 
 **Mammillary.** A compartment model in which the peripheral compartments connect only to the central one, like a hub and spokes.
 

@@ -31,6 +31,10 @@ plottedUnitText <- function(units, drugs) {
   # A factor concentrate is plotted in IU/dL, % of normal, the patient's own
   # activity included (R/factorBaselines.R).
   unitText[units == "IUdL"] <- "IU/dL"
+  # Fibrinogen is plotted in mg/dL, the patient's own included
+  unitText[units == "mgdL"] <- "mg/dL"
+  # Serum IgG is plotted in g/L, the patient's own included
+  unitText[units == "gL"] <- "g/L"
   unitText
 }
 
@@ -63,7 +67,8 @@ simulationPlot <- function(
   yAxisHeight = 150,
   width = 800,
   pixelRatio = 1,
-  observations = NULL
+  observations = NULL,
+  nominal = NULL
   )
 {
   # Notes on what happens below
@@ -961,7 +966,35 @@ simulationPlot <- function(
     }
   }
 
-  plotObject <- ggplot2::ggplot() +
+  # The physiology ribbon (R/physiologyRibbon.R; Shafer, 2026-11-25): on the
+  # panel of each drug the physiology changes, from its curve at normal
+  # physiology to its curve at the physiology given, in place of its band.
+  # Not under normalization, where the bands are not drawn either.
+  ribbons <- if (identical(normalization, NORMALIZE_NONE))
+    physiologyRibbons(data, nominal, plotTable$Drug, plotTable$Wrap, maximum) else NULL
+  if (!is.null(ribbons) && nrow(ribbons) > 0) {
+    bands <- bands[!bands$Drug %in% ribbons$Drug, , drop = FALSE]
+    if (logY) {
+      lowestShown <- tapply(data$Y, as.character(data$Wrap), min)
+      floorOf <- lowestShown[ribbons$Wrap]
+      ribbons$ymin <- pmax(ribbons$ymin, ifelse(is.na(floorOf), ribbons$ymax / 10, floorOf))
+      ribbons <- ribbons[ribbons$ymax > 0, , drop = FALSE]
+    }
+    ribbons$Wrap <- factor(ribbons$Wrap, levels = wrapFactors, ordered = TRUE)
+  }
+
+  plotObject <- ggplot2::ggplot()
+  if (!is.null(ribbons) && nrow(ribbons) > 0)
+    plotObject <- plotObject +
+      ggplot2::geom_ribbon(
+        data = ribbons,
+        ggplot2::aes(x = Time, ymin = ymin, ymax = ymax, group = Drug),
+        fill = PHYSIOLOGY_RIBBON_FILL,
+        alpha = PHYSIOLOGY_RIBBON_ALPHA,
+        inherit.aes = FALSE,
+        show.legend = FALSE
+      )
+  plotObject <- plotObject +
     ggplot2::geom_line(
       data = data,
       ggplot2::aes(
@@ -1360,9 +1393,23 @@ simulationPlot <- function(
     # `Wrap =`, not `Wrap <-`: the assignment form named the column after the
     # whole expression, and the code below only found it because `$` on a data
     # frame matches partial names.  (Fixed 2026-10-05.)
+    # A potent gas's threshold steps with the temperature in force
+    # (thresholdSteps(); Shafer, 2026-11-25): the arrow at the right-hand
+    # edge points at the one in force there
+    endCeSteps <- Filter(Negate(is.null), lapply(drugs, function(x) x$endCeSteps))
+    thresholdRects <- thresholdSteps(plotTable$Drug, plotTable$endCe, endCeSteps,
+                                     minimum, maximum)
+    thresholdRects$Wrap <- plotTable$Wrap[match(thresholdRects$Drug, plotTable$Drug)]
+    endCeAtEnd <- vapply(seq_along(plotTable$Drug), function(i) {
+      d <- as.character(plotTable$Drug[i])   # a name, not the factor's code
+      s <- if (d %in% names(endCeSteps)) endCeSteps[[d]]
+      if (is.null(s) || nrow(s) == 0) return(plotTable$endCe[i])
+      k <- findInterval(maximum, s$Start)
+      if (k < 1) plotTable$endCe[i] else s$endCe[k]
+    }, numeric(1))
     arrows <- data.frame(
       Drug = plotTable$Drug,
-      y = plotTable$endCe,
+      y = endCeAtEnd,
       new = "\u2190 Threshold",
       x = maximum,
       Wrap = as.character(plotTable$Wrap)
@@ -1418,7 +1465,7 @@ simulationPlot <- function(
         size = 3 # font size to mm
       ) +
       ggplot2::geom_rect(
-        data=plotTable,
+        data=thresholdRects,
         mapping=ggplot2::aes(
           xmin=xmin,
           xmax=xmax,

@@ -376,6 +376,20 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
         mcg_Conv <- NA_real_
         ng_Conv  <- NA_real_
       },
+      mgdL = {                 # Mass in mg/dL: fibrinogen concentrate
+        # 1 mg/dL = 10 mg/L, so the base amount is 10 mg and a dose in mg is
+        # divided by 10.  See R/factorBaselines.R.
+        mg_Conv  <- 10
+        mcg_Conv <- 10000
+        ng_Conv  <- 10000000
+      },
+      gL = {                   # Mass in g/L (= mg/mL): serum IgG after immunoglobulin
+        # Amounts in g, so a dose in mg is divided by 1000.  See
+        # R/factorBaselines.R.
+        mg_Conv  <- 1000
+        mcg_Conv <- 1e6
+        ng_Conv  <- 1e9
+      },
       ACT = {                  # Heparin anti-Xa (IU/mL) driving the ACT (R/act.R)
         # The anti-factor Xa activity is simulated exactly as for an "IU" drug
         # (amounts in IU, divided by 1000 below to give IU/mL); actEngineResults()

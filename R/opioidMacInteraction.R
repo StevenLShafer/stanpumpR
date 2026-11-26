@@ -86,6 +86,21 @@
 #
 # The parameters are isolated here so that they can be replaced without touching
 # anything else.
+#
+# DECIDED (Shafer, 2026-11-25; Gemini's gas-engine audit of 2026-11-23, D-02,
+# D-04 and F-02): only the opioids lower MAC here, each on the one MEAC scale
+# above, with no potency of its own on MAC.  Dexmedetomidine, the
+# benzodiazepines, ketamine and propofol lower MAC too, and the app does not
+# show it; inst/app-help/models/opioid-mac.md says so.  A literature search for
+# their MAC reductions with sevoflurane (dexmedetomidine, midazolam, ketamine,
+# propofol) is recorded as the alternative, not begun.
+#
+# REVIEW WHEN THE ANAESTHETIC INTERACTION MODEL ARRIVES (Shafer, 2026-11-25):
+# he will introduce a large anaesthetic drug interaction model he has been
+# developing offline, once the current work has settled.  This file, the
+# decision above and the frozen-opioid approximation in
+# applyOpioidMacInteraction() (D-03, decided the same day to wait for that
+# model) are to be reviewed when it is added.
 # -----------------------------------------------------------------------------
 
 OPIOID_MAC_EMAX  <- 0.90   # ceiling on the fractional reduction in MAC
@@ -192,6 +207,10 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   if (is.null(mac)) return(gasEntries)
   series <- mac$results[mac$results$Site == "Plasma", c("Time", "Y")]
   if (is.null(totalOpioidMEAC(drugs, series$Time))) return(gasEntries)
+  # The summed brain MAC, the panel's effect-site line (gasBrainMac()), at the
+  # same times; the opioid reduces the MAC it is a multiple of in the same way
+  brain <- mac$results[mac$results$Site == "Effect Site", c("Time", "Y")]
+  if (!identical(brain$Time, series$Time)) brain <- series
 
   # Time until threshold, if it is being shown.  The opioid-adjusted MAC is the
   # unadjusted MAC divided by (1 - R), so it falls to the threshold when the
@@ -212,7 +231,12 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   # and the coupled gas washout would need a threshold that changes with the
   # time since the stop: a proposal recorded in
   # docs/gas-engine-audit/gemini-2026-11-23-assessment.md (D-03).  Until
-  # 2026-11-24 this comment said the engines did not expose them.
+  # 2026-11-24 this comment said the engines did not expose them.  DECIDED
+  # (Shafer, 2026-11-25): left as it is for the anaesthetic drug interaction
+  # model he will introduce (see the file header).  How large it is, measured
+  # that day: remifentanil 0.2 mcg/kg/min with 2% sevoflurane for 60 minutes,
+  # both stopped, threshold 0.1 MAC, reads 24.6 minutes where the time with
+  # remifentanil washing out alongside is 22.5 (about 9% long).
   #
   # The opioid's own times inside the plot join the MAC series, so a bolus's
   # peak effect is drawn where it is, not only at the gas engine's points
@@ -237,9 +261,12 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
   if (!is.null(aug)) extra <- aug$extra
   if (length(extra) > 0) {
     o <- order(c(series$Time, extra))
+    brain <- data.frame(Time = c(brain$Time, extra),
+                        Y = c(brain$Y, seriesStepAt(brain$Time, brain$Y, extra)))[o, , drop = FALSE]
     series <- data.frame(Time = c(series$Time, extra),
                          Y = c(series$Y, seriesStepAt(series$Time, series$Y, extra)))[o, , drop = FALSE]
     rownames(series) <- NULL
+    rownames(brain) <- NULL
   }
   R <- opioidMacReduction(totalOpioidMEAC(drugs, series$Time)$U)
   recovery <- NULL
@@ -248,13 +275,14 @@ applyOpioidMacInteraction <- function(gasEntries, drugs)
     recovery <- macRecoveryTime(w, mac$age, mac$endCe * (1 - R))
   }
   series$Y <- series$Y / (1 - R)
+  brain$Y <- brain$Y / (1 - R)
 
   # Rebuilt through gasEntry() so that the normalisation series, the equispaced
   # values behind the hover readout, and the maxima all follow.
   gasEntries[["MAC"]] <- gasEntry(
     drug         = "MAC",
     alveolar     = series,
-    brain        = series,
+    brain        = brain,
     xout         = mac$equiSpace$Time,
     drugDefaults = NULL,
     unitLabel    = "opioid-adjusted",

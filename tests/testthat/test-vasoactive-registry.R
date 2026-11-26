@@ -16,7 +16,7 @@ IMPLEMENTED <- c("epinephrine", "magnesiumSulfate", "labetalol", "diltiazem",
                  "verapamil", "phenylephrine", "milrinone", "milrinonePediatric",
                  "metoprolol", "nicardipine", "digoxinIV", "digoxinIVPediatric",
                  "vasopressin", "hydralazine", "dobutamineNeonatal",
-                 "methyleneBlue", "landiolol")
+                 "methyleneBlue", "landiolol", "levosimendan")
 
 # Every drug that was asked for, by its name in the registry
 REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
@@ -30,7 +30,7 @@ REQUESTED <- c("clevidipine", "sodium nitroprusside", "nitroglycerin",
                # asked for on 2026-10-27
                "dobutamine",
                # asked for on 2026-11-25 (docs/library-expansion/plan.csv)
-               "landiolol")
+               "landiolol", "levosimendan")
 
 test_that("every row is fully classified with a clickable source", {
   for (col in c("model_id", "drug", "route", "population", "analyte", "matrix",
@@ -161,7 +161,7 @@ test_that("the parameter audit covers every implemented drug", {
   # clinician-author's observation, "clinical", which is never estimated)
   timing <- parameters$parameter == "tPeak"
   for (d in IMPLEMENTED) {
-    reg <- registry$evidence_read[registry$stanpumpr_drug %in% d]
+    reg <- unique(registry$evidence_read[registry$stanpumpr_drug %in% d])
     pk <- parameters$drug == d & !timing
     expect_true(all(parameters$evidence[pk] == reg), info = d)
   }
@@ -238,11 +238,24 @@ test_that("the audit's numbers are the ones the models use", {
   expect_equal(value("procainamide", "Vd"), PROCAINAMIDE_VD)
   expect_equal(value("esmolol", "CL") / 1000, ESMOLOL_CL)
   expect_equal(value("esmolol", "Vc"), ESMOLOL_V1)
-  expect_equal(value("landiolol", "CL") / 1000, LANDIOLOL_CL)
-  expect_equal(value("landiolol", "V1") / 1000, LANDIOLOL_V1)
-  expect_equal(value("landiolol", "Q") / 1000, LANDIOLOL_Q)
-  expect_equal(value("landiolol", "V2") / 1000, LANDIOLOL_V2)
-  expect_equal(value("landiolol", "lag time (not represented)"), LANDIOLOL_ALAG)
+  expect_equal(value("levosimendan", "CL (76 kg)") / 60, LEVOSIMENDAN_CL)
+  expect_equal(value("levosimendan", "V1 (76 kg)"), LEVOSIMENDAN_V1)
+  expect_equal(value("levosimendan", "Q") / 60, LEVOSIMENDAN_Q)
+  expect_equal(value("levosimendan", "V2"), LEVOSIMENDAN_V2)
+  expect_equal(value("levosimendan", "weight on CL") / 100, LEVOSIMENDAN_CL_SLOPE)
+  expect_equal(value("levosimendan", "weight on V1") / 100, LEVOSIMENDAN_V1_SLOPE)
+  # landiolol: one set per candidate of the group (R/landiolol.R)
+  for (s in list(c("honda", "Honda 2008"),
+                 c("kunisawa2014", "Kunisawa 2015, gynaecologic"),
+                 c("kunisawa2015", "Kunisawa 2015, PAD"))) {
+    p <- LANDIOLOL_SOURCES[[s[1]]]
+    fields <- c(CL = "cl", V1 = "v1", Q = "q", V2 = "v2")
+    for (n in names(fields))
+      expect_equal(value("landiolol", paste0(n, " (", s[2], ")")) / 1000,
+                   p[[fields[[n]]]], info = s[2])
+    expect_equal(value("landiolol", paste0("lag time (not represented; ", s[2], ")")),
+                 p[["lag"]], info = s[2])
+  }
   expect_equal(value("dopamine", "k10"), DOPAMINE_K10)
   expect_equal(value("dopamine", "V1"), DOPAMINE_V1)
   expect_equal(value("dopamine", "k12"), DOPAMINE_K12)

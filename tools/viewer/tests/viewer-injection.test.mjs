@@ -1351,6 +1351,27 @@ test('gas: an intubation that steps is drawn with the lungs\' capacity in force,
   assertClean(page);
 });
 
+test('gas: the shunt fraction a tube was run at is named under the title (2026-11-25)', { skip }, async t => {
+  const page = await viewerPage(t);
+  const physio = async shunt => {
+    const r = clone(GAS);
+    r.physiology = { liver: 1, renal: 1, cardiac: 1, gi: 1, temperature: 37, altitude: 0, pressure: 760,
+                     endobronchial: true, ...(shunt == null ? {} : { shunt }) };
+    assert.equal(await loadRun(page, r), true);
+    return page.evaluate(() => document.getElementById('physio').innerText);
+  };
+  assert.match(await physio(30), /Intubation endobronchial, shunt 30%/);
+  // At the slider's 50%, or from a run made before it, the tube alone
+  assert.doesNotMatch(await physio(50), /shunt/);
+  assert.doesNotMatch(await physio(null), /shunt/);
+  // A shunt that is not a number is refused
+  const bad = clone(GAS);
+  bad.physiology = { endobronchial: true, shunt: '30%' };
+  assert.equal(await loadRun(page, bad), false);
+  assert.ok((await probe(page)).message.includes('physiology.shunt'));
+  assertClean(page);
+});
+
 test('gas: markup and malformed fields are refused, the name is shown as text', { skip }, async t => {
   const page = await viewerPage(t);
   for (const [mutate, names] of [[r => { r.units.conc = '%' + P; }, 'units.conc'],
