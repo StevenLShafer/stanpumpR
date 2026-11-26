@@ -281,10 +281,16 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   # papers digested on 2026-11-25/26 circle this number, several arguing from BIS-derived ke0
   # values as slow as 0.114 and 0.17 /min that 0.456 is too fast (PMID 28872658, 19690246).
   # It is not.  Schnider's own conclusion is that equilibration is FASTER than previously
-  # reported and that the fast onset was confirmed by inspecting the EEG data; a ke0 fitted to
-  # a processed index is partly fitting the monitor, which PMID 32925339 measures directly as
-  # 49 s of BIS lag beyond the effect-site model.  1.6 min applies to the Eleveld kinetics
-  # this model runs and to the Schnider companion (R/alternativeModels.R).
+  # reported, and the 1.6 min is the VISUALLY assessed time of peak EEG effect, independent of
+  # the model fit.  What the BIS-derived values measure is not the same quantity: Schnider
+  # fitted the canonical univariate parameter, derived from the EEG power spectrum to
+  # correlate with the effect site, whereas BIS is a proprietary index whose own calculation
+  # delay (14-155 s in the literature its authors cite) is absorbed into any ke0 fitted to it.
+  # PMID 32925339 is consistent with that and does not independently confirm 0.456: its 49 s
+  # is a lag FITTED to collapse the hysteresis between BIS and a Schnider effect site that
+  # already assumed ke0 0.456, so it explains why a BIS-fitted ke0 reads slow rather than
+  # proving the faster value.  1.6 min applies to the Eleveld kinetics this model runs and to
+  # the Schnider companion (R/alternativeModels.R).
   tPeak <- 1.600 # tPeak per Schnider TW et al., Anesthesiology 1999;90(6):1502-1516. https://pubmed.ncbi.nlm.nih.gov/10360845/
   reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   if (isTRUE(pregnant)) {
