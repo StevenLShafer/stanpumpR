@@ -4,7 +4,14 @@
 \alias{getGasBody}
 \title{Body and breathing-circuit geometry for the inhaled-gas model}
 \usage{
-getGasBody(weight = 70, circuitVolume = 8)
+getGasBody(
+  weight = 70,
+  circuitVolume = 8,
+  height = NULL,
+  age = NULL,
+  sex = NULL,
+  adjustToFFM = TRUE
+)
 }
 \arguments{
 \item{weight}{patient weight, kg}
@@ -14,16 +21,52 @@ absorber).  This sets the time constant of the lag between the vaporiser
 dial and the inspired concentration, and is what makes low-flow anaesthesia
 behave differently from high-flow.
 TODO(fixture): confirm the value GasMan 4.2 uses.}
+
+\item{height, age, sex}{the patient's height (cm), age (years) and sex, for
+the body-composition scaling; any NULL gives GasMan's linear scaling}
+
+\item{adjustToFFM}{FALSE for GasMan's linear scaling whatever is given}
 }
 \value{
 a list of geometry and flow parameters
 }
 \description{
-Tissue volumes and cardiac output scale with weight from the 70 kg standard.
-Circuit volume is a property of the anaesthesia machine, not the patient, so
-it does not scale.
+Tissue volumes and cardiac output scale with body size from the 70 kg
+standard, by body composition when the patient's height, age and sex are
+given and \code{adjustToFFM} is TRUE (below), otherwise linearly with
+weight as GasMan does.  Circuit volume is a property of the anaesthesia
+machine, not the patient, so it does not scale.
 }
 \details{
+BODY COMPOSITION (Shafer, 2026-11-25, built the same day).  With the
+library's fat-free mass (\code{ffmAlSallami()}), FFM, and the fat mass
+FM = weight - FFM, each over the reference man's (70 kg, 170 cm, 35
+years: FFM 54.48 kg, FM 15.52 kg; \code{FFM_REFERENCE}):
+\itemize{
+\item the vessel-rich group, the muscle group and the alveolar volume
+(functional residual capacity) scale with FFM;
+\item the fat group's volume scales with FM;
+\item the vessel-rich and muscle groups' blood flows scale with FFM to the
+0.75 (the clearance exponent of \code{pkSizeFactors()}), and the fat
+group's flow with its volume to the 0.75, Weber 2021's Equation 1
+(excess fat perfused at the standard fat's flow scaled allometrically);
+\item cardiac output is the sum of the three flows, and each group's
+share of it follows.
+}
+At the reference man this is GasMan's standard exactly (6.0, 33.0 and 14.5
+L; 76, 18 and 6\\% of 5 L/min).  Fat added to him leaves the lean volumes,
+their flows and the lungs as they were and raises cardiac output by the
+fat's flow alone, as Weber 2021 built its obese GasMan models (Table 2: at
+100 kg, 44.87 L of fat; Equation 1 gives 0.70 L/min where its table, with
+its shares rounded to whole per cent, prints 0.77).  Weber kept the lean
+volumes unchanged and so does this; it did not scale a child, which the
+lean terms here do.  Oxygen consumption stays 3.5 mL/kg/min of total
+weight, and the default ventilation stays allometric in weight
+(\code{defaultGasVentilation()}): neither is a compartment.  With
+\code{adjustToFFM} FALSE (the Patient Profile's fat-free-mass switch off),
+or without height, age or sex, the scaling is GasMan's, which the
+validation against GasMan at other weights uses.
+
 Cardiac output is GasMan's default: 5 L/min at 70 kg (gasman.ini
 \code{[Defaults] CO=5}), scaled allometrically by \code{(weight / 70)^0.75}
 as \code{GasDoc.cpp} does.  Adopted 2026-10-05 at Shafer's direction ("for
@@ -38,7 +81,7 @@ mass, the fat group by fat mass, its blood flow following its volume as
 Weber 2021 scaled it, anchored so that the 70 kg, 170 cm, 35-year-old man
 is GasMan's standard exactly, with a GasMan-scaling option kept for the
 validation cases at other weights.  Shafer: "Ted Eger would have approved."
-To be built in its own pull request; until then the scaling is linear.
+Built 2026-11-25, as above.
 Cardiac output is returned here as a single covariate-derived constant, but
 \code{advanceClosedFormGas()} accepts it per segment, so making it
 time-varying later requires no change to the engine.

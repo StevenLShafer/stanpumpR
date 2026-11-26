@@ -1624,6 +1624,8 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
 #'
 #' @param weight patient weight, kg
 #' @param events physiologyEventsFrom()'s data frame, at least one row
+#' @param base the patient's body before physiology (getGasBody()), by
+#'   default GasMan's linear scaling of \code{weight}
 #' @returns list(time, body): normal physiology from 0 and each event's from
 #'   its time.  If any body has cardiac output off normal, every body splits
 #'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
@@ -1636,12 +1638,12 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
 #'   was 30 C throughout as one whose temperature changed (Gemini's
 #'   gas-engine audit of 2026-11-23, C-07).
 #' @keywords internal
-gasBodySteps <- function(weight, events)
+gasBodySteps <- function(weight, events, base = getGasBody(weight))
 {
   states <- physiologyEventStates(events)
   split <- any(vapply(states, function(x) x[["cardiac"]] != 1, TRUE))
   bodies <- lapply(states, function(x) {
-    body <- gasBodyPhysiology(getGasBody(weight), x[["cardiac"]], split = split)
+    body <- gasBodyPhysiology(base, x[["cardiac"]], split = split)
     if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
     if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
     body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1, x[["shunt"]])
@@ -1703,6 +1705,11 @@ gasBodySteps <- function(weight, events)
 #' @param shunt NULL (0.5), or the share of cardiac output through the
 #'   unventilated lung with an endobronchial tube, 0 to 0.5
 #'   (R/endobronchial.R); ignored without the tube
+#' @param height,sex the patient's height (cm) and sex, which with \code{age}
+#'   scale the compartments by body composition (getGasBody()); NULL for
+#'   GasMan's linear scaling in weight
+#' @param adjustToFFM FALSE for GasMan's linear scaling whatever is given
+#'   (the Patient Profile's fat-free-mass switch)
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1719,7 +1726,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           physiology = NULL, temperature = NULL,
                           altitude = NULL, endobronchial = FALSE,
                           physiologyEvents = NULL, haemoglobin = NULL,
-                          shunt = NULL)
+                          shunt = NULL, height = NULL, sex = NULL,
+                          adjustToFFM = TRUE)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1736,8 +1744,11 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   gasDose <- gasDose[!is.na(gasDose$Time) & !is.na(gasDose$Dose), , drop = FALSE]
   if (nrow(gasDose) == 0) return(NULL)
 
-  body <- gasBodyPhysiology(getGasBody(weight),
-                            checkPhysiology(physiology)[["cardiac"]])
+  # The body scaled to the patient (getGasBody(): by body composition when
+  # height, age and sex are given, GasMan's linear scaling otherwise)
+  base <- getGasBody(weight, height = height, age = age, sex = sex,
+                     adjustToFFM = adjustToFFM)
+  body <- gasBodyPhysiology(base, checkPhysiology(physiology)[["cardiac"]])
   temperature <- checkBodyTemperature(temperature)
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
@@ -1751,7 +1762,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   # its time; the other physiology arguments are not used
   # (R/physiologyEvents.R)
   bodySteps <- if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0)
-    gasBodySteps(weight, physiologyEvents)
+    gasBodySteps(weight, physiologyEvents, base)
 
   sim <- advanceClosedFormGas(
     gasDose,

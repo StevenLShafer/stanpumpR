@@ -432,6 +432,21 @@ PHYSIOLOGY_Q_CARDIAC_EXPONENT <- 1
 #' @noRd
 PHYSIOLOGY_GAS_PROTECTED_SHARE <- 0.12 + 0.04
 
+#' The vessel-rich group's share of resting output in the reference body
+#' (getGasBody()'s f_brain, GasMan's 76%), against which the brain and heart's
+#' share is held: they are part of the group, lean tissue whose flow scales
+#' with the group's (by fat-free mass to the 0.75 under body-composition
+#' scaling), so they keep PHYSIOLOGY_GAS_PROTECTED_SHARE / 0.76 of the
+#' group's flow.  With the group at its reference share (the reference man,
+#' and every body scaled linearly by weight) that is exactly
+#' PHYSIOLOGY_GAS_PROTECTED_SHARE of output, so nothing changes there; a
+#' composed body whose fat takes more of the output (CodeRabbit on #941: 500
+#' kg, 20 cm, age 0 left the group 5.9%, below the fixed 16%, and a cardiac
+#' output off normal stopped the simulation) keeps the same split of its
+#' smaller group.
+#' @noRd
+GAS_REFERENCE_VRG_SHARE <- 0.76
+
 #' The gas engine's body at a multiple of normal cardiac output
 #'
 #' Scales \code{Q_cardiac} by \code{cardiac} and redistributes it: the brain
@@ -460,7 +475,10 @@ gasBodyPhysiology <- function(body, cardiac = 1, split = FALSE)
   # every body (gasBodySteps()); at normal output the two groups fill exactly
   # as the one did
   if (cardiac == 1 && !isTRUE(split)) return(body)
-  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE
+  # The brain and heart's share of normal output: a fixed fraction of the
+  # vessel-rich group's (GAS_REFERENCE_VRG_SHARE), 16% of output when the
+  # group has its reference 76%
+  share <- PHYSIOLOGY_GAS_PROTECTED_SHARE * body$f_brain / GAS_REFERENCE_VRG_SHARE
   # Normal flows as fractions of normal output.
   rest0 <- c(vrg = body$f_brain - share, muscle = body$f_muscle,
              fat = body$f_fat)

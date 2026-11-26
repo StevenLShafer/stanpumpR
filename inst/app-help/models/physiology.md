@@ -254,7 +254,10 @@ brain and heart does not fall with cardiac output: it follows the same
 autoregulated relation as the effect site of the intravenous drugs, cardiac
 output to the power 0.35 (see above). The brain and heart take 16% of resting
 output (brain 12%, heart 4%, the 35-year-old reference man of Williams and
-Leggett 1989, Table 17). What is left of the
+Leggett 1989, Table 17), whose vessel-rich group takes 76%. They are part of
+that group, so in a body scaled by composition they keep 16/76 of the group's
+flow: a 150 kg man of 170 cm, whose group takes 70% of his output, gives them
+14.7%. What is left of the
 output is shared among the rest of the vessel-rich group, muscle and fat in
 their normal proportions. At a tenth of normal output the brain and heart
 receive 7% of normal output, nearly three quarters of all there is, and the
