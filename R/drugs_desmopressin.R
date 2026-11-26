@@ -72,14 +72,16 @@
 #   vWF:    ke0 2.16 /h (CV 106%), EC50 237 pg/mL, Emax 367% of predose,
 #           gamma 0.94
 #   FVIII:C ke0 2.59 /h (CV 42.6%), EC50 314 pg/mL, Emax 388%, gamma 0.89
-# The ke0 is vWF's, since the clinical use is platelet function and vWF is
-# the factor that carries it; it is supplied directly, as glyburide's is
+# The ke0 is FVIII:C's (Steven L. Shafer, 2026-11-26: "Use Factor VIII for
+# desmopressin time of peak effect"), the better estimated of the two (CV
+# 43% against vWF's 106%); the first version used vWF's, as the factor that
+# carries platelet adhesion.  The two put the peak 30 and 34 min after a
+# bolus on this disposition.  It is supplied directly, as glyburide's is
 # (R/drugs_glyburide.R), rather than as a time to peak solved on Agerso's
 # disposition, because a ke0 is the effect site's own rate and the two
-# studies' dispositions differ.  [decision] vWF's ke0 rather than FVIII:C's,
-# and supplied rather than solved from a tPeak: Shafer to confirm.  Both
-# endpoints are drawn as % effect panels (inst/extdata/pdEffect.csv): vWF on
-# this effect site, FVIII:C on an effect site of its own at its own ke0.
+# studies' dispositions differ.  Both endpoints are drawn as % effect panels
+# (inst/extdata/pdEffect.csv): FVIII:C on this effect site, vWF on an effect
+# site of its own at its own ke0.
 #
 # THE TWO STUDIES DISAGREE ON CLEARANCE.  Argenti's means give V 9.65 L and
 # k10 0.727 /h, a clearance of 7.0 L/h in young healthy men; Agerso's model
@@ -126,9 +128,9 @@ DESMOPRESSIN_CRCL_SLOPE_NONRENAL <- 0.00933
 #' @rdname DESMOPRESSIN_CRCL_REFERENCE
 DESMOPRESSIN_CRCL_RANGE <- c(10, 144)
 
-#' Argenti 1997's von Willebrand factor ke0, /h
+#' Argenti 1997's factor VIII:C ke0, /h (Shafer, 2026-11-26)
 #' @keywords internal
-DESMOPRESSIN_KE0 <- 2.16
+DESMOPRESSIN_KE0 <- 2.59
 
 #' Desmopressin clearances at a creatinine clearance
 #'
@@ -149,8 +151,8 @@ desmopressinClearance <- function(crcl)
 #' Desmopressin, intravenous (Agerso 2004, Argenti 1997)
 #'
 #' Three compartments with renal and non-renal clearance that both fall with
-#' the creatinine clearance (Agerso 2004), and the effect site of von
-#' Willebrand factor release (Argenti 1997).  See the file header.
+#' the creatinine clearance (Agerso 2004), and the effect site of factor
+#' VIII release (Argenti 1997).  See the file header.
 #'
 #' @inheritParams ketamine
 #' @param creatinine serum creatinine, mg/dL, or NULL for the assumed normal
@@ -192,8 +194,8 @@ desmopressin <- function(weight, height, age, sex, adjustToFFM = TRUE,
       "renal and non-renal clearance linear in creatinine clearance; venous ",
       "plasma; doses as desmopressin acetate; a blank serum creatinine is the ",
       "assumed normal value for age and sex). https://doi.org/10.1111/",
-      "j.1365-2125.2004.02175.x. Effect site: von Willebrand factor release, ",
-      "ke0 2.16/h, Argenti D et al., Am J Ther 1997;4:3-8. ",
+      "j.1365-2125.2004.02175.x. Effect site: factor VIII release, ",
+      "ke0 2.59/h, Argenti D et al., Am J Ther 1997;4:3-8. ",
       "https://doi.org/10.1097/00045391-199701000-00002")
   )
 }
