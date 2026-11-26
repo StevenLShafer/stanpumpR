@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # -----------------------------------------------------------------------------
-# Build the attachment for the external audit of the inhaled-gas engine
-# (docs/gas-engine-audit/PROMPT.md).
+# Build the attachment for the external audit of the inhaled-gas engine:
+# round 1 (docs/gas-engine-audit/PROMPT.md, stanpumpR c90c33e, 2026-11-23) or
+# round 2 (PROMPT-2.md, stanpumpR 8c1ea1b, 2026-11-26), chosen by ROUND.
+# Round 2 adds the files the changes since round 1 touched and
+# CHANGES-SINCE-ROUND-1.diff, the diff of the gas engine's code and pages from
+# c90c33e to the round-2 commit.
 #
 # Writes, from PINNED commits so that every line number the auditors cite can
 # be checked against the same text:
@@ -25,14 +29,22 @@
 # Usage:
 #   docs/gas-engine-audit/make-bundle.sh OUTDIR [EGER_CHAPTER.pdf]
 # Environment:
-#   STANPUMPR_COMMIT  default the commit PROMPT.md names
-#   GASMAN_COMMIT     default the commit PROMPT.md names
+#   ROUND             1 or 2 (default 2)
+#   STANPUMPR_COMMIT  default the commit that round's prompt names
+#   GASMAN_COMMIT     default the commit both prompts name
 #   GASMAN_REPO       a local clone of rasman/gasmanonline to read from instead
 #                     of fetching (it must contain GASMAN_COMMIT)
 # -----------------------------------------------------------------------------
 set -euo pipefail
 
-STANPUMPR_COMMIT="${STANPUMPR_COMMIT:-c90c33e50346380960d5d86c5a991ca1bf35a1ff}"
+ROUND="${ROUND:-2}"
+ROUND1_COMMIT="c90c33e50346380960d5d86c5a991ca1bf35a1ff"
+case "$ROUND" in
+  1) DEFAULT_COMMIT="$ROUND1_COMMIT" ;;
+  2) DEFAULT_COMMIT="8c1ea1bd3610181226f087c2598ae48f5a17b0aa" ;;
+  *) echo "ROUND must be 1 or 2" >&2; exit 1 ;;
+esac
+STANPUMPR_COMMIT="${STANPUMPR_COMMIT:-$DEFAULT_COMMIT}"
 GASMAN_COMMIT="${GASMAN_COMMIT:-d3a2dd36f6be4582cdb7c26ccb860164d9f9983a}"
 GASMAN_URL="https://github.com/rasman/gasmanonline"
 STANPUMPR_URL="https://github.com/StevenLShafer/stanpumpR"
@@ -41,7 +53,11 @@ OUT="${1:?usage: make-bundle.sh OUTDIR [EGER_CHAPTER.pdf]}"
 CHAPTER="${2:-}"
 REPO="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 SHORT="${STANPUMPR_COMMIT:0:7}"
-NAME="stanpumpR-gas-audit-${SHORT}"
+if [ "$ROUND" = 1 ]; then
+  NAME="stanpumpR-gas-audit-${SHORT}"
+else
+  NAME="stanpumpR-gas-audit-r${ROUND}-${SHORT}"
+fi
 DEST="$OUT/$NAME"
 
 if [ -e "$DEST" ]; then
@@ -121,6 +137,35 @@ STANPUMPR_FILES=(
   tests/testthat/test-ui-audit-carbon4-gas.R
   tests/testthat/test-coderabbit-730-gas.R
 )
+# Round 2: what the changes since round 1 added or touched, the record of
+# round 1, and the gas scenarios' pages (James Philip will read them)
+if [ "$ROUND" -ge 2 ]; then
+  STANPUMPR_FILES+=(
+    R/physiologyRibbon.R
+    R/derivedSeries.R
+    R/simulationPlot.R
+    R/help-scenarios.R
+    inst/app-help/models/fat-free-mass.md
+    inst/app-help/scenarios/emergence-desflurane.md
+    inst/app-help/scenarios/emergence-sevoflurane.md
+    inst/app-help/scenarios/mac-and-age.md
+    inst/app-help/scenarios/opioid-mac-interaction.md
+    inst/app-help/scenarios/second-gas-effect.md
+    inst/app-help/scenarios/sevoflurane-washin.md
+    inst/app-help/scenarios/visualizer-nitrous-oxide.md
+    inst/app-help/scenarios/visualizer-sevoflurane-emergence.md
+    inst/app-help/scenarios/visualizer-sevoflurane-overpressure.md
+    inst/app-help/scenarios/visualizer-sevoflurane-washin.md
+    docs/gas-engine-audit/chatgpt-2026-11-23-assessment.md
+    docs/gas-engine-audit/gemini-2026-11-23-assessment.md
+    tests/testthat/test-brain-mac.R
+    tests/testthat/test-gas-body-composition.R
+    tests/testthat/test-physiology-ribbon.R
+    tests/testthat/test-gas-audit-chatgpt.R
+    tests/testthat/test-gas-audit-gemini.R
+    tests/testthat/test-coderabbit-858.R
+  )
+fi
 # Whole directories
 mapfile -t VALIDATION < <(git -C "$REPO" ls-tree -r --name-only "$STANPUMPR_COMMIT" -- inst/validation)
 STANPUMPR_FILES+=("${VALIDATION[@]}")
@@ -164,6 +209,31 @@ if [ -n "$CHAPTER" ]; then
   cp "$CHAPTER" "$DEST/$(basename "$CHAPTER")"
 fi
 
+# --- Round 2: what changed since round 1 -----------------------------------
+# The diff, from the round-1 commit to this one, of the bundled files that
+# existed at both (a file added since is in the bundle whole), leaving out the
+# CSVs and the files whose changes are mostly elsewhere in the program
+# (AGENTS.md, docs/, constants.R, help-drugs.R), so the auditor can see what
+# the fixes and the features since round 1 changed.
+if [ "$ROUND" -ge 2 ]; then
+  git -C "$REPO" cat-file -e "${ROUND1_COMMIT}^{commit}" 2>/dev/null || {
+    echo "round-1 commit $ROUND1_COMMIT is not in $REPO; fetch it first" >&2
+    exit 1
+  }
+  mapfile -t DIFFED < <(printf '%s\n' "${STANPUMPR_FILES[@]}" |
+    grep -v -E '\.csv$|^AGENTS\.md$|^docs/|^R/constants\.R$|^R/help-drugs\.R$')
+  {
+    echo "# Changes to the gas engine's files from round 1 to round 2"
+    echo "# git diff --diff-filter=M ${ROUND1_COMMIT:0:7} ${STANPUMPR_COMMIT:0:7}"
+    echo "# Files added since round 1 are in the bundle whole and not repeated here."
+    echo "# Paths are repository paths; in the bundle they are under stanpumpR/."
+    echo "# The commits that touched these files:"
+    git -C "$REPO" log --format='#   %h %s' "$ROUND1_COMMIT..$STANPUMPR_COMMIT" -- "${DIFFED[@]}"
+    echo
+    git -C "$REPO" diff --diff-filter=M "$ROUND1_COMMIT" "$STANPUMPR_COMMIT" -- "${DIFFED[@]}"
+  } > "$DEST/CHANGES-SINCE-ROUND-1.diff"
+fi
+
 # --- INDEX.md ----------------------------------------------------------------
 permalink() {  # bundle path -> permalink at the pinned commit
   case "$1" in
@@ -172,7 +242,7 @@ permalink() {  # bundle path -> permalink at the pinned commit
   esac
 }
 {
-  echo "# Index of the gas-engine audit bundle"
+  echo "# Index of the gas-engine audit bundle (round $ROUND)"
   echo
   echo "- stanpumpR at \`$STANPUMPR_COMMIT\` ($STANPUMPR_URL/tree/$STANPUMPR_COMMIT)"
   echo "- GasMan at \`$GASMAN_COMMIT\` ($GASMAN_URL/tree/$GASMAN_COMMIT)"
@@ -205,7 +275,7 @@ permalink() {  # bundle path -> permalink at the pinned commit
 # --- Numbered text ----------------------------------------------------------
 # Files left out of CORE-NUMBERED.txt: large, or read only for one check.
 # They are in the zip, in INDEX.md and, for stanpumpR, in SUPPLEMENT-NUMBERED.txt.
-SUPPLEMENT_RE='^stanpumpR/(AGENTS\.md|R/app_server\.R|R/viewerRun\.R|R/constants\.R|R/help-drugs\.R|inst/extdata/drugDefaults_global\.csv|inst/extdata/pregnancyRegistry\.csv|inst/validation/.*\.csv|inst/app-help/models/physiology-and-pharmacokinetics\.md|docs/weight-adjustment\.md|tests/testthat/test-physiology\.R|tests/testthat/test-physiology-events\.R|tests/testthat/helpers\.R)$'
+SUPPLEMENT_RE='^stanpumpR/(AGENTS\.md|R/app_server\.R|R/viewerRun\.R|R/constants\.R|R/help-drugs\.R|R/simulationPlot\.R|R/help-scenarios\.R|docs/gas-engine-audit/.*|inst/extdata/drugDefaults_global\.csv|inst/extdata/pregnancyRegistry\.csv|inst/validation/.*\.csv|inst/app-help/models/physiology-and-pharmacokinetics\.md|docs/weight-adjustment\.md|tests/testthat/test-physiology\.R|tests/testthat/test-physiology-events\.R|tests/testthat/helpers\.R)$'
 # GasMan files never numbered: the licence text, build tooling, examples
 UNNUMBERED_RE='^gasman/(LICENSE|gasman_api/(examples|run|convert|GasManWeb)/.*|.*CMake.*|.*Makefile)$'
 
