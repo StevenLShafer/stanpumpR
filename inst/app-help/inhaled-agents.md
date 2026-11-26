@@ -27,6 +27,8 @@ Two meanings of "MAC" are kept apart.
 
 The **MAC equivalents** panel shows the patient's alveolar concentration *as a multiple of that MAC*, summed over the potent agents present, including nitrous oxide. "1 MAC of sevoflurane" means an alveolar concentration of one MAC equivalent. Agents given together are treated as additive, and one number is what is titrated to.
 
+The panel has two lines, as each agent's panel does. Its **plasma** line is the end-tidal MAC equivalents just described, and its *time until threshold* is read from that line. Its **effect site** line is the brain's: each agent's tension in the vessel-rich group, which lags the end-tidal tension, as a multiple of its MAC, summed over the agents (Steven Shafer, 25 November 2026). With the default line types (Graph Options: plasma line blank, effect-site line solid) the panel shows the brain's line. Turn on the plasma line to see the end-tidal line beside it: on induction the brain trails the end-tidal line, and on emergence it stays above it.
+
 ## Rules the dose table enforces
 
 - **Ventilation must be greater than zero** whenever a gas is being given; without it nothing carries gas to the alveoli. If you enter a gas and there is no ventilation row, one is added: 5.7 L/min at 70 kg, scaled to the patient by (weight/70)^0.75. That is the minute ventilation whose alveolar part is GasMan's default of 4 L/min.

@@ -256,11 +256,15 @@
 #     end-tidal MAC (see "(5) MAC" in the loop below, which says why).  Until
 #     2026-11-24 this header said the brain (vessel-rich) tension, which an
 #     earlier version used (Gemini's gas-engine audit of 2026-11-23, C-04).
-#     DECIDED (Shafer, 2026-11-25; C-04, D-05): the MAC panel's dashed
-#     "effect site" line is to show the summed brain (vessel-rich group) MAC,
-#     sum_i F_brain,i / MAC_i(age), in place of what it draws now; the solid
-#     end-tidal line and its time until threshold are unchanged.  Shafer: "I
-#     think Ted Eger would have approved."  To be built in its own pull request.
+#     DECIDED (Shafer, 2026-11-25; C-04, D-05): the MAC panel's "effect
+#     site" line is the summed brain (vessel-rich group) MAC,
+#     sum_i F_brain,i / MAC_i(age), built the same day (gasBrainMac(), read
+#     by gasDrugEntries()); its "plasma" line, the end-tidal MAC, and the time
+#     until threshold, read off end-tidal, are unchanged.  Shafer: "I think
+#     Ted Eger would have approved."  Until then both lines were the
+#     end-tidal MAC.  With the default line types (plasma blank, effect site
+#     solid) the panel shows the brain MAC, as an agent's panel shows its
+#     brain tension.
 #
 # LINEARITY AND THE METHOD OF SOLUTION
 # ====================================
@@ -1438,18 +1442,8 @@ advanceClosedFormGas <- function(
   # m_fMAC raw, with no age term, so macForAge() is ours too -- a validation run
   # against GasMan output must use the reference age.
   # MAC at each row's body temperature (physiology events step it)
-  macTotal <- rep(0, nT)
   rowBodies <- if (is.null(bodySteps)) list(body) else bodySteps$body
-  for (k in unique(bodyRow))
-  {
-    rows <- which(bodyRow == k)
-    pk <- gasPropertiesAt(rowBodies[[k]]$temperature)
-    for (g in pk$gas[pk$potent])
-    {
-      MAC <- macForAge(pk$MAC40[pk$gas == g], age)
-      macTotal[rows] <- macTotal[rows] + out[[g]][rows, 2] / MAC
-    }
-  }
+  macTotal <- gasMacSum(out, 2L, bodyRow, rowBodies, age)
   results <- rbind(results, data.frame(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
     stringsAsFactors = FALSE))
@@ -1473,6 +1467,55 @@ advanceClosedFormGas <- function(
        body = body, circuit = circuit, weight = weight, age = age, Qco = Qco,
        deadSpace = deadSpace, bodySteps = bodySteps, bodyRow = bodyRow,
        cardiacOutput = cardiacOutput)
+}
+
+#' Summed MAC multiples of one state of every potent agent
+#'
+#' Each potent agent's tension divided by its MAC at the patient's age and
+#' the body temperature in force at each row, summed over the agents.
+#' Column 2, the alveolar tension, is the engine's MAC series; column 3, the
+#' brain (vessel-rich group), is the MAC panel's effect-site line
+#' (\code{gasBrainMac()}).
+#'
+#' @param state named list of state matrices, one per gas, a row per time
+#' @param column the state's column: 2 alveolar, 3 brain
+#' @param bodyRow the body in force at each row (an index into \code{bodies})
+#' @param bodies the gas bodies
+#' @param age years
+#' @returns the summed MAC multiple at each row
+#' @keywords internal
+gasMacSum <- function(state, column, bodyRow, bodies, age)
+{
+  total <- rep(0, length(bodyRow))
+  for (k in unique(bodyRow))
+  {
+    rows <- which(bodyRow == k)
+    pk <- gasPropertiesAt(bodies[[k]]$temperature)
+    for (g in intersect(pk$gas[pk$potent], names(state)))
+      total[rows] <- total[rows] +
+        state[[g]][rows, column] / macForAge(pk$MAC40[pk$gas == g], age)
+  }
+  total
+}
+
+#' The summed brain MAC of a run
+#'
+#' The MAC panel's dashed "effect site" line: the sum over the potent agents
+#' of each one's brain (vessel-rich group) tension over its MAC, where the
+#' solid line sums the alveolar tensions.  Shafer, 2026-11-25 (Gemini's
+#' gas-engine audit, C-04 and D-05): "I think Ted Eger would have approved."
+#' With cardiac output off normal, state 3 is the brain and heart alone
+#' (\code{gasTissueShares()}), the effect site.
+#'
+#' @param sim \code{advanceClosedFormGas()}'s value
+#' @returns a data frame of Time and Y, one row per time of the run
+#' @keywords internal
+gasBrainMac <- function(sim)
+{
+  bodies <- if (is.null(sim$bodySteps)) list(sim$body) else sim$bodySteps$body
+  bodyRow <- if (is.null(sim$bodyRow)) rep(1L, length(sim$timeLine)) else sim$bodyRow
+  data.frame(Time = sim$timeLine,
+             Y = gasMacSum(sim$state, 3L, bodyRow, bodies, sim$age))
 }
 
 #' The agent carried across a change of body temperature
