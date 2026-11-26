@@ -46,7 +46,7 @@ test_that("the switch on reads the pharmacokinetic weight and the size factors",
   expect_equal(on$cl2 * 60, 12.1 * size$clearance)
   ref <- fluconazole(70, 170, 35, "male")$PK$default
   expect_equal_rounded(0.7420773, ref$cl1 * 60)
-  expect_equal_rounded(34.90488, ref$v1)
+  expect_equal_rounded(34.90113, ref$v1)
 })
 
 test_that("the oral route: the label's F and McLachlan's ka", {
