@@ -481,6 +481,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "fibrinogen",
     "immunoglobulin",
     "antithrombin",
+    "antithrombinAlfa",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",

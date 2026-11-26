@@ -10,8 +10,9 @@ mcgPerMlScale(units)
 \item{units}{a drug's \code{Concentration.Units}}
 }
 \value{
-1/1000 for ng (internalDoseScale()), otherwise 1: mcg, and the
-units no such drug is plotted in
+1/1000 for ng (internalDoseScale()), 1e-6 for pg (desmopressin's
+\% effect, 2026-11-26), otherwise 1: mcg, and the units no such drug is
+plotted in
 }
 \description{
 For the constants a few models hold in fixed units (the antiseizure

@@ -136,7 +136,11 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 # rocuronium (Kleijn 2011): Cockcroft-Gault in an exponential
                 # on V1, exp[-0.00143 (CR - 119)], not on its clearance
                 # (R/drugs_rocuronium.R)
-                "rocuronium")
+                "rocuronium",
+                # Cockcroft-Gault per 1.73 m2 (Gehan-George), linear on both
+                # renal and non-renal clearance (Agerso 2004,
+                # R/drugs_desmopressin.R)
+                "desmopressin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),
