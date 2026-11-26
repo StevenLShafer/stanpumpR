@@ -1,4 +1,4 @@
-The parameters and defaults of the inhaled-gas engine are GasMan®'s, and the intent for now is to give the same answers GasMan gives. The table lists eleven differences. Ten are deliberate, confirmed by Dr Shafer in October and November 2026, and will remain; the eleventh is a GasMan option, off by default, that has no counterpart here. Anyone comparing the two side by side should know them.
+The parameters and defaults of the inhaled-gas engine are GasMan®'s, and the intent for now is to give the same answers GasMan gives. The table lists twelve differences. Eleven are deliberate, confirmed by Dr Shafer in October and November 2026, and will remain; the twelfth is a GasMan option, off by default, that has no counterpart here. Anyone comparing the two side by side should know them.
 
 | | GasMan | stanpumpR | Why |
 |---|---|---|---|
