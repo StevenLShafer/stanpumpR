@@ -141,7 +141,16 @@ test_that("the help page's generated blocks render from the registry", {
   expect_match(md, "| Drug | Product |", fixed = TRUE)
   expect_equal(length(strsplit(md, "\n")[[1]]), nrow(registry) + 2)
   want <- helpChemotherapyToObtainMarkdown()
-  expect_match(want, "Periclou", fixed = TRUE)    # a paper still to obtain
+  # A canary for the to-obtain block, and it must name an entry with NO PMID.
+  # It named Periclou until 2026-11-25, and then broke the moment that paper was
+  # obtained, verified and its row cleared -- i.e. the test failed BECAUSE the work
+  # succeeded.  Anything carrying a PMID is a paper somebody is trying to get, so
+  # arrivals.py will one day report it as arrived and its row will be cleared; the
+  # carboplatin erratum has no PMID and no row can clear it on arrival.
+  expect_match(want, "Duffull 1997 erratum", fixed = TRUE)
+  # ...and the block really is a bullet list of entries, whichever rows are in it
+  expect_true(sum(grepl("^- [*][*]", strsplit(want, "
+")[[1]])) >= 2)
   html <- helpPageHTML("models/chemotherapy")
   expect_match(html, "MTXPK.org", fixed = TRUE)  # a paper still to obtain
   expect_false(grepl("<!-- generated", html, fixed = TRUE))
