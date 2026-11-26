@@ -13,6 +13,10 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
                 # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
                 "dabigatranHip",
+                # tinzaparin (Barrett 2001) puts a power of the RAW plasma
+                # creatinine (mg/dL, not a clearance) on apparent CL, centred
+                # on the median 1.0 mg/dL (R/drugs_tinzaparin.R)
+                "tinzaparin",
                 "enoxaparin", "fondaparinux",
                 # Renal function is hydrochlorothiazide's ONLY covariate
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
