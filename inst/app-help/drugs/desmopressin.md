@@ -27,7 +27,7 @@ Doses are entered as desmopressin acetate, as every US product is labelled and a
 
 ### Effect site
 
-The effect site is the release of von Willebrand factor. Its rate constant, ke0 2.16 /h (a half-time of 19 minutes), is from Argenti and colleagues (*Am J Ther* 1997;4:3-8, [doi:10.1097/00045391-199701000-00002](https://doi.org/10.1097/00045391-199701000-00002)). They gave 0.3 mcg/kg over 15 minutes to 28 healthy men and measured von Willebrand factor (ristocetin cofactor) and factor VIII coagulant activity for 24 hours.
+The effect site is the release of factor VIII. Its rate constant, ke0 2.59 /h (a half-time of 16 minutes), is from Argenti and colleagues (*Am J Ther* 1997;4:3-8, [doi:10.1097/00045391-199701000-00002](https://doi.org/10.1097/00045391-199701000-00002)). They gave 0.3 mcg/kg over 15 minutes to 28 healthy men and measured von Willebrand factor (ristocetin cofactor) and factor VIII coagulant activity for 24 hours. Factor VIII's rate constant was chosen over von Willebrand factor's (2.16 /h) because it was the better estimated: its coefficient of variation between subjects was 43%, against 106%. On this model the two put the peak effect 30 and 34 minutes after a bolus.
 
 After 0.3 mcg/kg over 15 minutes, the plasma concentration peaks at about 1100 pg/mL at the end of the infusion, as Argenti measured, and the effect site about half an hour later.
 
@@ -37,12 +37,12 @@ The Graph Option **% effect** draws two panels from Argenti's sigmoid Emax model
 
 | End point | EC50 | Emax (% of predose) | Hill coefficient | ke0 |
 |---|---|---|---|---|
-| von Willebrand factor | 237 pg/mL | 367% | 0.94 | 2.16 /h (this drug's effect site) |
-| Factor VIII:C | 314 pg/mL | 388% | 0.89 | 2.59 /h (its own effect site) |
+| von Willebrand factor | 237 pg/mL | 367% | 0.94 | 2.16 /h (its own effect site) |
+| Factor VIII:C | 314 pg/mL | 388% | 0.89 | 2.59 /h (this drug's effect site) |
 
 100% on these panels is the largest possible rise: to 3.7 times baseline for von Willebrand factor and 3.9 times for factor VIII. After 0.3 mcg/kg the von Willebrand panel reaches about 70%, a rise to about 2.9 times baseline. Argenti measured about 2.6 to 2.9 times.
 
-The variability between subjects was large: the coefficients of variation were about 30 to 45% for Emax and EC50, and 106% for the von Willebrand factor ke0.
+The variability between subjects was large: the coefficients of variation were about 30 to 45% for Emax and EC50, 43% for the factor VIII ke0 and 106% for the von Willebrand factor ke0.
 
 ### Where to be careful
 

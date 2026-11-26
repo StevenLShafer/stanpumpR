@@ -12,6 +12,6 @@ value for the patient's age and sex}
 }
 \description{
 Three compartments with renal and non-renal clearance that both fall with
-the creatinine clearance (Agerso 2004), and the effect site of von
-Willebrand factor release (Argenti 1997).  See the file header.
+the creatinine clearance (Agerso 2004), and the effect site of factor
+VIII release (Argenti 1997).  See the file header.
 }
