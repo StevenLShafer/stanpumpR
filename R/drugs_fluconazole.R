@@ -12,7 +12,7 @@
 # THE SOURCE
 # ==========
 # Vuong ML, Elkayal O, et al. A fluconazole population pharmacokinetics study
-# to improve target attainment in critically ill patients. Infection 2025
+# to improve target attainment in critically ill patients. Infection 2026;54:299-313
 # (PMID 41085604, doi 10.1007/s15010-025-02663-0).  177 ICU patients from
 # eight studies (Belgium, the Netherlands, Germany, Australia), intravenous
 # fluconazole, 1616 concentrations; NONMEM 7.5, FOCE-I, ADVAN13; 70 multiply
@@ -144,7 +144,7 @@ fluconazole <- function(weight, height, age, sex, adjustToFFM = TRUE,
   reference <- paste0(
     "Vuong ML, Elkayal O, et al. A fluconazole population pharmacokinetics ",
     "study to improve target attainment in critically ill patients. ",
-    "Infection 2025, doi 10.1007/s15010-025-02663-0. 177 ICU patients, two ",
+    "Infection 2026;54:299-313, doi 10.1007/s15010-025-02663-0. 177 ICU patients, two ",
     "compartments: CL 0.614 L/h x (eGFR/80)^0.532 (CKD-EPI 2021, off CRRT), ",
     "Vc 39.4 L x (weight/80)^0.908, Q 12.1 L/h, Vp 8.47 L. Clearance about ",
     "40% below the Diflucan label's healthy adults. ",

@@ -1,6 +1,6 @@
 ### The model
 
-Vuong and colleagues (*Infection* 2025, [doi:10.1007/s15010-025-02663-0](https://doi.org/10.1007/s15010-025-02663-0)) pooled the individual data of eight intensive-care studies from Belgium, the Netherlands, Germany and Australia: 177 critically ill adults given intravenous fluconazole, 1616 concentrations. Two compartments describe them. For a patient not on renal replacement therapy:
+Vuong and colleagues (*Infection* 2026;54:299-313, [doi:10.1007/s15010-025-02663-0](https://doi.org/10.1007/s15010-025-02663-0)) pooled the individual data of eight intensive-care studies from Belgium, the Netherlands, Germany and Australia: 177 critically ill adults given intravenous fluconazole, 1616 concentrations. Two compartments describe them. For a patient not on renal replacement therapy:
 
 - clearance 0.614 L/h × (eGFR / 80)^0.532, the eGFR from the CKD-EPI equation without race, in mL/min/1.73 m²
 - central volume 39.4 L × (weight / 80 kg)^0.908
