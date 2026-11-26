@@ -83,11 +83,11 @@
 #   the same "will appear to be a bug because it isn't what the physiology
 #   teaches", and a Y axis that rescales can hide a change that the ribbon
 #   shows within one panel.  The threshold line stays and, on the gas panels,
-#   steps with the temperature in force.  To be built in its own pull
-#   request (a nominal-physiology simulation at the drug's own times, the
-#   ribbon from the lower curve to the higher at each moment, kept in order
-#   across an event's repeated time, from the panel's lowest positive value
-#   on a log axis, never clicked or hovered, off under normalization).
+#   steps with the temperature in force.  Built 2026-11-25: R/physiologyRibbon.R
+#   (physiologyRibbons(), thresholdSteps()), app_server()'s nominalDrugs(),
+#   simulationPlot(nominal =), and a gas entry's endCeSteps.  The ribbon
+#   follows the line the panel draws, effect site where shown, rather than
+#   the alveolar line the working assumption named for an inhaled agent.
 #
 #   Not a decision, a lead: Single Paper Review "crashed" (Shiny's Reload
 #   overlay, 2026-11-19) when Shafer opened it after using the sliders, the

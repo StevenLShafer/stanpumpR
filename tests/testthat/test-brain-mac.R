@@ -63,3 +63,31 @@ test_that("the opioid interaction divides both lines by the same reduction", {
   expect_equal(ratio("Effect Site"), ratio("Plasma"), tolerance = 1e-6)
   expect_gt(ratio("Plasma"), 1)
 })
+
+test_that("an opioid time between gas samples scales each line's own interpolation", {
+  # CodeRabbit on #939: times 0 and 60 are gas points already, so the branch
+  # that inserts an opioid's own time, reading brain and end-tidal each off its
+  # own curve, was not exercised
+  dt <- data.frame(Drug = c("oxygen", "sevoflurane", "ventilation"), Time = 0, Dose = c(6, 2, 6))
+  sim <- simulateGases(dt, weight = 70, age = 40, maximum = 60)
+  entries <- gasDrugEntries(sim, dt, getDrugDefaultsGlobal(), 60, age = 40)
+  before <- entries[["MAC"]]$results
+  t <- 3.4567
+  expect_false(t %in% before$Time)
+  opioid <- list(remifentanil = list(
+    results = data.frame(Drug = "remifentanil", Time = c(0, t, 60), Site = "Effect Site",
+                         Y = c(0.5, 3, 1)),
+    MEAC = 1))
+  after <- applyOpioidMacInteraction(entries, opioid)[["MAC"]]$results
+  R <- opioidMacReduction(totalOpioidMEAC(opioid, t)$U)
+  at <- function(d, site) {
+    s <- d[d$Site == site, ]
+    seriesStepAt(s$Time, s$Y, t)
+  }
+  expect_true(t %in% after$Time[after$Site == "Effect Site"])
+  expect_true(t %in% after$Time[after$Site == "Plasma"])
+  expect_equal(at(after, "Effect Site"), at(before, "Effect Site") / (1 - R))
+  expect_equal(at(after, "Plasma"), at(before, "Plasma") / (1 - R))
+  # The two lines differ there, so a brain read off the end-tidal curve fails
+  expect_false(isTRUE(all.equal(at(before, "Effect Site"), at(before, "Plasma"))))
+})
