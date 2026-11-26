@@ -15,6 +15,34 @@ Until 2026-11-18 that meant they existed **only** on the Drive, with no history,
 backup — three of them were changed that day, and nothing recorded what they had been. Hence this
 folder.
 
+## Where papers arrive: `C:\dev\Pending Uploads`, and nowhere else
+
+Changed on 2026-11-25 (Shafer). Until then both filers scanned `~/Downloads`, which had
+collected hundreds of PDFs unrelated to stanpumpR — the last run that read it reported **136
+recent ones it could not place** — and every run re-read and re-hashed them. Shafer now moves
+what he wants filed into `C:\dev\Pending Uploads`; Downloads is not scanned at all.
+
+Two consequences worth knowing:
+
+- **`file_supplements.py` had Downloads hard-coded and no `--dir` at all**, and `update.bat`
+  passes no arguments, so after the inbox moved it would have scanned the wrong folder for
+  ever and reported "Filed 0" every run without anything looking wrong. It now takes `--dir`
+  like `file_downloads.py`, and both default to the inbox. The run on the evening of the
+  change filed **0 PDFs and 0 supplements** for exactly this reason, which is how it was found.
+- **`file_downloads.py` still scans the archive as well.** That is how a second copy of an
+  already-filed paper is recognised and recycled, and has nothing to do with where new files
+  land.
+
+`unplaced_downloads.txt` is now `unplaced_uploads.txt`: a short to-do of what is still sitting
+in the inbox, not a survey of somebody's Downloads folder.
+
+**Recycle on success, keep and report on failure.** A file that files cleanly is moved to the
+Recycle Bin and logged in `recycled_log.json`, so the inbox stays short on its own. A file the
+filer CANNOT identify is left where it is and named in the report — never deleted. Deleting it
+silently would lose a paper nobody had noticed was unidentifiable, and the evening of the
+change produced three such files (an Avycaz corrigendum and two supplements) that all turned
+out to be wanted once a person looked at them.
+
 ## Keeping the two in step
 
 `check_in_step.py` compares them and names anything that differs, is in the archive but not

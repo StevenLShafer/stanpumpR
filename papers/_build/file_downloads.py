@@ -23,7 +23,18 @@ dry = "--dry-run" in args
 ARCHIVE = args[args.index("--archive") + 1] if "--archive" in args else os.path.dirname(HERE)
 CACHE_PATH = os.path.join(HERE, "filing_cache.json")
 LOG_PATH = os.path.join(HERE, "filing_log.json")
-scan_dirs = [args[args.index("--dir") + 1]] if "--dir" in args else [os.path.join(os.path.expanduser("~"), "Downloads"), ARCHIVE]
+# WHERE PAPERS ARRIVE (changed 2026-11-25, Shafer): C:\dev\Pending Uploads, and
+# nowhere else.  Downloads is NO LONGER SCANNED.  It had accumulated hundreds of
+# PDFs with no relation to stanpumpR -- the last run that read it reported 136
+# recent ones it could not place -- and every run re-read and re-hashed them.
+# Shafer moves what he wants filed into Pending Uploads; a file that files
+# successfully is recycled from there, so the folder stays short.  A file that
+# CANNOT be identified is left and reported, never deleted: deleting it silently
+# would lose a paper nobody had noticed was unidentifiable.
+INBOX = os.path.join("C:", os.sep, "dev", "Pending Uploads")
+scan_dirs = [args[args.index("--dir") + 1]] if "--dir" in args else [INBOX, ARCHIVE]
+# ARCHIVE stays in the default set: that is how a second copy of an already-filed
+# paper is recognised and recycled, which has nothing to do with where new files land.
 
 
 def words(s):
@@ -519,7 +530,9 @@ def unidentified_note(path):
 # and are written out in full to UNPLACED_PATH.
 NOT_A_REFERENCE = "not a stanpumpR reference, as far as the filer can tell"
 PAGE1_MIN_LETTERS = 20          # below this, page 1 carries no text that can be screened
-UNPLACED_PATH = os.path.join(HERE, "unplaced_downloads.txt")
+UNPLACED_PATH = os.path.join(HERE, "unplaced_uploads.txt")
+# Renamed from unplaced_downloads.txt on 2026-11-25 with the inbox: it now lists
+# what is left in Pending Uploads, which is a short to-do, not a survey of Downloads.
 
 
 cache = json.load(open(CACHE_PATH, encoding="utf-8")) if os.path.exists(CACHE_PATH) else {}
@@ -837,7 +850,7 @@ if unwrapped:
 # lists non-empty, which is exactly the case that hides it (CodeRabbit, PR #797).
 if recycled:
     same = sum(1 for e in recycled if e.get("why"))
-    print("Moved %d original(s) from Downloads to the Recycle Bin (%d identical to an archived copy, %d the same paper "
+    print("Moved %d original(s) from the inbox to the Recycle Bin (%d identical to an archived copy, %d the same paper "
           "differently stamped)." % (len(recycled), len(recycled) - same, same))
 if would_recycle:
     print("Would recycle %d redundant second copies (same paper as the archived one):" % len(would_recycle))
@@ -857,10 +870,10 @@ if review:
 if unplaced:
     if not dry:
         with open(UNPLACED_PATH, "w", encoding="utf-8") as f:
-            f.write("Recent PDFs in Downloads that file_downloads.py could not match to any stanpumpR reference (%s).\n"
+            f.write("Files left in the inbox that file_downloads.py could not match to any stanpumpR reference (%s).\n"
                     "File one that IS a reference by hand as PMID_<pmid>.pdf; move the rest out of Downloads.\n\n"
                     % datetime.datetime.now().isoformat(timespec="minutes"))
             for path, note in sorted(unplaced):
                 f.write("%s\n    %s\n" % (path, note))
-    print("Not stanpumpR references, as far as the filer can tell: %d recent PDF(s) in Downloads, listed in %s"
+    print("Not stanpumpR references, as far as the filer can tell: %d PDF(s) left in the inbox, listed in %s"
           % (len(unplaced), UNPLACED_PATH))
