@@ -1,4 +1,4 @@
-Ventilation is the patient's **minute ventilation** in L/min: the setting on a ventilator, or what the monitor reads for a spontaneously breathing patient. It is an input, not a drug, and is not plotted.
+Ventilation is the patient's **minute ventilation** in L/min, the setting on the ventilator: the model assumes controlled ventilation. It is an input, not a drug, and is not plotted. In a patient breathing spontaneously the agents depress ventilation, which slows their own uptake (Munson, Eger and Bowers 1973); the model does not depress it, so for such a patient what you enter is what the patient breathes whatever the agent does.
 
 Thirty per cent of it is taken to be dead space, so the **alveolar ventilation**, which is what exchanges gas with the circuit, is 70 per cent of what you enter. This is one of the deliberate differences from GasMan, whose ventilation setting is alveolar ventilation with no dead space; when comparing, enter 70 per cent of the minute ventilation in GasMan. See [Where the gas engine differs from GasMan](help:models/gas-differences).
 
@@ -6,4 +6,4 @@ Ventilation must be greater than zero whenever a gas is being given; with none, 
 
 Minute ventilation also sets the **threshold for rebreathing**: in the ideal circuit, once the fresh gas flow reaches the minute ventilation plus the gas being taken up from the alveoli (about 0.05 L/min on oxygen and a volatile agent, more early in a nitrous oxide induction) the patient inspires fresh gas and nothing else; below it, the shortfall is made up with exhaled gas. Raising the ventilation while the fresh gas flow stays fixed therefore increases rebreathing as well as alveolar exchange. See [Inhaled anesthetics](help:inhaled-agents).
 
-Ventilation can be changed during a simulation by adding a row at a later time, for example to model the change from controlled to spontaneous ventilation at emergence.
+Ventilation can be changed during a simulation by adding a row at a later time, for example to the ventilation a patient breathing again at emergence is seen to have; the model takes it as given.
