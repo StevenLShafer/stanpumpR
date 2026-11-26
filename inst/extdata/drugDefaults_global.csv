@@ -385,3 +385,4 @@ antithrombinMoffett,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,
 antithrombinIlias,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,
 desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal
+methylergonovine,ng,mg,,mg IM,"mg,mcg,mg IM,mcg IM,mg PO,mcg PO,mg IM qid,mg IM q4h,mg PO tid,mg PO qid,mg PO q4h",#B0436F,0,0,0,0,0,IV,Other

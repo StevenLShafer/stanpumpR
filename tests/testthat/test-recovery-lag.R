@@ -157,7 +157,10 @@ test_that("only the expected oral drugs carry an absorption lag", {
                     # median time to peak, 2026-11-16); plasma only
                     "thioguanine",
                     # tamsulosin's 0.957 h lag (Tsuda 2010); plasma only
-                    "tamsulosin"))
+                    "tamsulosin",
+                    # methylergonovine's 0.09 h oral lag (de Groot 1995);
+                    # plasma only
+                    "methylergonovine"))
 })
 
 
