@@ -4,7 +4,7 @@
 \alias{viewerPhysiologySteps}
 \title{The physiology steps a run carries with physiology events}
 \usage{
-viewerPhysiologySteps(events, start, body = NULL)
+viewerPhysiologySteps(events, start, body = NULL, end = Inf)
 }
 \arguments{
 \item{events}{physiologyEventsFrom()'s data frame}
@@ -12,6 +12,9 @@ viewerPhysiologySteps(events, start, body = NULL)
 \item{start}{the run's first time, minutes}
 
 \item{body}{a gas run's body, to add the altitude and the intubation}
+
+\item{end}{the run's last time, minutes: a step at or after it is not in
+the run (ChatGPT's round-2 gas audit, E-01)}
 }
 \value{
 a list of settings with \code{time}, the first at \code{start}, or NULL

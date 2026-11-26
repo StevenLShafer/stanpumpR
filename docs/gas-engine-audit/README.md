@@ -26,6 +26,7 @@ The reports come back as Markdown files and are uploaded to Claude. Claude valid
 | `make-bundle.sh` | Builds the attachment from pinned commits: for round 1 (`ROUND=1`) stanpumpR `c90c33e`, for round 2 (the default) stanpumpR `8c1ea1b`; GasMan `d3a2dd3` for both. |
 | `chatgpt-2026-11-23-assessment.md` | The validation of ChatGPT's report of 2026-11-23, and what PR #858 changed. |
 | `gemini-2026-11-23-assessment.md` | The validation of Gemini's report of 2026-11-23, and what the PR after it changed, with Dr Shafer's ten decisions of 2026-11-25. |
+| `chatgpt-2026-11-26-round2-assessment.md` | The validation of ChatGPT's round-2 report of 2026-11-26, and what changed. |
 
 ### Running it
 
@@ -72,7 +73,7 @@ Before Dr Shafer asks James Philip to review the gas engine, he wants it checked
 
    This writes `~/gas-audit/stanpumpR-gas-audit-r2-8c1ea1b.zip`. The Eger chapter is not needed this round.
 3. **ChatGPT.** A new conversation with code execution (to unzip and run `grep -n`). Attach the zip and paste `PROMPT-2.md`. The Drive connector is optional this round; the papers it might need are Weber 2021, the Al-Sallami fat-free mass paper and Mapleson 1996.
-4. **Gemini.** A new conversation with the longest-context model, code execution if offered. Attach the zip, or, if it is refused, `CORE-NUMBERED.txt`, `CHANGES-SINCE-ROUND-1.diff` and `INDEX.md` from the unzipped folder. Paste `PROMPT-2.md`.
+4. **Gemini.** A new conversation with the longest-context model, code execution if offered. Attach the zip, or, if it is refused, `CORE-NUMBERED.txt`, `SUPPLEMENT-NUMBERED.txt`, `CHANGES-SINCE-ROUND-1.diff` and `INDEX.md` from the unzipped folder (the supplement holds `AGENTS.md`, `R/app_server.R`, `R/viewerRun.R` and the round-1 assessments, which the prompt needs; CodeRabbit on #942). Paste `PROMPT-2.md`.
 5. **Keep the two independent**, as in round 1.
 6. **Save each reply** as `gas-engine-audit-round2-<auditor>-<date>.md`. If an auditor stops for room, ask it to continue in the same conversation and join the parts.
 
