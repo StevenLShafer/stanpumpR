@@ -56,6 +56,9 @@ physiologyRibbons <- function(data, nominal, drugs, wraps, maximum = Inf)
                       ymin = numeric(0), ymax = numeric(0), stringsAsFactors = FALSE)
   if (is.null(nominal) || length(nominal) == 0 || is.null(data) || nrow(data) == 0)
     return(empty)
+  # Names, not an ordered factor's codes (simulationPlot() passes
+  # plotTable$Drug)
+  drugs <- as.character(drugs)
   out <- list()
   for (d in intersect(names(nominal), drugs)) {
     wrap <- as.character(wraps[match(d, drugs)])
@@ -78,7 +81,7 @@ physiologyRibbons <- function(data, nominal, drugs, wraps, maximum = Inf)
       a <- rbind(a, data.frame(Time = extra, Y = seriesStepAt(a$Time, a$Y, extra)))
       a <- a[order(a$Time, seq_len(nrow(a))), , drop = FALSE]
     }
-    y0 <- seriesStepAt(n$Time, n$Y, a$Time)
+    y0 <- nominalStepMatched(n$Time, n$Y, a$Time)
     scale <- max(abs(c(a$Y, y0)), na.rm = TRUE)
     if (!is.finite(scale) || scale == 0 ||
         max(abs(a$Y - y0), na.rm = TRUE) <= PHYSIOLOGY_RIBBON_TOLERANCE * scale) next
@@ -110,6 +113,11 @@ physiologyRibbons <- function(data, nominal, drugs, wraps, maximum = Inf)
 #' @keywords internal
 thresholdSteps <- function(drugs, endCe, steps, xmin, xmax)
 {
+  # Look the steps up by name: simulationPlot() passes plotTable$Drug, an
+  # ordered factor, whose `[[` reads its integer code (CodeRabbit on #940: a
+  # temperature event with the time until threshold shown stopped the plot,
+  # "subscript out of bounds")
+  drugs <- as.character(drugs)
   rows <- lapply(seq_along(drugs), function(i) {
     s <- if (drugs[i] %in% names(steps)) steps[[drugs[i]]]
     if (is.null(s) || nrow(s) == 0)
@@ -123,4 +131,35 @@ thresholdSteps <- function(drugs, endCe, steps, xmin, xmax)
                stringsAsFactors = FALSE)
   })
   do.call(rbind, rows)
+}
+
+#' The nominal curve read at the drawn curve's times, a step matched side for
+#' side
+#'
+#' At a time the nominal curve itself repeats (a step), \code{seriesStepAt()}
+#' reads the value after it for every row, so a drawn curve with the same step
+#' had its row before the step compared with the nominal value after it, and a
+#' drug the physiology does not change could show a ribbon (CodeRabbit on
+#' #940).  Where both curves repeat a time, the drawn curve's first row there
+#' takes the nominal curve's first and its last the nominal curve's last; a
+#' time only one of them repeats reads as \code{seriesStepAt()} reads it.
+#'
+#' @param t,y the nominal curve
+#' @param x the drawn curve's times, in order, a step's rows in theirs
+#' @returns the nominal values, one per element of \code{x}
+#' @keywords internal
+nominalStepMatched <- function(t, y, x)
+{
+  out <- seriesStepAt(t, y, x)
+  o <- order(t, seq_along(t))
+  t <- t[o]
+  y <- y[o]
+  repeatedX <- unique(x[duplicated(x)])
+  for (u in repeatedX[repeatedX %in% t[duplicated(t)]]) {
+    rows <- which(x == u)
+    at <- which(t == u)
+    k <- seq_along(rows)
+    out[rows] <- y[at[ifelse(k == length(rows), length(at), pmin(k, length(at)))]]
+  }
+  out
 }

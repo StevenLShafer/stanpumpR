@@ -137,3 +137,46 @@ test_that("a plot with no stepped threshold draws one per panel (no steps at all
   expect_equal(r$endCe, c(1, 2))
   expect_equal(r$xmax, c(60, 60))
 })
+
+test_that("the threshold steps are looked up by name, not an ordered factor's code", {
+  # CodeRabbit on #940: simulationPlot() passes plotTable$Drug, an ordered
+  # factor, and `[[` read its integer code
+  d <- factor(c("MAC", "sevoflurane"), levels = c("MAC", "sevoflurane"), ordered = TRUE)
+  s <- list(sevoflurane = data.frame(Start = c(0, 20), endCe = c(0.2, 0.15)))
+  r <- thresholdSteps(d, c(0.1, 0.2), s, 0, 60)
+  expect_equal(r$Drug, c("MAC", "sevoflurane", "sevoflurane"))
+  expect_equal(r$endCe, c(0.1, 0.2, 0.15))
+  # And through the plot: a temperature event with the time until threshold
+  # shown stopped it with "subscript out of bounds"
+  dt <- data.frame(Drug = c("oxygen", "sevoflurane", "ventilation", "sevoflurane"),
+                   Time = c(0, 0, 0, 40), Dose = c(6, 2, 6, 0))
+  ev <- data.frame(Time = 20, t(physiologyEventDecode("temperature=32")))
+  sim <- simulateGases(dt, weight = 70, age = 40, maximum = 60, physiologyEvents = ev)
+  entries <- gasDrugEntries(sim, dt, getDrugDefaultsGlobal(), 60,
+                            washout = gasWashout(sim, dt[, c("Time", "Drug", "Dose")]), age = 40)
+  p <- suppressMessages(simulationPlot(entries, data.frame(Time = numeric(0), Event = character(0)),
+                                       getDrugDefaultsGlobal(), getEventDefaults(),
+                                       xBreaks = seq(0, 60, 10), xLabels = seq(0, 60, 10),
+                                       plasmaLinetype = "solid", effectsiteLinetype = "solid",
+                                       typical = "Range", plotRecovery = TRUE))
+  # The threshold layer (the band's layer carries endCe too, with lowerTypical)
+  rects <- Filter(function(l) inherits(l$geom, "GeomRect") && "endCe" %in% names(l$data) &&
+                    !"lowerTypical" %in% names(l$data), p$plotObject$layers)
+  expect_length(rects, 1)
+  sevo <- rects[[1]]$data[rects[[1]]$data$Drug == "sevoflurane", ]
+  expect_equal(sevo$xmin, c(0, 20))
+  expect_equal(sevo$endCe, entries$sevoflurane$endCeSteps$endCe)
+})
+
+test_that("a step both curves share draws no ribbon", {
+  # CodeRabbit on #940: at a repeated time the nominal value after the step
+  # was read for the row before it too
+  d <- data.frame(Drug = "x", Wrap = "x\n(u)", Site = "Plasma",
+                  Time = c(0, 1, 1, 2), Y = c(0, 0, 2, 1))
+  expect_equal(nrow(physiologyRibbons(d, list(x = list(results = d)), "x", "x\n(u)")), 0)
+  expect_equal(nominalStepMatched(d$Time, d$Y, d$Time), d$Y)
+  # A step only the drawn curve has still reads the nominal curve through it
+  expect_equal(nominalStepMatched(c(0, 2), c(1, 1), c(0, 1, 1, 2)), c(1, 1, 1, 1))
+  # A step only the nominal curve has reads after it, as seriesStepAt() does
+  expect_equal(nominalStepMatched(c(0, 1, 1, 2), c(0, 0, 2, 1), c(0, 1, 2)), c(0, 2, 1))
+})

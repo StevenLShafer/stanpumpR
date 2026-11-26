@@ -1401,7 +1401,8 @@ simulationPlot <- function(
                                      minimum, maximum)
     thresholdRects$Wrap <- plotTable$Wrap[match(thresholdRects$Drug, plotTable$Drug)]
     endCeAtEnd <- vapply(seq_along(plotTable$Drug), function(i) {
-      s <- if (plotTable$Drug[i] %in% names(endCeSteps)) endCeSteps[[plotTable$Drug[i]]]
+      d <- as.character(plotTable$Drug[i])   # a name, not the factor's code
+      s <- if (d %in% names(endCeSteps)) endCeSteps[[d]]
       if (is.null(s) || nrow(s) == 0) return(plotTable$endCe[i])
       k <- findInterval(maximum, s$Start)
       if (k < 1) plotTable$endCe[i] else s$endCe[k]
