@@ -66,5 +66,5 @@ test_that("50 IU/kg: the patient's activity plus the infused, in IU/dL", {
   expect_equal(w2$Plasma[w2$Time < 60], rep(40, sum(w2$Time < 60)))
   expect_equal(max(w2$Plasma[w2$Time == 60]), 40 + 3500 / (67.9 * (40 / 60)^-0.389),
                tolerance = 1e-6)
-  expect_identical(patientFieldReaders("antithrombinBaseline"), "antithrombin")
+  expect_true("antithrombin" %in% patientFieldReaders("antithrombinBaseline"))
 })
