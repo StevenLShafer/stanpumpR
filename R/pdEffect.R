@@ -49,17 +49,23 @@
 # question: should propofol declare an EEG endpoint here?  It should NOT, and
 # the reason is about what the EEG measures, not about the numbers.
 #
-# The EEG is not solely a measure of drug effect.  On emergence it is nearly
-# unchanged for several minutes after the drug is stopped; then the patient
-# opens their eyes and it changes INSTANTLY, showing brain arousal with the
-# return of consciousness.  What the monitor reports is a combination of drug
-# effect and brain state, so a sigmoid Emax model of concentration against
-# index would attribute to the drug a change the brain made.
+# The EEG is not solely a measure of drug effect.  Shafer's clinical observation
+# on emergence: the EEG is nearly unchanged for several minutes after the drug
+# is stopped, and then, as the patient opens their eyes, it changes at once,
+# showing arousal with the return of consciousness.  The argument does not need
+# that sequence to be invariable -- other reports have EEG measures moving
+# before eye opening -- only that the index can move while the concentration
+# does not.  What the monitor reports is a combination of drug effect and brain
+# state, so a sigmoid Emax model of concentration against index would attribute
+# to the drug a change the brain made.
 #
 # Nor do the drugs act on it in one direction, which matters because clinical
 # anaesthesia combines them.  Ketamine and midazolam ACTIVATE the EEG.  Opioids
-# do little to it except in huge doses, where they DEPRESS it -- the basis of
-# the Stanford opioid experiments that determined their ke0.  The hypnotics,
+# do little to the measures used for anaesthetic depth -- the spectral edge and
+# the indices derived from it -- except in huge doses, where they DEPRESS them,
+# which is what the Stanford opioid experiments relied on to determine their
+# ke0; smaller spectral changes at clinical doses are a different measurement
+# and do not give a usable depth signal.  The hypnotics,
 # propofol and the inhaled agents and etomidate, ACTIVATE and then DEPRESS it.
 # A per-drug % effect panel would draw each of these as a monotone function of
 # that drug's own concentration, which the index is not.

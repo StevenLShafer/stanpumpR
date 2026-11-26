@@ -294,9 +294,10 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   #
   # Propofol carries NO EEG-index pharmacodynamic endpoint, and is not to be given one
   # without Shafer's decision (2026-11-26).  The EEG is not solely a measure of drug
-  # effect -- on emergence it is nearly unchanged for minutes after the drug stops, then
-  # changes instantly when the patient opens their eyes -- and the drugs of an anaesthetic
-  # do not move it in one direction.  The full reasoning is in R/pdEffect.R.
+  # effect: on emergence it can be nearly unchanged for minutes after the drug stops and
+  # then change at once as the patient opens their eyes, so the index moves while the
+  # concentration does not -- and the drugs of an anaesthetic do not move it in one
+  # direction.  The full reasoning is in R/pdEffect.R.
   tPeak <- 1.600 # tPeak per Schnider TW et al., Anesthesiology 1999;90(6):1502-1516. https://pubmed.ncbi.nlm.nih.gov/10360845/
   reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   if (isTRUE(pregnant)) {
