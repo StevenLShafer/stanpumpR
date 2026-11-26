@@ -42,7 +42,12 @@
 # changes nothing.
 #
 #
-# WHY NO DRUG CARRIES AN EEG-INDEX ENDPOINT (Steven L. Shafer, 2026-11-26)
+# WHY PROPOFOL CARRIES NO EEG-INDEX ENDPOINT (Steven L. Shafer, 2026-11-26)
+#
+# No drug carries one today.  What Shafer DECIDED on 2026-11-26 is propofol; whether
+# any drug should is queued for a future session.  The reasoning below is general,
+# and is why the queued question is unlikely to be answered yes, but it has not been
+# put to him for the other drugs and must not be recorded as though it had.
 #
 # Several papers digested on 2026-11-25/26 report propofol Ce50 values against
 # BIS, the A-line ARX index and the spectral edge, and they raised the obvious
