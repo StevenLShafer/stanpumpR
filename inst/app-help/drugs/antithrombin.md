@@ -1,29 +1,22 @@
-### The model
+### One name, the model chosen for the patient
 
-Moffett and colleagues' population analysis (*Br J Clin Pharmacol* 2017) of 184 inpatients under 19 years old given Thrombate III (plasma-derived antithrombin, Grifols), most of them infants (median age 0.35 years, median weight 5.2 kg) receiving antithrombin for a low activity during a heparin infusion. It was validated in 30 more children. One compartment:
+stanpumpR holds 2 published models of plasma-derived antithrombin III. You do not choose between them: stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use. The US product is Thrombate III; recombinant antithrombin alfa (ATryn), a different molecule with a much shorter half-life, is a drug of its own, [antithrombinAlfa](help:drugs/antithrombinAlfa).
 
-- clearance 0.917 dL/h × (weight/70)^0.75 + 0.129 dL/h × (heparin units/h ÷ 173);
-- volume 67.9 dL × weight/70 × (baseline/60)^−0.389, where the baseline is the antithrombin activity before the dose.
+| Model | Source | Studied in |
+|---|---|---|
+| [antithrombinMoffett](help:drugs/antithrombinMoffett) | Moffett 2017 | 184 children under 19 years given Thrombate III, mostly infants, most on heparin |
+| [antithrombinIlias](help:drugs/antithrombinIlias) | Ilias 2000 | 32 adults with severe sepsis, 18-85 years, given Kybernin P |
 
-**This is the only population model of a plasma-derived antithrombin concentrate in the library**, and it is used for adults as well (Steven L. Shafer, 2026-11-26). At 70 kg and a baseline of 60 IU/dL it gives a half-life of 51 hours (2.1 days) and a rise of 1.03 IU/dL for each IU/kg. The Thrombate III label, from 8 asymptomatic adults with hereditary deficiency, gives a rise of 1.4 IU/dL per IU/kg and a half-life of 3.8 days (functional assay). So for an adult with hereditary deficiency the curve probably rises less and falls faster than the activity will. The source's children were critically ill and consuming antithrombin; the authors suggest this explains the larger volume at a lower baseline. The label's own dosing rule assumes the 1.4.
+**The rule.** Among the models whose studied age range (and weight range, where the paper printed one) includes the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### What is plotted
+**What that means for antithrombin** (Steven L. Shafer, 2026-11-26). Patients under 19 years get Moffett 2017, and older patients get Ilias 2000. The two ranges meet from 18 to 19 years, where both studies include the patient and Moffett's is the larger. The two models differ:
 
-Antithrombin activity in **IU/dL** (% of normal): the patient's own plus the activity infused. The patient's own is the Patient Profile's **Antithrombin baseline**, shown while antithrombin is in the dose table. Left blank, it is 60 IU/dL, the source's reference. The baseline also sets the model's volume, so a lower baseline gives a smaller rise for the same dose. For the volume it is held between 25 and 93 IU/dL (the source cohort's mean ± 2 standard deviations, 59 ± 2 × 17), because the paper prints no range and a baseline of 0 would otherwise give an infinite volume (Steven L. Shafer's decision, 2026-11-26). A patient below 25 IU/dL is given the volume at 25; the plotted baseline is the value entered, unheld.
+- At 70 kg, Moffett's half-life is 51 hours and Ilias's 19 hours; the rise for each IU/kg is 1.03 and 1.56 IU/dL.
+- In Moffett's model the baseline also sets the volume; in Ilias's it is only plotted, because each patient's baseline was subtracted before the fit.
+- Left blank, the **Antithrombin baseline** is each source's own: 60 IU/dL for Moffett, 63 for Ilias, the median of its septic adults.
+
+**Both describe patients consuming antithrombin.** Moffett's children were critically ill and Ilias's adults septic. In a patient with hereditary deficiency who is not consuming it, the Thrombate III label gives a half-life of 3.8 days (8 patients, functional assay), so the activity will fall more slowly than either model draws.
+
+The tables on this page are computed at six reference patients, so each uses the model chosen for that patient. Each model's own page gives its parameters, its checks against its paper, and its limits.
 
 The band is the label's target, 80 to 120% of normal (IU/dL).
-
-### Covariates
-
-- **Weight**, on both parameters, as fitted; with the fat-free-mass switch on, the pharmacokinetic weight.
-- **Antithrombin baseline**, on the volume (above).
-- **Heparin is held at none.** In the source, a heparin infusion speeds clearance in proportion to its rate: the median child, on 34 units/kg/h, cleared antithrombin twice as fast as without heparin (half-life 13 against 27 hours). stanpumpR does not read one drug's doses into another's model, so the curve is that of a patient given no heparin. **With heparin running, the activity falls faster than drawn.** The label also warns that the half-life is shortened after surgery, haemorrhage or acute thrombosis.
-- **Pregnancy**: no change in the plasma-derived concentrate's clearance or volume has been measured against non-pregnant women. Weiner 1990 measured a half-life of 29 hours in five healthy pregnant women, with no non-pregnant comparison. For the recombinant product, [antithrombin alfa](help:drugs/antithrombinAlfa), DeJongh 2014 found clearance and volume about twice as large at delivery. Nothing is applied.
-
-### Doses
-
-`IU/kg` or `IU` as a dose (the label gives it over 10 to 20 minutes), and `IU/kg/hr` or `IU/hr` as an infusion. The label's loading dose is (120 − baseline) × weight ÷ 1.4, then about 60% of it every 24 hours, adjusted to keep the activity between 80 and 120%.
-
-### Not modelled
-
-The patient's own antithrombin is held constant; its production, and its consumption in disease or by heparin, are not drawn.

@@ -138,6 +138,17 @@ MODEL_GROUPS <- list(
     ageMin = c(20, 37, 64), ageMax = c(33, 71, 84),
     weightMin = c(50.7, 47.1, 40.4), weightMax = c(77.2, 73.0, 71.8),
     n = c(47, 9, 8), year = c(2008, 2015, 2015)),
+  # Antithrombin III, plasma-derived (Shafer, 2026-11-26): Moffett 2017's
+  # children (inclusion "<19 years", adolescents 13-18) and Ilias 2000's
+  # adults with severe sepsis (18-85 years), ranges read on the PDFs; no
+  # weight range printed in either.  The ranges meet from 18 to 19 years,
+  # where the rule gives Moffett, the larger study.
+  antithrombin = data.frame(
+    model = c("antithrombinMoffett", "antithrombinIlias"),
+    source = c("Moffett 2017", "Ilias 2000"),
+    ageMin = c(0, 18), ageMax = c(19, 85),
+    weightMin = c(NA, NA), weightMax = c(NA, NA),
+    n = c(184, 32), year = c(2017, 2000)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -418,3 +429,14 @@ ambrisentan <- modelGroup("ambrisentan")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 landiolol <- modelGroup("landiolol")
+
+#' Antithrombin III (human), Thrombate III: the model chosen for the patient
+#'
+#' Moffett 2017 (184 children under 19 years) or Ilias 2000 (32 adults with
+#' severe sepsis, 18-85 years), chosen by \code{selectModel()}; see
+#' \code{R/modelSelection.R}.
+#' @inheritParams antithrombinMoffett
+#' @inheritParams antithrombinIlias
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+antithrombin <- modelGroup("antithrombin")
