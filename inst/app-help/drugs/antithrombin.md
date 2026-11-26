@@ -9,7 +9,7 @@ Moffett and colleagues' population analysis (*Br J Clin Pharmacol* 2017) of 184 
 
 ### What is plotted
 
-Antithrombin activity in **IU/dL** (% of normal): the patient's own plus the activity infused. The patient's own is the Patient Profile's **Antithrombin baseline**, shown while antithrombin is in the dose table. Left blank, it is 60 IU/dL, the source's reference. The baseline also sets the model's volume, so a lower baseline gives a smaller rise for the same dose. For the volume it is held between 25 and 93 IU/dL (the source cohort's mean ± 2 standard deviations, 59 ± 2 × 17), because the paper prints no range.
+Antithrombin activity in **IU/dL** (% of normal): the patient's own plus the activity infused. The patient's own is the Patient Profile's **Antithrombin baseline**, shown while antithrombin is in the dose table. Left blank, it is 60 IU/dL, the source's reference. The baseline also sets the model's volume, so a lower baseline gives a smaller rise for the same dose. For the volume it is held between 25 and 93 IU/dL (the source cohort's mean ± 2 standard deviations, 59 ± 2 × 17), because the paper prints no range and a baseline of 0 would otherwise give an infinite volume (Steven L. Shafer's decision, 2026-11-26). A patient below 25 IU/dL is given the volume at 25; the plotted baseline is the value entered, unheld.
 
 The band is the label's target, 80 to 120% of normal (IU/dL).
 
