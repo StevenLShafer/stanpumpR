@@ -33,12 +33,28 @@ test_that("the switch on anchors the size-free parameters at Liu's cohort", {
   expect_equal(s$cl1, 80.9 * 0.789 / 60 * (size$pkWeight / 62)^0.578)
 })
 
-test_that("Wang's per-kilogram parameters", {
+test_that("Wang's per-kilogram parameters, switch off", {
   m <- ciprofolWang(20, 115, 5, "male", adjustToFFM = FALSE)$PK$default
   expect_equal(m$v1, 0.506 * 20)
+  expect_equal(m$v2, 0.231 * 20)
   expect_equal(m$v3, 1.36 * 20)
   expect_equal(m$cl1, 0.0312 * 20)
   expect_equal(m$cl2, 0.0282 * 20)
+  expect_equal(m$cl3, 0.0198 * 20)
+})
+
+test_that("with the switch on, Wang's parameters scale with the adjusted weight", {
+  # a 30 kg, 140 cm, 8-year-old girl: the per-kg values on pkSizeFactors()'s
+  # adjusted weight
+  s <- ciprofolWang(30, 140, 8, "female")$PK$default
+  w <- pkSizeFactors(30, 140, 8, "female", TRUE)$pkWeight
+  expect_false(isTRUE(all.equal(w, 30)))
+  expect_equal(s$v1, 0.506 * w)
+  expect_equal(s$v2, 0.231 * w)
+  expect_equal(s$v3, 1.36 * w)
+  expect_equal(s$cl1, 0.0312 * w)
+  expect_equal(s$cl2, 0.0282 * w)
+  expect_equal(s$cl3, 0.0198 * w)
 })
 
 test_that("the group chooses Wang for children and Liu for adults", {

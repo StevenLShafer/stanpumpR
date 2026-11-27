@@ -121,7 +121,7 @@ ciprofolResult <- function(default, reference)
 #' Ciprofol, intravenous, adults (Liu 2024)
 #'
 #' Arterial, long-infusion, non-ICU parameters; see `R/ciprofol.R`.
-#' @inheritParams ketamine
+#' @inheritParams cefazolin
 #' @export
 ciprofolLiu <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
@@ -154,7 +154,7 @@ ciprofolLiu <- function(weight, height, age, sex, adjustToFFM = TRUE)
 #'
 #' Three compartments per kilogram in children aged 1-9 years; see
 #' `R/ciprofol.R`.
-#' @inheritParams ketamine
+#' @inheritParams cefazolin
 #' @export
 ciprofolWang <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {

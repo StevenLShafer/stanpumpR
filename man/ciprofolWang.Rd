@@ -6,6 +6,22 @@
 \usage{
 ciprofolWang(weight, height, age, sex, adjustToFFM = TRUE)
 }
+\arguments{
+\item{weight}{weight in kg}
+
+\item{height}{height in cm}
+
+\item{age}{age in years}
+
+\item{sex}{sex as a string}
+
+\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
+patient's fat-free mass as described in the
+\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
+\code{FALSE} reproduces the published size scaling exactly.  Each drug
+file's header says what the switch changes for that model; for cefazolin
+it also sets the weight the creatinine-clearance estimate uses.}
+}
 \description{
 Three compartments per kilogram in children aged 1-9 years; see
 \code{R/ciprofol.R}.
