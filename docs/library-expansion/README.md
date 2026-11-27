@@ -133,3 +133,12 @@ Its prompt is `weekly-routine-prompt.md`, below the `---` line. A change to what
 - **nlmixr2lib had not moved** (d8a308a); the lists were regenerated anyway.
 - **63 picks and leads marked missing were in the archive** (filed 2026-11-18, `PMID_` names); `archive-status.csv` was stale. 10 picks and 10 leads are still to download (`downloads.md`); Pai 2025 (PMID 41159735, Zerbaxa's newest pick) and Ciprofol's PMID 38440939 are among them.
 - **No drug was implemented this run.** Zerbaxa stays blocked on the infection-state decision; ceftazidime (Avycaz's partner) is next in plan order and needs the full seven items plus the antibiotic band sources, which this run did not complete.
+
+### Weekly run, 2026-11-27
+
+- **nlmixr2lib has not moved** since the last committed cross-check (05d1c08, 4,581 models); the lists were regenerated against master 8e49154, which drops the 17 drugs added to the library since (ceftolozane, fluconazole, posaconazole, micafungin, emicizumab, tenecteplase and others) from `docs/nlmixr2lib/missing-drugs.md`. The 2026-11-26 run's pull request (#943) was still open and is superseded by this run's.
+- **Two papers had arrived** (both filed 2026-11-25): ciprofol's Liu 2024 (PMID 38440939) and tocilizumab's Jamois 2025 (PMID 40576759). 27 picks and 10 report leads are still to download (`downloads.md`).
+- **Dolutegravir was implemented** (Zhang 2015, 563 previously untreated adults with HIV-1) in its own draft pull request, #997.
+- **Three priority-1 drugs were taken up and are blocked**, each with the reason in `plan.csv`: ciprofol (Steven's choice of the population its curve describes, and a source for the time to peak effect), tocilizumab (Jamois 2025's parameters are in its supplement; Moes 2022 could be built now if Steven prefers), von Willebrand factor (Bauer 2023's equations are in its supplement).
+- **`plan.csv` was brought up to date**: 14 drugs now in the library are `done`, and the duplicate rows for emicizumab and tenecteplase were removed.
+- **Run the scripts in the default (C) locale**, as the routine's commands do. Under a UTF-8 locale `sort()` orders the model files differently, which changes which of several models of one paper each list names and rewrites hundreds of lines for no reason.
