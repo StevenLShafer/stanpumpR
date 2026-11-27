@@ -5,7 +5,9 @@
 #
 # Drafted by Claude Code, 2026-11-25, on Steven L. Shafer's decision of that
 # day (card papers/digests/PMID_41288922.md, [decided]: Jonsson 2003 for the
-# parent, Kivikko 2002 for the metabolite OR-1896 on an extended engine).
+# parent, Kivikko 2002 for the metabolite OR-1896 on an extended engine;
+# Kivikko being unobtainable, Bertin 2026 checked against Antila 2004 took its
+# place on his decision of 2026-11-26).
 # Every number below was read on the PDF of the source (stanpumpRPapers
 # PMID_12814448.pdf; card papers/digests/PMID_12814448.md, from the digest
 # run of 2026-11-25, PR #899).
@@ -58,15 +60,15 @@
 # cohort (median 76 kg, 61 years, 173 cm, 161 men and 32 women), and with it
 # off they are the published values.
 #
-# WHAT IS NOT DRAWN
-# =================
+# THE METABOLITE, OR-1896
+# =======================
 # Levosimendan's haemodynamic effect outlasts the parent by days, through
 # OR-1896, formed slowly from OR-1855 after intestinal reduction (half-life
-# about 70-80 h).  The parent alone is drawn here; the metabolite waits for
-# Kivikko 2002 (PMID 12395979, papers/pending-work.csv) and an engine for a
-# metabolite formed from a metabolite with back-conversion, to be proposed
-# to Shafer before it is built.  So there is no tPeak (the effect follows
-# the metabolite, not the parent) and no band.
+# about 70-80 h).  Since 2026-11-27 it is drawn as its own panel, OR1896,
+# from Bertin 2026's chain on the transit-chain engine (R/drugs_OR1896.R;
+# Shafer's decisions of 2026-11-26 and 2026-11-27), checked against Antila
+# 2004; OR-1855 is not drawn.  Neither has a tPeak or a band: the
+# haemodynamic effect is not plotted.
 #
 # PRODUCT AND DOSE BASIS.  Not approved in the United States (Simdax,
 # Orion, in Europe and elsewhere); dosed as levosimendan, mcg/kg and
@@ -130,8 +132,28 @@ levosimendan <- function(weight, height, age, sex, adjustToFFM = TRUE)
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  # OR-1896, the long-acting active metabolite (Bertin 2026; R/drugs_OR1896.R)
+  ch <- levosimendanOR1896Chain(weight, height, age, sex, adjustToFFM)
+
   list(
     PK = PK,
+    transitChain = list(
+      n = 0L,                         # intravenous only: no absorption chain
+      kMetabolic = ch$fm * default$cl1 / default$v1,
+      metabolite = list(
+        name = "OR1896",
+        n    = 1L,                    # one transit to OR-1855
+        ktr  = ch$ktr,
+        v    = ch$v,                  # OR-1855, not drawn
+        kel  = ch$kel,
+        k12  = ch$k12,                # acetylation to OR-1896
+        k21  = ch$k21,                # and back
+        kelPeripheral = ch$kelPeripheral,
+        vPeripheral = ch$vPeripheral,
+        plotted = "peripheral",
+        mwRatio = ch$mwRatio
+      )
+    ),
     tPeak = 0,
     MEAC = 0,
     typical = 0,
@@ -141,8 +163,8 @@ levosimendan <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "Jonsson EN et al., Br J Clin Pharmacol 2003;55(6):544-551. ",
       "Two compartments in 190 patients with NYHA III-IV heart failure: ",
       "CL 13.3 L/h x (1 + 0.015 (WT - 76)), V1 16.8 L x (1 + 0.009 (WT - 76)), ",
-      "Q 2.33 L/h, V2 30.0 L; plasma.  The parent only: the long-acting ",
-      "metabolite OR-1896 is not drawn.  Not approved in the US. ",
+      "Q 2.33 L/h, V2 30.0 L; plasma.  Drawn with its long-acting active ",
+      "metabolite OR-1896 (Bertin 2026; see OR1896).  Not approved in the US. ",
       "https://doi.org/10.1046/j.1365-2125.2003.01778.x")
   )
 }
