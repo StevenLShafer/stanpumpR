@@ -2,7 +2,7 @@
 % Please edit documentation in R/drugs_methylergonovine.R
 \name{methylergonovine}
 \alias{methylergonovine}
-\title{Methylergonovine pharmacokinetics (intravenous, intramuscular and oral)}
+\title{Methylergonovine pharmacokinetics (intravenous and intramuscular)}
 \usage{
 methylergonovine(weight, height, age, sex, adjustToFFM = TRUE)
 }
@@ -26,10 +26,10 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-The two-compartment intravenous disposition and oral absorption of de Groot
-and colleagues (1995) in nonpregnant women, with intramuscular
-bioavailability and time of peak from the Methergine prescribing
-information.  Doses are the labelled maleate.  Plasma only; see the header
-of \code{R/drugs_methylergonovine.R}.
+The two-compartment intravenous disposition of de Groot and colleagues
+(1995) in nonpregnant women, with intramuscular bioavailability and time of
+peak from the Methergine prescribing information.  No oral route is offered.
+Doses are the labelled maleate.  Plasma only; see the header of
+\code{R/drugs_methylergonovine.R}.
 }
 \keyword{internal}

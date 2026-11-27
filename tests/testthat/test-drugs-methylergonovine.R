@@ -1,7 +1,7 @@
 # methylergonovine: see R/drugs_methylergonovine.R.  de Groot 1995's
-# intravenous and oral values in nonpregnant women, with the label's
-# intramuscular bioavailability.  What is protected here is that the model still
-# reproduces what was read.
+# intravenous values in nonpregnant women, with the label's intramuscular
+# bioavailability, and no oral route.  What is protected here is that the model
+# still reproduces what was read.
 
 # Rate constants (1/h) and central volume of the unscaled model
 methylergonovineMicro <- function(x)
@@ -17,7 +17,7 @@ methylergonovineMicro <- function(x)
 # The curve after one first-order dose (mcg of maleate; times in hours,
 # concentrations in ng/mL), by the closed form, computed independently of the
 # engine
-methylergonovineCurve <- function(dose, ka, f, lag = 0)
+methylergonovineCurve <- function(dose, ka, f)
 {
   m <- methylergonovineMicro(
     methylergonovine(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default)
@@ -26,9 +26,9 @@ methylergonovineCurve <- function(dose, ka, f, lag = 0)
       (m$k21 - m$b) / ((ka - m$b) * (m$a - m$b)),
       (m$k21 - ka) / ((m$a - ka) * (m$b - ka)))
   lambda <- c(m$a, m$b, ka)
-  cp <- function(t) vapply(t - lag, function(u)
+  cp <- function(t) vapply(t, function(u)
     if (u <= 0) 0 else sum(co * exp(-lambda * u)), 0)
-  peak <- stats::optimize(cp, c(lag, 6), maximum = TRUE, tol = 1e-9)
+  peak <- stats::optimize(cp, c(0, 6), maximum = TRUE, tol = 1e-9)
   list(cmax = peak$objective, tmax = peak$maximum, auc = sum(co / lambda))
 }
 
@@ -49,9 +49,6 @@ test_that("methylergonovine reproduces de Groot's intravenous values", {
 test_that("methylergonovine returns the absorption values it read", {
   actual <- methylergonovine(70, 170, 35, "male", adjustToFFM = FALSE)
   x <- actual$PK$default
-  expect_equal(x$ka_PO, 1 / 0.57 / 60)
-  expect_equal(x$bioavailability_PO, 0.964)
-  expect_equal(x$tlag_PO, 0.09 * 60)
   expect_equal(x$ka_IM, 1.7256 / 60)
   expect_equal(x$bioavailability_IM, 0.78)
   expect_equal(x$tlag_IM, 0)
@@ -59,18 +56,6 @@ test_that("methylergonovine returns the absorption values it read", {
     unlist(actual[c("tPeak", "MEAC", "typical", "upperTypical", "lowerTypical")],
            use.names = FALSE),
     rep(0, 5))
-})
-
-test_that("the oral curve agrees with the women's observed peak and area", {
-  # 0.125 mg orally: Cmax 1.21 (0.40) ng/mL at 0.97 (0.74) h, AUC 3.49 (0.70)
-  po <- methylergonovineCurve(125, 1 / 0.57, 0.964, 0.09)
-  expect_equal(po$cmax, 1.362, tolerance = 0.001)
-  expect_lt(abs(po$cmax - 1.21), 0.40)
-  expect_equal(po$tmax, 0.495, tolerance = 0.002)
-  expect_lt(abs(po$tmax - 0.97), 0.74)
-  # F x dose (as base) / CL; the measured area is lower, as the header says
-  expect_equal(po$auc, 0.964 * 125 * 0.76 / 22.2, tolerance = 1e-6)
-  expect_lt(abs(po$auc - 3.49), 0.70)
 })
 
 test_that("the intramuscular curve peaks at the label's time", {
@@ -104,9 +89,12 @@ test_that("scaling the women's model predicts the study's men", {
   expect_equal((men$v1 + men$v2) * 0.76, 71.5, tolerance = 0.1)
 })
 
-test_that("methylergonovine is offered intravenously, intramuscularly and orally", {
+test_that("methylergonovine is offered intravenously and intramuscularly only", {
   dd <- getDrugDefaultsGlobal()
   units <- unlist(dd$Units[dd$Drug == "methylergonovine"])
   expect_true(all(units %in% allUnits | units %in% scheduledUnits))
-  expect_setequal(doseRoute(units), c(ROUTE_IV, ROUTE_IM, ROUTE_PO))
+  expect_setequal(doseRoute(units), c(ROUTE_IV, ROUTE_IM))
+  # no oral route (R/drugs_methylergonovine.R, THE ORAL ROUTE)
+  x <- methylergonovine(70, 170, 35, "male")$PK$default
+  expect_false(any(c("ka_PO", "bioavailability_PO", "tlag_PO") %in% names(x)))
 })

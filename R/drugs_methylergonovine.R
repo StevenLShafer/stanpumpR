@@ -1,7 +1,6 @@
 # -----------------------------------------------------------------------------
-# Methylergonovine (methylergometrine), intravenous, intramuscular and oral:
-# the two-compartment intravenous disposition of de Groot 1995, nonpregnant
-# women
+# Methylergonovine (methylergometrine), intravenous and intramuscular: the
+# two-compartment intravenous disposition of de Groot 1995, nonpregnant women
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min.  Doses are mg
 # or mcg of methylergonovine MALEATE as labelled; concentrations are ng/mL of
@@ -38,8 +37,9 @@
 #   Intravenous: CL 22.2 (3.10) L/h; Vss 50.8 (8.23) L; half-lives 0.10 (0.04)
 #     and 1.94 (0.34) h; mean residence time 2.31 (0.31) h; AUC 6.02 (0.63)
 #     mcg.h/L.
-#   Oral: F 96.4 (27.5) %; lag 0.09 (0.07) h; mean absorption time 0.57
-#     (0.35) h; Cmax 1.21 (0.40) ng/mL at 0.97 (0.74) h; AUC 3.49 (0.70)
+#   Oral (not modelled, see THE ORAL ROUTE): F 96.4 (27.5) %, range 22 to
+#     138 %; lag 0.09 (0.07) h; mean absorption time 0.57 (0.35) h; half-life
+#     1.42 (0.31) h; Cmax 1.21 (0.40) ng/mL at 0.97 (0.74) h; AUC 3.49 (0.70)
 #     mcg.h/L.
 #
 # THE DERIVATION
@@ -58,15 +58,6 @@
 # When the dose basis is not the plotted analyte).  CL is then 29.21 L/h per
 # labelled dose.
 #
-# Oral.  F is READ, 0.964 (the women, against the intravenous dose), and the lag
-# is 0.09 h.  The source's absorption was a one-compartment fit, so its
-# half-life of absorption does not transfer to two compartments.  The mean
-# absorption time, which does not depend on the compartments and which the
-# authors prefer, gives ka = 1 / 0.57 = 1.754 /h.  For the women's 0.125 mg the
-# model peaks at 1.36 ng/mL at 0.50 h (observed 1.21 (0.40) at 0.97 (0.74) h)
-# with an AUC of 4.12 mcg.h/L (observed 3.49 (0.70)).  The half-life of
-# absorption, 0.50 h, would have given 1.18 ng/mL at 0.58 h.
-#
 # Intramuscular.  Neither paper gave an intramuscular dose.  F 0.78 is READ
 # from the Methergine US prescribing information (Drugs@FDA 006035s080, posted
 # 2025,
@@ -77,12 +68,23 @@
 # disposition above.  THIS IS THE WEAKEST ROUTE.  Two things follow:
 #   - the predicted peak is 1.75 ng/mL, where the label reports 5.9 (and an
 #     AUC of 5.3 mcg.h/L against the label's 200 / 14.4 = 13.9);
-#   - because the intramuscular F (0.78, label) is below the oral F (0.964,
-#     de Groot), an intramuscular dose gives 19% LESS exposure than the same
-#     dose by mouth, where the label says intramuscular absorption is about 25%
-#     GREATER than the tablet's.  The two figures come from different studies;
-#     bioavailability is read, not adjusted to agree.  Steven L. Shafer kept
-#     0.78, rather than assume complete absorption, on 2026-11-26.
+#   - the label puts intramuscular absorption about 25% above the tablet's,
+#     yet its 0.78 is below the oral F de Groot measured (0.964).  The two
+#     figures come from different studies; bioavailability is read, not
+#     adjusted to agree.  Steven L. Shafer kept 0.78, rather than assume
+#     complete absorption, on 2026-11-26.
+#
+# THE ORAL ROUTE
+# ==============
+# Not offered.  Steven L. Shafer removed it on 2026-11-26, after it had been
+# drafted from the oral values above, when told that de Groot's own later
+# review (de Groot ANJA.  Eur J Obstet Gynecol Reprod Biol 1996;69:31-36, PMID
+# 8909954, abstract) concludes that oral (methyl)ergometrine tablets are
+# unstable in storage, that the drug's pharmacokinetic and dynamic properties
+# are unpredictable, that no effect on blood loss after childbirth has been
+# shown, and that it is not an alternative to parenteral prophylactic oxytocics
+# in the active management of the third stage of labour.  The tablet remains a
+# labelled product.  Do not restore the route without asking.
 #
 # The label copies filed in papers/labels/ are two other documents from
 # DailyMed: the tablet label (Lupin, ANDA 091577, revised 3/2024, setid
@@ -95,9 +97,8 @@
 # ================================================
 # The label's intramuscular CL/F is 14.4 L/h; de Groot's women give
 # 29.21 / 0.78 = 37 L/h, and after injection the label is about three times
-# higher (peak 3.4-fold, area 2.6-fold).  Its tablet peak, 3.2 ng/mL after
-# 0.2 mg, is 1.5-fold this model's 2.2.  The label names no assay.  Mantyla and
-# Kanto's review of radioimmunoassay studies (Int J Clin Pharmacol Ther
+# higher (peak 3.4-fold, area 2.6-fold).  The label names no assay.  Mantyla
+# and Kanto's review of radioimmunoassay studies (Int J Clin Pharmacol Ther
 # Toxicol 1981;19:386-391, PMID 7298246, abstract) reports a clearance of 7.2
 # to 14.4 L/h, like the label's.  A radioimmunoassay that also read metabolites
 # would raise concentrations and lower clearance; that this explains the
@@ -107,19 +108,15 @@
 # WHAT DISAGREES WITHIN THE SOURCES
 # =================================
 # - The women's dose / AUC is 0.152 / 6.02 = 25.2 L/h against the printed CL of
-#   22.2, which agrees with the printed Vss / MRT.  The printed CL is used, so
-#   the model's intravenous AUC is 6.85 mcg.h/L, 14% above the measured 6.02.
-# - The women's mean absorption time is printed as 0.57 h; the printed mean
-#   residence times and lag give 2.87 - 0.09 - 2.31 = 0.47 h.  The printed
-#   0.57 is used.
+#   22.2, which agrees with the printed Vss / MRT (50.8 / 2.31 = 22.0).  The
+#   printed CL is used, so the model's intravenous AUC is 6.85 mcg.h/L, 14%
+#   above the measured 6.02.
 # - The injection solution held 93.3 (6.5) % of its stated content.  No
 #   correction is made.
-# - Oral half-life in the women was 1.42 (0.31) h; the model's, from the
-#   intravenous data, is 1.94 h.
-# - Oral F ranged from 22 to 138% between subjects.
 # - The men's CL is 32.2 (11.8) L/h in the tables of both papers, but 33.2 in
-#   the abstract of A and 34.1 (9.7) in the summary of B.  The text of A swaps
-#   the sexes' Vss per kg against its Table 1.
+#   the abstract of A and 34.1 (9.7) in the summary of B.  Their Vss / MRT,
+#   71.5 / 2.25 = 31.8, supports 32.2.  The text of A swaps the sexes' Vss per
+#   kg against its Table 1.
 #
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
@@ -138,20 +135,16 @@
 # contraindicated in pregnancy and is given at delivery and after it.  The
 # subjects here were not pregnant.  The label reports the 78% intramuscular
 # bioavailability during delivery (used for every intramuscular dose, there
-# being no other), and says peak concentrations after the tablet may be delayed
-# to about 3 hours in postpartum women on continuous treatment (Allonen 1978,
-# PMID 352975: peak at 3 h on the third or sixth postpartum day).  de Groot
-# cites that delay in setting further study after delivery aside.  No
-# comparison of clearance or volume with nonpregnant women was found (PubMed,
-# 2026-11-25).
+# being no other).  No comparison of clearance or volume with nonpregnant women
+# was found (PubMed, 2026-11-25).
 #
 # EFFECT SITE AND BAND
 # ====================
 # No time of peak effect has been measured (the label gives onset only:
-# immediate intravenously, 2 to 5 minutes intramuscularly, 5 to 10 minutes
-# orally), and Mantyla and Kanto 1981 found no apparent correlation between
-# plasma level and clinical effect.  tPeak is 0, only the plasma is drawn, and
-# there is no therapeutic concentration range, so no band.
+# immediate intravenously, 2 to 5 minutes intramuscularly), and Mantyla and
+# Kanto 1981 found no apparent correlation between plasma level and clinical
+# effect.  tPeak is 0, only the plasma is drawn, and there is no therapeutic
+# concentration range, so no band.
 # -----------------------------------------------------------------------------
 
 # de Groot 1995, Table 1: the six women, intravenous (on the base dose)
@@ -161,10 +154,6 @@ METHYLERGONOVINE_T12_ALPHA <- 0.10    # h
 METHYLERGONOVINE_T12_BETA <- 1.94     # h
 # 0.152 mg base per 0.2 mg of the labelled maleate
 METHYLERGONOVINE_BASE_FRACTION <- 0.152 / 0.200
-# de Groot 1995, Table 2: the same women, oral
-METHYLERGONOVINE_F_PO <- 0.964
-METHYLERGONOVINE_MAT_PO <- 0.57       # h, mean absorption time
-METHYLERGONOVINE_LAG_PO <- 0.09       # h
 # Intramuscular: F from the Methergine label, ka to its time of peak, 0.41 h
 METHYLERGONOVINE_F_IM <- 0.78
 METHYLERGONOVINE_KA_IM <- 1.7256      # 1/h
@@ -172,13 +161,13 @@ METHYLERGONOVINE_KA_IM <- 1.7256      # 1/h
 METHYLERGONOVINE_COHORT <- list(weight = 61, height = 167, age = 41.2,
                                 men = 0, women = 6)
 
-#' Methylergonovine pharmacokinetics (intravenous, intramuscular and oral)
+#' Methylergonovine pharmacokinetics (intravenous and intramuscular)
 #'
-#' The two-compartment intravenous disposition and oral absorption of de Groot
-#' and colleagues (1995) in nonpregnant women, with intramuscular
-#' bioavailability and time of peak from the Methergine prescribing
-#' information.  Doses are the labelled maleate.  Plasma only; see the header
-#' of \code{R/drugs_methylergonovine.R}.
+#' The two-compartment intravenous disposition of de Groot and colleagues
+#' (1995) in nonpregnant women, with intramuscular bioavailability and time of
+#' peak from the Methergine prescribing information.  No oral route is offered.
+#' Doses are the labelled maleate.  Plasma only; see the header of
+#' \code{R/drugs_methylergonovine.R}.
 #'
 #' @inheritParams cefazolin
 #' @returns a list in the shape \code{getDrugPK()} expects
@@ -212,10 +201,7 @@ methylergonovine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     cl3 = 0,
     ka_IM = METHYLERGONOVINE_KA_IM / 60,                      # 1/min
     bioavailability_IM = METHYLERGONOVINE_F_IM,
-    tlag_IM = 0,
-    ka_PO = 1 / METHYLERGONOVINE_MAT_PO / 60,
-    bioavailability_PO = METHYLERGONOVINE_F_PO,
-    tlag_PO = METHYLERGONOVINE_LAG_PO * 60                    # min
+    tlag_IM = 0
   )
 
   events <- c(PK_EVENT_DEFAULT)
@@ -225,7 +211,7 @@ methylergonovine <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "de Groot ANJA, Vree TB, Hekster YA, van den Biggelaar-Martea M, van ",
     "Dongen PWJ, van Roosmalen J. Comparison of the bioavailability and ",
     "pharmacokinetics of oral methylergometrine in men and women. Int J Clin ",
-    "Pharmacol Ther 1995;33:328-332 (nonpregnant women, intravenous and oral). ",
+    "Pharmacol Ther 1995;33:328-332 (nonpregnant women, intravenous). ",
     "Intramuscular bioavailability and time of peak from the Methergine US ",
     "prescribing information, Drugs@FDA 006035s080 (2025), whose ",
     "intramuscular concentrations are about three times these. ",

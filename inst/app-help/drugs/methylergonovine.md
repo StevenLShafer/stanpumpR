@@ -1,24 +1,22 @@
 ### The model
 
-The intravenous and oral pharmacokinetics measured by de Groot and colleagues in 6 nonpregnant women (*Int J Clin Pharmacol Ther* 1995;33:328-332, [PubMed](https://pubmed.ncbi.nlm.nih.gov/7582383/)): mean age 41 years, 61 kg, 167 cm. Each received 0.2 mg of methylergonovine maleate intravenously over 1 minute and 0.125 mg by mouth after breakfast. Venous plasma was assayed by liquid chromatography for 9 hours.
+The intravenous pharmacokinetics measured by de Groot and colleagues in 6 nonpregnant women (*Int J Clin Pharmacol Ther* 1995;33:328-332, [PubMed](https://pubmed.ncbi.nlm.nih.gov/7582383/)): mean age 41 years, 61 kg, 167 cm. Each received 0.2 mg of methylergonovine maleate intravenously over 1 minute. Venous plasma was assayed by liquid chromatography for 9 hours.
 
 **Intravenous.** Two compartments built from the women's clearance (22.2 L/h), steady-state volume (50.8 L) and half-lives (6 minutes and 1.94 h). The paper reports the free base, 0.152 mg of it per 0.2 mg of maleate, so the parameters are divided by 0.76 and doses are entered as the labelled maleate. The model draws the dose as given at once, so its first few minutes lie above what a 1-minute injection gives.
 
-**Oral.** Bioavailability 0.964 and lag 0.09 h are the women's. The absorption rate is the reciprocal of their mean absorption time, 0.57 h. After 0.125 mg the model peaks at 1.4 ng/mL at 0.5 h; the women's mean peak was 1.2 ng/mL (SD 0.4) at 1.0 h (SD 0.7).
-
 **Intramuscular, the weakest route.** The study gave no intramuscular dose. Bioavailability, 0.78, is the figure the **Methergine** prescribing information ([Drugs@FDA, 2025](https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/006035s080lbl.pdf)) gives for injection during delivery, without saying how it was measured. The absorption rate was set to the label's time of peak, 0.41 h.
+
+**No oral route.** The tablet is marketed, and the same study measured it, but oral doses are not offered. De Groot's later review (1996, [PubMed](https://pubmed.ncbi.nlm.nih.gov/8909954/), abstract) concludes that oral (methyl)ergometrine tablets are unstable in storage, that the drug's pharmacokinetics and effects by mouth are unpredictable, that it has not been shown to reduce blood loss after childbirth, and that it is no alternative to injected drugs for preventing haemorrhage in the third stage of labour. In the study, oral bioavailability ranged from 22% to 138% between subjects.
 
 ### How far to trust it
 
-**The product label reports higher concentrations,** about three times these after injection and one and a half times after the tablet. After 0.2 mg intramuscularly it gives a peak of 5.9 ng/mL, against 1.7 ng/mL here, and its clearance divided by bioavailability is 14.4 L/h, against 37 L/h here. After the 0.2 mg tablet it gives 3.2 ng/mL, against 2.2. The label names no assay. A review of older radioimmunoassay studies (Mäntylä and Kanto 1981, [PubMed](https://pubmed.ncbi.nlm.nih.gov/7298246/)) reports a clearance of 7 to 14 L/h, like the label's. An antibody that also reads metabolites would explain the gap, but that has not been shown. This model follows the specific assay and the intravenous data.
+**The product label reports higher concentrations,** about three times these after injection. After 0.2 mg intramuscularly it gives a peak of 5.9 ng/mL, against 1.7 ng/mL here, and its clearance divided by bioavailability is 14.4 L/h, against 37 L/h here. The label names no assay. A review of older radioimmunoassay studies (Mäntylä and Kanto 1981, [PubMed](https://pubmed.ncbi.nlm.nih.gov/7298246/)) reports a clearance of 7 to 14 L/h, like the label's. An antibody that also reads metabolites would explain the gap, but that has not been shown. This model follows the specific assay and the intravenous data.
 
-**Intramuscular against oral.** Because the two bioavailabilities come from different sources, an intramuscular dose here gives 19% less exposure than the same dose by mouth. The label says the reverse: intramuscular absorption about 25% greater than the tablet's.
-
-The study was small. The women's reported clearance predicts an intravenous area under the curve 14% above the one measured, which the model does not reconcile. Oral bioavailability varied from 22% to 138% between its subjects.
+The study was small. The women's reported clearance predicts an intravenous area under the curve 14% above the one measured, which the model does not reconcile.
 
 ### Doses
 
-Doses are methylergonovine **maleate**, as labelled: 0.2 mg intramuscularly, repeated as required every 2 to 4 hours, or 0.2 mg by mouth three or four times daily after delivery for no more than a week. The label reserves intravenous injection for necessity, given over at least 60 seconds with blood pressure monitoring.
+Doses are methylergonovine **maleate**, as labelled: 0.2 mg intramuscularly, repeated as required every 2 to 4 hours. The label reserves intravenous injection for necessity, given over at least 60 seconds with blood pressure monitoring. It also gives the tablet, 0.2 mg three or four times daily after delivery for no more than a week, which is not simulated here.
 
 ### Body size
 
@@ -26,14 +24,14 @@ No covariate was fitted. With **Adjust to fat-free mass** on, the values belong 
 
 ### Effect and typical concentrations
 
-The label gives the onset of the uterine effect (immediate intravenously, 2 to 5 minutes intramuscularly, 5 to 10 minutes orally) but no time of peak effect, so no effect-site curve is drawn. No therapeutic concentration range is established, and the 1981 review found no apparent relation between plasma level and clinical effect, so no band is shown.
+The label gives the onset of the uterine effect (immediate intravenously, 2 to 5 minutes intramuscularly) but no time of peak effect, so no effect-site curve is drawn. No therapeutic concentration range is established, and the 1981 review found no apparent relation between plasma level and clinical effect, so no band is shown.
 
 ### Pregnancy
 
 Methylergonovine is **contraindicated during pregnancy** because it contracts the uterus; it is used at delivery and after it. The women studied were not pregnant, and nothing is applied for pregnancy. What is reported:
 
 - **At delivery,** the label gives an intramuscular bioavailability of 78%, without saying what it is compared with or how it was measured. The model uses it for every intramuscular dose.
-- **After delivery,** absorption of the tablet may be slow: the label says the peak may come at about 3 hours in postpartum women on continuous treatment. In one study on the third or sixth postpartum day the peak after 0.25 mg was at 3 hours, about 2 ng/mL (Allonen and colleagues 1978, [PubMed](https://pubmed.ncbi.nlm.nih.gov/352975/), abstract). For that regimen this model (switch off) peaks at about 2.8 ng/mL, 0.5 hours after the dose, and has about 1.1 ng/mL at 3 hours, so do not use its oral curve for postpartum timing or peaks.
+- **After delivery,** the label says the peak after the tablet may be delayed to about 3 hours in postpartum women on continuous treatment. Oral doses are not simulated.
 - **Clearance and volume:** no comparison with nonpregnant women was found.
 
 ### Where to be careful
