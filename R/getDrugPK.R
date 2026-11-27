@@ -1620,7 +1620,11 @@ getDrugPK <- function(
         out$PK[[event]]$metabolite <- list(
           name = formed$name,
           ke0  = 0,
-          k21  = if (isTRUE(formed$k21 > 0)) formed$k21 else 0,
+          # No peripheral panel for a metabolite drawn from its peripheral
+          # compartment: that compartment is the curve, and the first
+          # moiety (OR-1855) is not drawn.
+          k21  = if (isTRUE(formed$k21 > 0) &&
+                     !identical(formed$plotted, "peripheral")) formed$k21 else 0,
           k31  = 0
         )
     }

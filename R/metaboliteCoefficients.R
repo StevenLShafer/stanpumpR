@@ -567,7 +567,11 @@ METABOLITE_FORMATION_BASIS <- data.frame(
              # Coartem's artemether (2026-11-24, Ding 2026): its transit chain
              # forms dihydroartemisinin from dihydroartemisininSet(), the one
              # definition the metabolite's own model reads.
-             "artemether"),
+             "artemether",
+             # Levosimendan (2026-11-27, Bertin 2026): its transit chain forms
+             # OR-1855 and OR-1896 from levosimendanOR1896Chain(), the one
+             # definition OR1896's own model reads (R/drugs_OR1896.R).
+             "levosimendan"),
   metabolite = c("morphine", "hydromorphone", "oxymorphone",
                  "enalaprilat", "prednisolone",
                  "desethylamiodarone", "dehydroaripiprazole", "salicylate",
@@ -578,18 +582,20 @@ METABOLITE_FORMATION_BASIS <- data.frame(
                  "doxorubicinolPerezBlanco", "doxorubicinol", "norclozapine",
                  "nortriptyline", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
                  "aprocitentan", "colistin",
-                 "MEGX", "norpethidine", "PPX", "dihydroartemisinin"),
+                 "MEGX", "norpethidine", "PPX", "dihydroartemisinin", "OR1896"),
   basis = c("reads", "reads", "reads",
             "shared", "shared",
             rep("joint", 17), "reads", "joint", "joint", "shared", "shared",
             "joint",
             rep("joint", 3),  # MEGX, norpethidine, PPX
-            "shared"),        # artemether
+            "shared",         # artemether
+            "shared"),        # levosimendan
   uses = c("libraryReferenceClearance", "hydromorphone",
            "libraryReferenceClearance",
            "enalaprilatSet", "prednisolonePairSystem",
            rep(NA_character_, 17), "nortriptyline", NA_character_, NA_character_,
            "M6SUZ", "aprocitentan", NA_character_,
-           rep(NA_character_, 3), "dihydroartemisininSet"),
+           rep(NA_character_, 3), "dihydroartemisininSet",
+           "levosimendanOR1896Chain"),
   stringsAsFactors = FALSE
 )
