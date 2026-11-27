@@ -448,7 +448,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
     "OR1896",  # levosimendan's metabolite, concentration only (2026-11-27)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
     "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
     # suzetrigine and its metabolite (2026-11-16): plasma only
