@@ -370,7 +370,17 @@ def doi_named_ref(name, path):
         page1 = ""
     top, flat = norm(page1)[:3000], norm(pdf_text(path))
     sur = surname(hit.get("first_author") or "")
-    ok_title = bool(hit.get("title")) and norm(hit["title"])[:50] in top
+    # The title by its WORDS, not as a contiguous run.  on_top() elsewhere tests norm(title)[:50]
+    # against the top of page 1, which works for a modern single-column PDF and fails on older
+    # typesetting: pdftotext is called without -layout, so a title set across two lines can come
+    # back reordered.  Fenn 1946 (Am J Physiol 146:637) normalises to "...study of the composition
+    # ALVEOLAR AIR AT ALTITUDE 1 OF THE" -- every word present, the trailing "of the" of the first
+    # line emitted after the second -- and the contiguous test called it absent (2026-11-26).
+    # Four fifths of the title's words of more than three letters must appear among page 1's own
+    # words, and at least three such words must exist, so a two-word title cannot pass on one hit.
+    tw = words(hit.get("title") or "")
+    pw = words(page1)
+    ok_title = len(tw) >= 3 and len(tw & pw) >= 0.8 * len(tw)
     ok_author = bool(sur) and sur in flat
     if not (ok_title and ok_author):
         lack = " or ".join(s for s, ok in (("its title", ok_title), ("its first author", ok_author)) if not ok)
