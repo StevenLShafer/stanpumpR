@@ -26,6 +26,8 @@ it also sets the weight the creatinine-clearance estimate uses.}
 a list in the shape \code{getDrugPK()} expects
 }
 \description{
-One compartment with first-order subcutaneous absorption and weight on the
-apparent clearance and volume (Urien 2013); see the header of the file.
+Subcutaneous doses: one compartment with first-order absorption and weight
+on the apparent clearance and volume (Urien 2013). Intravenous doses: two
+compartments (Ogungbenro 2016), a parallel system scaled to the patient.
+See the header of the file.
 }

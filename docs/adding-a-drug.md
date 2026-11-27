@@ -70,6 +70,19 @@ routine that searches PubMed for new pharmacokinetic studies of every drug alrea
 CSV and emails the maintainer the promising ones with an assessment. Either way the work
 below is the same, and it starts from the full paper, never from an abstract.
 
+## Arterial pharmacokinetics are preferred
+
+Where a source fits arterial and venous samples, or several sources differ in sampling
+site, use the arterial parameters (Steven L. Shafer, 2026-11-26). The brain sees the
+arterial concentration, and so do the other organs that act on the drug, such as the
+liver and the kidneys. A venous sample has passed through the tissues of the limb and
+leads or lags the arterial concentration depending on whether drug is entering or leaving
+them, most of all in the first minutes after a bolus. A model fitted with a sampling-site
+covariate is therefore evaluated at its arterial setting. A venous-only source is still
+used where it is the best available, and its header and help page say that it is venous.
+Ciprofol (Liu 2024) was the first case: arterial sampling is the reference of its
+equations.
+
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one

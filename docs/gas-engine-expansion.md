@@ -1,0 +1,165 @@
+# Expanding the gas engine: end-tidal carbon dioxide, oxygen saturation and the circle system
+
+Written on 2026-11-26 at the end of the session that ran both rounds of the external gas-engine audit (`docs/gas-engine-audit/`), so that the next session starts from the discussion as well as from the code. Nothing here has been built. Every item marked **[decision]** is Steven Shafer's to make. Record each answer here, dated and in his words, before the work it governs begins.
+
+The session that wrote this is `session_0169csHpVDvu9xMPZSSHrUa1`. A cloud session can ask it a question with `send_message` while it is not archived. Its memory has been condensed once, though, so this page and the repository are the better source.
+
+## What Dr Shafer asked for, in his words (2026-11-26)
+
+- "I want to look at %oxygen saturation and at end tidal carbon dioxide. These will be somewhat consequential."
+- "The end-tidal carbon dioxide is important because there is a 'gotcha' in the closed system that we should capture. Because 100% of the fresh gas flow goes to the patient during the inspiratory cycle, you can drive the carbon dioxide quite low if you turn the fresh gas flow very high. There is no clinical reason to raise fresh gas flow above the ventilatory rate, because when fresh gas flow = minute ventilation no gas is rebreathed. The design of the circle valves and escape valves is such that during inspiration the ventilator pumps fresh gas into the circuit, and during exhalation the fresh gas pushes the exhaled gas into the pop-off valve, where the exhaled gas exits the circuit."
+- "Circle systems are the ONLY systems used in anesthesia." "stanpumpR should match clinical practice as well as possible." Recorded in `AGENTS.md`, *Circle systems only, under controlled ventilation*.
+- "We always assume controlled ventilation in these models. When patients breath spontaneously we need to account for ventilatory depression. However, the feedback between anesthetic gas concentration and ventilatory depression is complex, and changes the engine to ODE." Spontaneous ventilation is **not** part of this expansion. The help pages say it is not modelled.
+
+## What the engine does today
+
+- **Circuit.** The ideal circle (`gasCircuitBlend()` in `R/advanceClosedFormGas.R`). The patient inspires minute ventilation plus the net gas taken up. When the fresh gas covers that, the patient breathes fresh gas only. Below it, exhaled gas makes up the shortfall, its CO₂ removed by the absorber. Below the uptake itself the circuit is closed. The circuit holds no gas: a real circle's 3 to 5 L is not modelled, and a pending-work row proposes it (`papers/pending-work.csv`).
+- **Ventilation.** An input: the minute ventilation set on the ventilator. 30% of it is dead space (`GAS_DEAD_SPACE_FRACTION`), so alveolar ventilation is 0.7 × minute ventilation. Nothing the agents do changes it. The fresh gas flow does not add to it either.
+- **Oxygen.** Carried in the circuit and the alveoli. Consumption is `VO2 = 0.0035 × weight` L/min (`getGasBody()`), the same at any body temperature.
+- **Carbon dioxide.** Not a state. Production is `VCO2 = GAS_RESPIRATORY_QUOTIENT × VO2`, with the quotient 0.8 marked "NOT YET CONFIRMED BY SHAFER" in `R/gasProperties.R`. The alveolar fraction is taken at its steady value, 100 VCO2 / VA, so it follows any change in ventilation instantly. Inspired CO₂ is zero, the absorber taking it out. CO₂ enters only the gas-volume coupling and the circuit blend (the long header of `R/advanceClosedFormGas.R`, "THE CLOSED CIRCUIT" and the lines on c_E). It is never shown.
+- **Arterial oxygen.** `R/arterialOxygen.R`: Severinghaus 1979 from the alveolar oxygen, through the endobronchial tube's shunt only. Without a tube, PaO₂ equals the alveolar PO₂ (713 mmHg per 100% at sea level, `GAS_ALVEOLAR_TORR`), so the saturation reads near 100% whenever the alveolar oxygen is adequate. It is shown in the oxygen panel's hover and, with a tube, in the Visualizer.
+
+## The fresh-gas gotcha, in numbers
+
+Delivered minute ventilation = set minute ventilation + inspiratory fraction × fresh gas flow. At I:E 1:2 the inspiratory fraction is one third. Steady-state alveolar PCO₂ = (VCO₂ / VA) × 713 mmHg. A 70 kg patient, VO₂ 0.245 L/min, VCO₂ 0.196 L/min, set to 6 L/min:
+
+| Fresh gas flow | Delivered ventilation | Alveolar ventilation | End-tidal CO₂ |
+|---|---|---|---|
+| no coupling (today) | 6.0 L/min | 4.2 L/min | 33 mmHg |
+| 2 L/min | 6.7 | 4.7 | 30 |
+| 6 L/min (= minute ventilation) | 8.0 | 5.6 | 25 |
+| 10 L/min | 9.3 | 6.5 | 21 |
+
+Two consequences beyond the CO₂:
+- The added ventilation speeds every agent's uptake.
+- It changes every run at the default settings, because the fresh gas flow is never zero. Coupling would therefore be a new row of `inst/app-help/models/gas-differences.md`. The GasMan comparisons would need it off: the semi-closed circuit already takes no physiology GasMan lacks (`gasNotGasMansBody()`), and the ideal-circuit comparisons run with `deadSpace = 0` and `oxygenUptake = FALSE`.
+
+**Whether the machine adds the fresh gas depends on its design.** This is the writing session's understanding, to be confirmed in sources before anything is built:
+- **Dräger piston machines** store the fresh gas in the bag during inspiration. The circle-systems module below says so for the Primus.
+- **Many current GE machines** measure and compensate the delivered volume.
+- **In pressure control,** the pressure sets the volume.
+
+So the gotcha belongs to volume control on a machine that neither decouples nor compensates.
+
+## Decisions for Dr Shafer
+
+1. **[decision] Fresh gas coupling.** Should delivered ventilation be set ventilation + inspiratory fraction × fresh gas flow? If so, is the I:E ratio an input, defaulting to 1:2, or a fixed fraction? Alternatively, should the model assume a compensated or decoupled machine, or should the user say which kind of machine is in use? (That would be a fact about the patient's setup, not a choice between published models.)
+2. **[decision] End-tidal CO₂ dynamics.** One option is the steady state, VCO₂ / VA, which moves the instant the ventilation does. The other is a model of the body's CO₂ stores, in which a real PaCO₂ moves over minutes. Under controlled ventilation the stores are still linear, so the matrix-exponential engine can carry them. A source must be read before building the stores.
+3. **[decision] Display.** Should end-tidal CO₂ and SpO₂ be lines, and on their own panel? When are they drawn: whenever a gas or oxygen is in the dose table, or only on request?
+4. **[decision] A baseline shunt under anaesthesia.** Atelectasis gives a venous admixture, a figure to be found in a source, and with it a realistic A–a gradient. The engine sends the agents through the same shunt (`gasArterial()`), so this would also lower every agent's arterial tension a little. Apply it to oxygen only, to everything, or not at all?
+5. **[decision] Oxygen consumption and temperature.** Oxygen consumption and CO₂ production fall in hypothermia. The size of the fall, per °C, is to be read in a source, not taken from memory. Today the temperature slider does not change them, so the end-tidal CO₂ of a cold patient would read high. Should they follow the slider?
+6. **[decision] The respiratory quotient**, 0.8, which `R/gasProperties.R` says he has not yet confirmed. End-tidal CO₂ is proportional to it.
+
+## Decided so far (the "Gas Engine Expansion" session, 2026-11-26 and 27)
+
+Recorded by `session_0169csHovKX7NBB69aNCSNRj`, the session that is building the expansion. Nothing below has been built yet. Each entry gives Dr Shafer's words and how they will be applied; the application is Claude's reading, which he accepted where it says so.
+
+**What is to be added** (2026-11-26): "I want to expand the gas engine to include end-tidal carbon dioxide, arterial oxygen saturation, arterial oxygen partial pressure (use a percent of 1 atmosphere at sea level for now, we may change the units later), a slider for respiratory quotient, and a slider for hemoglobin / hematocrit. The slider will move both hct and hbg jointly. [...] The engine should also include the slider on changes in metabolism." This reshapes decision 6 above: the quotient becomes a slider, so 0.8 is its default and no longer a constant awaiting confirmation. Its range, and the metabolism slider's, are not yet decided.
+
+**The key concepts** (2026-11-26): "Key concept is the alveolar gas equation. Another is the oxyhemoglobin dissociation curve."
+
+**Every physiology control bears on it** (2026-11-26): "Please look over the existing physiology sliders. Nearly all will affect the relationship between ventilation, CO2, and alveolar oxygen."
+
+**Alpha-stat** (2026-11-26): "We will go with alpha stat, which will be explained in the documentation." Claude's reading, which he confirmed on 2026-11-27 ("Yes, that is what I intended"): the engine computes the in-vivo gas-phase values at body temperature (the alveolar and end-tidal CO₂ and oxygen a capnograph reads), and reports arterial pH, PaCO₂ and PaO₂ as a blood gas machine reads them at 37 °C, uncorrected; the saturation is the same either way. So in a cold patient the reported PaCO₂ reads above the end-tidal CO₂, and "normal" stays pH 7.40 and 40 mmHg at every temperature.
+
+**A pH-stat display, with a warning** (2026-11-27): "Since it only affects what is displayed, and not the internal calculations, perhaps pH stat would be useful for teaching. I personally think pH stat is dangerous. However, since stanpumpR is for teaching as well as guiding clinical care. Perhaps if someone checks 'pH stat' a popup could ask 'Are you sure - alpha stat is recommended.' If they click 'yes', they get pH stat. However, they will have been warned." (He first wrote "perhaps that would be useful" and corrected it to "perhaps pH stat would be useful" the same day.) To be built as a display option, off by default: ticking it asks for confirmation with that message, and only a yes turns it on. With it on, the arterial pH, PaCO₂ and PaO₂ are shown corrected to the patient's temperature, the in-vivo values; nothing the engine computes changes. "pH stat" here is the temperature-corrected display only, which he confirmed with the next decision.
+
+**No carbon dioxide in the fresh gas** (2026-11-27), recorded as his decision at his request: "I do not want users to add CO2 to the fresh gas. I trained with the ability to add CO2 to the fresh gas flow, and it was great for speeding up mask inductions. I loved it. However, I haven't seen an anesthesia machine with CO2 for decades. Adding CO2 to the fresh gas is potentially dangerous. Record this as a decision that I made. If anyone wants it added to stanpumpR we could definitely do that. However, for now the only way to raise CO2 is to decrease ventilation rate. Since the CO2 absorber is always in the line, we can't raise CO2 through rebreathing (although that could be added as well)." So:
+- there is no CO₂ flowmeter, and the pH-stat option adds none;
+- the absorber is always in the circuit, so inspired CO₂ is zero and rebreathing does not raise it;
+- the user raises CO₂ only by lowering the ventilation (CO₂ also moves with the metabolism and respiratory quotient sliders, which change its production);
+- a CO₂ flowmeter, and an absorber that can be bypassed or exhausted, are not built and are not refused: either could be added if someone asks for it. Do not add either without reopening this decision.
+
+**Hematocrit and solubility** (2026-11-27): "Hematocrit changes solubility. Use Zhou's 2002 coefficients." Applied as follows, which he accepted ("I accept your assumptions as sound recommendations"):
+- Each volatile agent's blood:gas coefficient is multiplied by exp(c × (Hct − 45)), Hct in per cent, with c = 0.0094 for desflurane, 0.0092 for sevoflurane and 0.0154 for isoflurane (Zhou, Liu and Liu 2002, abstract and Table 1, read on the page images).
+- The reference is 45%, the default haemoglobin of 15 g/dL times 3, so the default patient and the GasMan validation do not move.
+- Tissue:gas coefficients are unchanged, so tissue:blood changes with hematocrit.
+- Nitrous oxide and nitrogen are unchanged: Zhou measured neither.
+- The haemoglobin slider is shown whenever an inhaled agent is in the dose table, no longer only with the endobronchial tube.
+- The regression is applied across the whole slider (4 to 20 g/dL, 12 to 60% hematocrit), beyond the 20 to 40% Zhou measured by saline dilution. The documentation is to say that both ends are extrapolated, and that the measurements are of dilution with saline.
+
+**Temperature and the tissues** (2026-11-27): "Yes, use tissue specific slopes relative to temperature." and "Use the brain slope for the vessel-rich group." Until now every tissue:gas coefficient of an agent took its blood:gas slope. The slopes of ln(partition coefficient) on temperature, in % per °C of cooling:
+
+| Coefficient | Source | Desflurane | Sevoflurane | Isoflurane |
+|---|---|---|---|---|
+| Blood:gas | Zhou, Liu and Liu 2002 (unchanged) | 3.02 | 2.95 | 3.82 |
+| Vessel-rich group | Zhou and Liu 2001, Table 1, brain | 3.22 | 3.07 | 3.03 |
+| Muscle group | Zhou and Liu 2001, Table 1, muscle | 3.93 | 3.82 | 4.05 |
+| Fat group | Zhou and Liu 2001, Table 1, fat | 3.25 | 3.78 | 4.34 |
+
+Nitrous oxide keeps Allott 1973's coefficients. When the cardiac slider splits the brain and heart from the rest of the vessel-rich group, both parts keep the brain slope. Nothing changes at 37 °C. Away from it the tissue:blood ratios now move with temperature, so the help page's statement that they do not, its temperature table and the tests pinned at 32 °C change.
+
+**The sliders drive carbon dioxide, not the reverse** (2026-11-27): "Actually, it goes both ways. CO2 is a cardiovascular stimulant. Also, enzyme activity is pH dependent. However, that may get us too deeply into the weeds. Let's go unidirectional for now: the sliders change CO2 production, not the other way around." So the metabolism and respiratory quotient sliders set oxygen consumption and CO₂ production, and nothing the engine computes for CO₂ or pH feeds back on cardiac output, metabolism or any drug's clearance. The documentation is to say that the feedback exists and is not modelled.
+
+**The respiratory quotient and body habitus** (2026-11-27): "I think RQ is only dependent on what you eat, not body habitus." The slider is therefore the tissue quotient, set by the user and not linked to weight, height or body composition. Claude's answer, from general physiology and not yet from a source read for this work: it follows the fuel oxidised (carbohydrate 1.0, fat about 0.7, protein about 0.8), so it also moves with metabolic state (fasting, overfeeding, diabetes, critical illness), and the exchange ratio measured at the mouth departs from it for a while after a change in ventilation, as the body's CO₂ store fills or empties. A source is to be cited before this reaches the help page.
+
+**End-tidal CO₂ is dynamic** (2026-11-27; decision 2 above): "End-tidal CO2 is the breath by breath alveolar gas concentration. It is only at steady state if ventilation has been unchanged for a period of time." So the steady value VCO₂ / VA is not enough: carbon dioxide becomes a state of the engine, and what is reported as end-tidal is the alveolar value at each time. How the body's CO₂ stores are carried is still to be designed and needs a source.
+
+**Fresh gas adds to delivered ventilation** (2026-11-27; decision 1 above): "Fresh gas adds to delivered ventilation. Please review the circuit structure." Cicman 1993 (part II, read on the PDF) gives the mechanism for the Narkomed AV-E: the valve to the scavenger is held shut through the inspiratory flow and the inspiratory pause, so fresh gas entering then goes to the patient with the bellows' tidal volume; during expiration it fills the bellows with the exhaled gas, and the excess vents with the last of the exhaled gas in the expiratory pause. The I:E ratio is an input (2026-11-27: "I:E ratio should be a user input, default 1:2"), so delivered ventilation = set ventilation + I/(I + E) × fresh gas flow, a third of the fresh gas flow at the default. Still to settle: where the input sits and whether it can change during a run; that the ventilation row is the ventilator's setting and not the measured ventilation; and what the time until threshold does (below).
+
+**The time until threshold takes the higher ventilation** (2026-11-27): "It should use the higher ventilation as well. The effect of fresh gas flow in a circle system is often modest, but at high flows it can be considerable. I think we want to capture that." The time until threshold turns the fresh gas up until nothing is rebreathed (Shafer, 2026-10-05), and until now held the ventilation at what it was. With the coupling, the washout runs at the delivered ventilation that flow gives. Claude's reading of the flow, not yet confirmed: the least flow that stops rebreathing, Q* = (set ventilation + uptake) / (1 − I/(I + E)), at which the delivered ventilation is about the set ventilation / (1 − I/(I + E)), 1.5 times it at 1:2. This revises the rule of 2026-10-05 that "ventilation stays what it was": the ventilator's setting stays, and what reaches the patient rises.
+
+**Oxygen consumption follows temperature** (2026-11-27; decision 5 above): "Oxygen consumption absolutely follows the temperature slider. That is why patients are cooled during cardiovascular and brain surgery." The size of the fall per °C is to be read in a source; none has been identified yet. CO₂ production follows through the respiratory quotient.
+
+**Dissociation curves** (2026-11-27): "Implement dissociation curves for all, unless they resolve to be trivial." Read as: the oxygen and the carbon dioxide dissociation curves of blood, with their dependence on temperature, pH and each other, each built in full unless it reduces to something simple (a straight line over the range that matters, say), in which case the simple form is used and the documentation shows why.
+
+**Display is decided last** (2026-11-27; decision 3 above): "Those should be done before we discuss display choices. I've given that thought, but I want to see how the model comes together first."
+
+**The write-ups** (2026-11-26): "it needs to be in the stanpumpR documentation. Second, I would like a write up a formal statement of the mathematics using LaTex. Lastly, I will want to revise the 'gasman defect report' [...] The write-ups should all be well referenced." And: "I will also want the documentation to include the full mathematics of the interactions in the gas engine related to the physiology." The LaTeX statement is to be the master and the help page a plain-text rendering of it, since the help renderer typesets no equations. The letter to James Philip is his correspondence: it is written last and is not kept in the repository.
+
+**The order of work** (2026-11-27): the sources are read first; then the mathematics is drafted for his review; then the expansion is built, one pull request per piece; then the help page and the LaTeX statement; then he runs Gemini's round-2 audit ("I will run that after this work is done"), which needs a new prompt and bundle, `PROMPT-2.md` being pinned to a commit from before the expansion; the letter goes after that.
+
+**Still open**, beside decisions 1 to 5 above:
+- the dissolved oxygen: Severinghaus 1979 gives 0.0031 mL/dL/mmHg, `OXYGEN_DISSOLVED` is 0.003 with no source (`papers/pending-work.csv`, the row for PMID 35496);
+- which dissociation curve: Severinghaus 1979's equation 1 with his temperature and Bohr corrections, or Dash, Korman and Bassingthwaighte 2016 throughout, which also gives the blood's CO₂ content and uses hematocrit. The two agree on the Bohr effect and differ on temperature (P50 at 32 °C about 18.8 against 20.6 mmHg by Claude's arithmetic, not yet run in code);
+- the bicarbonate from which pH is computed (a fixed 24 mEq/L was proposed);
+- the water vapour pressure in a cold patient: `R/altitude.R` holds it at 47 mmHg at every temperature on purpose, "which leaves sea level untouched by the temperature slider";
+- (settled 2026-11-27, below) the time until threshold under the fresh gas coupling.
+
+## Sources read for the expansion
+
+Read by the "Gas Engine Expansion" session on the PDF (the page images where the text layer was unusable), 2026-11-26 and 27. "Checked" means each number the code attributes to the paper was found on its page; it does not mean every page was read.
+
+| Source | What was read | Result |
+|---|---|---|
+| Curran-Everett 2006, *Adv Physiol Educ* 30:58 (PMID 16709734) | The alveolar gas equation, after Fenn, Rahn and Otis 1946: PIO₂ = (PB − 47) FIO₂; PAO₂ = PIO₂ + PACO₂ FIO₂ (1 − R)/R − PACO₂/R | The engine's steady-state alveolar oxygen agrees with it to within 1 mmHg in four fresh gas settings (70 kg, 6 L/min) |
+| Severinghaus 1979, *J Appl Physiol* 46:599 (PMID 35496) | All of it | Equation 1 as coded; equations 2 to 5 and the content equation recorded in `papers/pending-work.csv` |
+| Dash, Korman and Bassingthwaighte 2016, *Eur J Appl Physiol* 116:97 (PMID 26298270) | The model equations and Table 1, not the appendix or the validation figures | A candidate for the dissociation curve; standard hematocrit 0.45 with haemoglobin 2.33 mM (15 g/dL) |
+| Chatzopoulou 2025, *Cureus* (PMID 40755621) | All of it | A systematic review of outcomes with alpha-stat and pH-stat; it has no equations |
+| Zhou, Liu and Liu 2002, *Chin Med J* 115:1014 (PMID 12150733) | Abstract and Table 1 | The three blood:gas slopes checked; the hematocrit coefficients above. Its blood:gas values at 37 °C and 40% hematocrit (0.55, 0.68, 1.38) differ from the engine's, which are GasMan's (0.42, 0.65, 1.3) |
+| Zhou and Liu 2001, *Anesth Analg* 93:234 (PMID 11429373) | Abstract, Table 1 and the discussion | Checked; the tissue slopes above. The authors conclude the increases are "approximately the same" as blood's |
+| Liu, Hu and Liu 2001, *Anesthesiology* 94:429 (PMID 11374601) | The regression and the text beside it | Checked, with the code's remark that the text's 5.1% and 16.2 °C do not follow from the regression |
+| James and White 1984, *Anesth Analg* 63:1097 (PMID 6239572) | The vaporizer and flowmeter experiments | Checked. The flow error is not constant: close to the density prediction above 4 L/min and much smaller below, with no low-flow flowmeter tested, which is the evidence for the open `[decision]` on flowmeter calibration in `R/altitude.R` |
+| James, Manson and Dennett 1982, *Anaesthesia* 37:285 (PMID 7091603) | Summary, methods and Table 2 | Checked |
+| Andrews and Johnston 1993, *Anesth Analg* 76:1338 (PMID 8498675) | The altitude and carrier gas sections (a scan) | Checked |
+| Cicman 1993, part II, *J Clin Monit* 9:104 (PMID 8478649) | The ventilator's cycle | The relief valve to the scavenger is held shut during inspiration, and excess fresh gas vents with the last of the exhaled gas in the expiratory pause. No sentence states that fresh gas adds to the delivered tidal volume, so it supports the mechanism of decision 1 without quantifying it |
+
+Until 2026-11-27 the two Zhou papers, both James papers and Andrews and Johnston were cited in the code as read in full without being in stanpumpRPapers; Dr Shafer supplied them that day and Paper management is filing them.
+
+Not yet read by this session: Kelman and Nunn 1966, Ashwood 1983, Rosenthal 1948 and Severinghaus 1966 (the temperature mathematics behind alpha-stat); Cicman 1992, part I; Allott 1973, Antognini 1994, West 1996, Williams and Leggett 1989, Mapleson 1996, Weber 2021, the five Peyton papers and Eger's chapter 8, all in the archive. Not obtained: Fenn, Rahn and Otis 1946. No source has been identified for oxygen consumption against temperature or for the body's CO₂ stores.
+
+## Not in this expansion
+
+- The circle's own volume. A pending-work row proposes it, for his decision, with Herbert and Magee 2017 and Lerou and Booij's system model as its sources.
+- Spontaneous ventilation and its depression by the agents (Munson, Eger and Bowers 1973). It would make the engine a nonlinear ODE: hold the ventilation fixed per step, as the uptake is held, or use an adaptive solver such as `mmDormandPrince()`.
+- The lung's ventilation/perfusion scatter (round 1, decision 9: a single mixed lung until Peyton's mathematics is checked).
+
+## Sources Dr Shafer supplied (2026-11-26)
+
+- **OpenAnesthesia.** Malark C, Tomlinson H, McCoy N. *Anesthesia Breathing Systems*. Last updated 5 February 2024. https://www.openanesthesia.org/keywords/anesthesia-breathing-systems/. Read in full. It classifies systems as open, semi-open, semi-closed and closed. A semi-closed circle (APL valve open, partial rebreathing) is "the most common breathing systems in the United States". It also says a high fresh gas flow is needed for the first 5 to 10 minutes "to equilibrate the breathing system".
+- **StatPearls.** Yao PY, Hendrix JM, Stahl DL. *Anesthesia Breathing Systems*. StatPearls, updated 13 December 2025 (NBK574503; PMID 34662017 by Europe PMC). Only the abstract was read: NCBI answers automated readers with a reCAPTCHA. It uses the same four-way classification.
+- **perioperativeCPD team.** *Understanding the circle system* (2022). CC BY-NC-SA 4.0, for private use, so it is cited here and not copied; it was uploaded to the session and is not in the archive. Points that bear on the model:
+  - A circle holds 3 to 5 L, and 22 mm tubing holds 400 to 500 mL per metre.
+  - Above 1 L/min the inspired concentrations are close to the fresh gas's. Below it they must be monitored.
+  - A table of the oxygen fraction needed at low flows, against 250 mL/min of consumption.
+  - A chart of rebreathed and fresh shares against fresh gas flow. It gives no source and no minute ventilation, so it should not be calibrated to.
+  - GE bellows machines cut the bag and APL valve out of the circuit during ventilation. Dräger's Primus stores the fresh gas in the bag.
+  - It cites Bokoch and Weston, *Inhaled Anesthetics: Delivery Systems*, in Miller's Anesthesia, 9th edition (2020), and Herbert and Magee, *BJA Education* 2017. Either may settle the machine question in decision 1.
+
+## How the next session should proceed
+
+1. Read this page and `AGENTS.md`'s gas-engine sections: *Circle systems only*, *Physiology sliders* and *Rules from Carbon's third UI audit*.
+2. Read the header of `R/advanceClosedFormGas.R` (the closed circuit and the CO₂ lines), `R/arterialOxygen.R`, and the help pages `inst/app-help/models/gas-engine.md`, `gas-differences.md` and `inst/app-help/drugs/ventilation.md`.
+3. Put the decisions to Dr Shafer and record each answer here.
+4. Find and read the sources the numbers above still need, on the PDF. Ask for any paper not in stanpumpRPapers, and write it in `papers/pending-work.csv` meanwhile.
+5. Build each piece as its own pull request with its tests. Keep the GasMan comparisons where they are, and add a row to `gas-differences.md` for any new default departure from GasMan.

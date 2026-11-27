@@ -256,11 +256,15 @@
 #     end-tidal MAC (see "(5) MAC" in the loop below, which says why).  Until
 #     2026-11-24 this header said the brain (vessel-rich) tension, which an
 #     earlier version used (Gemini's gas-engine audit of 2026-11-23, C-04).
-#     DECIDED (Shafer, 2026-11-25; C-04, D-05): the MAC panel's dashed
-#     "effect site" line is to show the summed brain (vessel-rich group) MAC,
-#     sum_i F_brain,i / MAC_i(age), in place of what it draws now; the solid
-#     end-tidal line and its time until threshold are unchanged.  Shafer: "I
-#     think Ted Eger would have approved."  To be built in its own pull request.
+#     DECIDED (Shafer, 2026-11-25; C-04, D-05): the MAC panel's "effect
+#     site" line is the summed brain (vessel-rich group) MAC,
+#     sum_i F_brain,i / MAC_i(age), built the same day (gasBrainMac(), read
+#     by gasDrugEntries()); its "plasma" line, the end-tidal MAC, and the time
+#     until threshold, read off end-tidal, are unchanged.  Shafer: "I think
+#     Ted Eger would have approved."  Until then both lines were the
+#     end-tidal MAC.  With the default line types (plasma blank, effect site
+#     solid) the panel shows the brain MAC, as an agent's panel shows its
+#     brain tension.
 #
 # LINEARITY AND THE METHOD OF SOLUTION
 # ====================================
@@ -318,7 +322,9 @@
 # and growing by 1.02 to a twentieth of the plot's step, in that induction,
 # its emergence, and the same in a 4 kg infant, on plots of an hour, a day
 # and a week: the largest error at any plotted point was 0.36% of the reading
-# (0.59% in the infant), against 1.6%, 13.4% and 6.3% before, for 15 to 130
+# (0.59% in the infant; 0.67% at 0.136 minute in a 3-month-old 4 kg infant at
+# its default 0.67 L/min against a finer reference, ChatGPT's round-2 gas
+# audit, B-01), against 1.6%, 13.4% and 6.3% before, for 15 to 130
 # more steps than the 601.  In the audit's matched ideal-circuit sevoflurane case the
 # 30-minute alveolar value moves from 1.71176014% with 31 steps to
 # 1.71178091% with 2401, against 1.71178112% from an independent ODE solver.
@@ -1151,6 +1157,21 @@ advanceClosedFormGas <- function(
   # hundredfold, which matters because this runs on every dose-table keystroke.
   changes <- sort(unique(c(0, gasDose$Time, bodySteps$time, maximum)))
   changes <- changes[changes >= 0 & changes <= maximum]
+  # The semi-closed circuit is GasMan's, kept only for the comparison with
+  # GasMan; the app never runs it.  So it takes no physiology GasMan lacks
+  # (Steven Shafer, 2026-11-26: "we should not permit it to reflect any
+  # physiology not available to GasMan"), which ChatGPT's round-2 gas audit
+  # (B-02) found where a step in altitude created gas with no source, 2.37 L
+  # of nitrogen at no flow from 3000 m to sea level.
+  if (circuit == "semi-closed") {
+    inRun <- if (is.null(bodySteps)) list(body) else bodySteps$body[bodySteps$time <= maximum]
+    problems <- unique(unlist(lapply(inRun, gasNotGasMansBody)))
+    if (length(problems) > 0)
+      stop("The semi-closed circuit is GasMan's, kept only for the comparison with ",
+           "GasMan, and takes no physiology GasMan lacks (here ",
+           paste(problems, collapse = ", "), "). Use the ideal circuit, the default.",
+           call. = FALSE)
+  }
   bodyIndex <- 1L
   if (length(changes) < 2) changes <- c(0, maximum)
 
@@ -1438,18 +1459,8 @@ advanceClosedFormGas <- function(
   # m_fMAC raw, with no age term, so macForAge() is ours too -- a validation run
   # against GasMan output must use the reference age.
   # MAC at each row's body temperature (physiology events step it)
-  macTotal <- rep(0, nT)
   rowBodies <- if (is.null(bodySteps)) list(body) else bodySteps$body
-  for (k in unique(bodyRow))
-  {
-    rows <- which(bodyRow == k)
-    pk <- gasPropertiesAt(rowBodies[[k]]$temperature)
-    for (g in pk$gas[pk$potent])
-    {
-      MAC <- macForAge(pk$MAC40[pk$gas == g], age)
-      macTotal[rows] <- macTotal[rows] + out[[g]][rows, 2] / MAC
-    }
-  }
+  macTotal <- gasMacSum(out, 2L, bodyRow, rowBodies, age)
   results <- rbind(results, data.frame(
     Drug = "MAC", Time = timeLine, Site = "MAC", Y = macTotal,
     stringsAsFactors = FALSE))
@@ -1473,6 +1484,55 @@ advanceClosedFormGas <- function(
        body = body, circuit = circuit, weight = weight, age = age, Qco = Qco,
        deadSpace = deadSpace, bodySteps = bodySteps, bodyRow = bodyRow,
        cardiacOutput = cardiacOutput)
+}
+
+#' Summed MAC multiples of one state of every potent agent
+#'
+#' Each potent agent's tension divided by its MAC at the patient's age and
+#' the body temperature in force at each row, summed over the agents.
+#' Column 2, the alveolar tension, is the engine's MAC series; column 3, the
+#' brain (vessel-rich group), is the MAC panel's effect-site line
+#' (\code{gasBrainMac()}).
+#'
+#' @param state named list of state matrices, one per gas, a row per time
+#' @param column the state's column: 2 alveolar, 3 brain
+#' @param bodyRow the body in force at each row (an index into \code{bodies})
+#' @param bodies the gas bodies
+#' @param age years
+#' @returns the summed MAC multiple at each row
+#' @keywords internal
+gasMacSum <- function(state, column, bodyRow, bodies, age)
+{
+  total <- rep(0, length(bodyRow))
+  for (k in unique(bodyRow))
+  {
+    rows <- which(bodyRow == k)
+    pk <- gasPropertiesAt(bodies[[k]]$temperature)
+    for (g in intersect(pk$gas[pk$potent], names(state)))
+      total[rows] <- total[rows] +
+        state[[g]][rows, column] / macForAge(pk$MAC40[pk$gas == g], age)
+  }
+  total
+}
+
+#' The summed brain MAC of a run
+#'
+#' The MAC panel's dashed "effect site" line: the sum over the potent agents
+#' of each one's brain (vessel-rich group) tension over its MAC, where the
+#' solid line sums the alveolar tensions.  Shafer, 2026-11-25 (Gemini's
+#' gas-engine audit, C-04 and D-05): "I think Ted Eger would have approved."
+#' With cardiac output off normal, state 3 is the brain and heart alone
+#' (\code{gasTissueShares()}), the effect site.
+#'
+#' @param sim \code{advanceClosedFormGas()}'s value
+#' @returns a data frame of Time and Y, one row per time of the run
+#' @keywords internal
+gasBrainMac <- function(sim)
+{
+  bodies <- if (is.null(sim$bodySteps)) list(sim$body) else sim$bodySteps$body
+  bodyRow <- if (is.null(sim$bodyRow)) rep(1L, length(sim$timeLine)) else sim$bodyRow
+  data.frame(Time = sim$timeLine,
+             Y = gasMacSum(sim$state, 3L, bodyRow, bodies, sim$age))
 }
 
 #' The agent carried across a change of body temperature
@@ -1529,10 +1589,12 @@ gasStateAcrossBodies <- function(state, from, to)
 #' lungs and the circuit keep their volume.  Where the pressure falls, gas
 #' leaves each of them at its own composition, so every tension is scaled by
 #' the new total over the old.  Where it rises, gas enters: the alveoli keep
-#' what they hold and draw in gas to make up the difference.  In the
-#' semi-closed circuit that gas is the circuit's own, compressed, and the
-#' circuit, refilled from the fresh gas, which it nearly matches, is scaled.
-#' The ideal and open circuits hold no gas, so the only gas the lungs can
+#' what they hold and draw in gas to make up the difference.  The
+#' semi-closed circuit, GasMan's, is not stepped: \code{advanceClosedFormGas()}
+#' refuses a step in altitude with it (Steven Shafer, 2026-11-26; ChatGPT's
+#' round-2 gas audit, B-02), since GasMan has no altitude and scaling its
+#' stored gas up created gas with no source.  The ideal and open circuits
+#' hold no gas, so the only gas the lungs can
 #' draw is fresh gas at the new pressure, in the share of the inspired gas it
 #' makes up (\code{gasCircuitBlend()}; the engine computes it,
 #' \code{inspired}): all of the rise where the flow covers what they draw,
@@ -1554,8 +1616,8 @@ gasStateAcrossBodies <- function(state, from, to)
 #' @param inspired for the ideal and open circuits, by gas, what the lungs
 #'   draw in where the pressure rises, as percent of the gas drawn: the fresh
 #'   gas's composition times its share of the inspired gas after the step,
-#'   so less than 100 in all where the flow does not cover the draw.  NULL,
-#'   or the semi-closed circuit, draws the circuit's own gas.
+#'   so less than 100 in all where the flow does not cover the draw.  NULL
+#'   draws the circuit's own gas.
 #' @returns the state after the step
 #' @keywords internal
 gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired = NULL)
@@ -1565,22 +1627,60 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
   if (isTRUE(all.equal(r1, r2, tolerance = 1e-12))) return(state)
   a1 <- r1 * gasHumidityRatio(from)
   a2 <- r2 * gasHumidityRatio(to)
+  # The semi-closed circuit never steps the altitude: advanceClosedFormGas()
+  # refuses it (Steven Shafer, 2026-11-26; ChatGPT's round-2 gas audit,
+  # B-02).  Scaling its stored gas up at a rise in pressure, as this did,
+  # created gas with no source: 2.37 L of nitrogen at no flow from 3000 m to
+  # sea level.
+  if (circuit == "semi-closed")
+    stop("gasStateAcrossPressure(): the semi-closed circuit does not step the altitude",
+         call. = FALSE)
   for (g in names(state)) {
     y <- state[[g]]
     # The composition of the gas drawn in, as a fraction of its dry gas (x 100)
-    drawn <- if (circuit == "semi-closed" || is.null(inspired) || is.na(inspired[g]))
-      y[1] / r1 else unname(inspired[g])
-    if (circuit == "semi-closed") y[1] <- y[1] * r2 / r1
+    drawn <- if (is.null(inspired) || is.na(inspired[g])) y[1] / r1 else unname(inspired[g])
     y[2] <- if (a2 < a1) y[2] * a2 / a1 else y[2] + drawn * (a2 - a1)
     state[[g]] <- y
   }
   state
 }
 
+#' What a gas body carries that GasMan's does not
+#'
+#' The semi-closed circuit takes only GasMan's body (Steven Shafer,
+#' 2026-11-26; \code{advanceClosedFormGas()}): no temperature but 37 C, no
+#' altitude, no endobronchial tube, no cardiac-output slider (a cardiac output
+#' given as GasMan's own setting, \code{simulateGases(cardiacOutput =)}, is
+#' GasMan's), no haemoglobin but the default, and GasMan's linear scaling by
+#' weight, not body composition (the 70 kg, 170 cm, 35-year-old man, whose
+#' composed body is GasMan's standard, is GasMan's).
+#'
+#' @param body a gas body
+#' @returns the names of what the body carries that GasMan's does not, or
+#'   NULL
+#' @keywords internal
+gasNotGasMansBody <- function(body)
+{
+  out <- character(0)
+  if (!is.null(body$temperature) && body$temperature != 37) out <- c(out, "body temperature")
+  if (!is.null(body$altitude) && body$altitude != ALTITUDE_DEFAULT) out <- c(out, "altitude")
+  if (isTRUE(body$endobronchial)) out <- c(out, "endobronchial intubation")
+  if (!is.null(body$V_vrgRest) || (!is.null(body$cardiac) && body$cardiac != 1))
+    out <- c(out, "the cardiac-output slider")
+  if (!is.null(body$haemoglobin) && body$haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    out <- c(out, "haemoglobin")
+  if (!is.null(body$composition) &&
+      !isTRUE(all.equal(unname(body$composition), c(1, 1))))
+    out <- c(out, "body composition (GasMan scales linearly with weight)")
+  if (length(out) == 0) NULL else out
+}
+
 #' The bodies of a gas run with physiology events
 #'
 #' @param weight patient weight, kg
 #' @param events physiologyEventsFrom()'s data frame, at least one row
+#' @param base the patient's body before physiology (getGasBody()), by
+#'   default GasMan's linear scaling of \code{weight}
 #' @returns list(time, body): normal physiology from 0 and each event's from
 #'   its time.  If any body has cardiac output off normal, every body splits
 #'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
@@ -1593,15 +1693,15 @@ gasStateAcrossPressure <- function(state, from, to, circuit = "ideal", inspired 
 #'   was 30 C throughout as one whose temperature changed (Gemini's
 #'   gas-engine audit of 2026-11-23, C-07).
 #' @keywords internal
-gasBodySteps <- function(weight, events)
+gasBodySteps <- function(weight, events, base = getGasBody(weight))
 {
   states <- physiologyEventStates(events)
   split <- any(vapply(states, function(x) x[["cardiac"]] != 1, TRUE))
   bodies <- lapply(states, function(x) {
-    body <- gasBodyPhysiology(getGasBody(weight), x[["cardiac"]], split = split)
+    body <- gasBodyPhysiology(base, x[["cardiac"]], split = split)
     if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
     if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
-    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1)
+    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1, x[["shunt"]])
     if (x[["haemoglobin"]] != ARTERIAL_OXYGEN_HAEMOGLOBIN)
       body$haemoglobin <- unname(x[["haemoglobin"]])
     body
@@ -1651,11 +1751,20 @@ gasBodySteps <- function(weight, events)
 #'   and each event's from its time (cardiac output, temperature, altitude
 #'   and intubation, \code{gasBodySteps()}), the agent in each compartment
 #'   carried across each step, and \code{physiology}, \code{temperature},
-#'   \code{altitude}, \code{endobronchial} and \code{haemoglobin} are not used
+#'   \code{altitude}, \code{endobronchial}, \code{haemoglobin} and
+#'   \code{shunt} are not used
 #' @param haemoglobin NULL (15 g/dL), or the haemoglobin, g/dL, of the
 #'   arterial oxygen read off the run (\code{gasArterialOxygen()},
 #'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
 #'   does not read it
+#' @param shunt NULL (0.5), or the share of cardiac output through the
+#'   unventilated lung with an endobronchial tube, 0 to 0.5
+#'   (R/endobronchial.R); ignored without the tube
+#' @param height,sex the patient's height (cm) and sex, which with \code{age}
+#'   scale the compartments by body composition (getGasBody()); NULL for
+#'   GasMan's linear scaling in weight
+#' @param adjustToFFM FALSE for GasMan's linear scaling whatever is given
+#'   (the Patient Profile's fat-free-mass switch)
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
 #'   \code{advanceClosedFormGas()}
 #'
@@ -1671,7 +1780,9 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           # positional call keeps its binding (exported).
                           physiology = NULL, temperature = NULL,
                           altitude = NULL, endobronchial = FALSE,
-                          physiologyEvents = NULL, haemoglobin = NULL)
+                          physiologyEvents = NULL, haemoglobin = NULL,
+                          shunt = NULL, height = NULL, sex = NULL,
+                          adjustToFFM = TRUE)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1688,13 +1799,16 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   gasDose <- gasDose[!is.na(gasDose$Time) & !is.na(gasDose$Dose), , drop = FALSE]
   if (nrow(gasDose) == 0) return(NULL)
 
-  body <- gasBodyPhysiology(getGasBody(weight),
-                            checkPhysiology(physiology)[["cardiac"]])
+  # The body scaled to the patient (getGasBody(): by body composition when
+  # height, age and sex are given, GasMan's linear scaling otherwise)
+  base <- getGasBody(weight, height = height, age = age, sex = sex,
+                     adjustToFFM = adjustToFFM)
+  body <- gasBodyPhysiology(base, checkPhysiology(physiology)[["cardiac"]])
   temperature <- checkBodyTemperature(temperature)
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
-  body <- gasBodyEndobronchial(body, endobronchial)
+  body <- gasBodyEndobronchial(body, endobronchial, checkShunt(shunt))
   # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
   # itself does not read it
   haemoglobin <- checkHaemoglobin(haemoglobin)
@@ -1703,7 +1817,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   # its time; the other physiology arguments are not used
   # (R/physiologyEvents.R)
   bodySteps <- if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0)
-    gasBodySteps(weight, physiologyEvents)
+    gasBodySteps(weight, physiologyEvents, base)
 
   sim <- advanceClosedFormGas(
     gasDose,

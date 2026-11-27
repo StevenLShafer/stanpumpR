@@ -47,6 +47,8 @@ Ding's own median peak, 15.2 mcg/mL, is twice that. It was reported only for the
 
 With the Pregnant field ticked, the clearance is multiplied by 1.232 and the central volume by 1.281. These factors come from Juma and colleagues (*Br J Clin Pharmacol* 2026;92:911-921), the same group's model in 50 pregnant and 25 non-pregnant women with malaria in Kenya. Pregnant women had lower exposure: their day-7 concentration was 0.69 times the non-pregnant women's, and 44% of them, against 20%, were below 200 ng/mL.
 
+Juma's women were in the **second and third trimesters** (13 to 40 weeks, median 26); no first-trimester woman was studied. stanpumpR's Pregnant field means late pregnancy — the third trimester and term — so the factors are applied to the population they were measured in.
+
 ### The day-7 concentration
 
 No therapeutic range is established, and no band is drawn. The established marker is a single concentration on day 7 after the first dose: below it, the infection is more likely to return. Kloprogge lists the targets of 175, 200 and 280 ng/mL used in different studies. It is a threshold at one time, not a range.

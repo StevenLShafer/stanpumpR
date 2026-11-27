@@ -151,7 +151,10 @@ app_ui <- function() {
                     "each model scales as it was published. Doses entered per kg",
                     "always use total body weight. Models with their own size",
                     "covariate, such as propofol and remifentanil, are not",
-                    "affected. See Help: Scaling to fat-free mass."
+                    "affected. The inhaled anesthetics' tissue groups follow",
+                    "fat-free and fat mass when ticked, and weight, as GasMan",
+                    "scales them, when unticked.",
+                    "See Help: Scaling to fat-free mass."
                   ),
                   placement = "right"
                 ),

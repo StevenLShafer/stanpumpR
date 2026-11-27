@@ -17,7 +17,7 @@ PROVENANCE <- c("estimated", "fixed", "label-derived", "derived", "calibration")
 IMPLEMENTED <- c("heparin", "bivalirudin", "apixaban", "rivaroxaban", "warfarin",
                  "edoxaban", "dabigatran", "argatroban", "enoxaparin", "fondaparinux",
                  "fluindione", "acenocoumarol", "dabigatranHip", "apixabanVTE",
-                 "heparinCPB", "tenecteplase", "thrombomodulinAlfa")
+                 "heparinCPB", "tenecteplase", "thrombomodulinAlfa", "tinzaparin")
 
 test_that("every registry row is fully classified with a clickable source", {
   for (col in c("model_id", "drug_class", "context", "analyte", "assay",
@@ -54,8 +54,9 @@ test_that("the common perioperative agents are all catalogued", {
   for (stem in c("ufh", "enox", "fonda", "biva", "arg",
                  "apix", "riva", "dabi", "edox", "warf", "flu", "aceno"))
     expect_true(any(grepl(paste0("^", stem), registry$model_id)), info = stem)
-  # and the pending LMWH/VKA extensions the spec names
-  for (m in c("dalteparin_label", "tinzaparin_label",
+  # tinzaparin is now implemented (tnz_barrett_2001); the remaining pending
+  # LMWH/VKA extensions the spec names
+  for (m in c("dalteparin_label",
               "phenprocoumon", "nadroparin", "danaparoid",
               "desirudin"))
     expect_true(m %in% registry$model_id, info = m)

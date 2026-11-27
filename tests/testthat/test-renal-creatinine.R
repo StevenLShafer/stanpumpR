@@ -13,6 +13,10 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 # dabigatranHip (Trocóniz 2007): Cockcroft-Gault CrCl and serum
                 # creatinine both act on the day-2-to-10 phase (R/drugs_dabigatranHip.R)
                 "dabigatranHip",
+                # tinzaparin (Barrett 2001) puts a power of the RAW plasma
+                # creatinine (mg/dL, not a clearance) on apparent CL, centred
+                # on the median 1.0 mg/dL (R/drugs_tinzaparin.R)
+                "tinzaparin",
                 "enoxaparin", "fondaparinux",
                 # Renal function is hydrochlorothiazide's ONLY covariate
                 # (R/drugs_hydrochlorothiazide.R, Van Wart 2013): the source
@@ -129,6 +133,9 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 "ceftolozane",
                 # Cockcroft-Gault on clearance (Patel 2022, R/drugs_imipenem.R)
                 "imipenem",
+                # the CKD-EPI 2021 eGFR, as a power, on clearance
+                # (Vuong 2025, R/drugs_fluconazole.R)
+                "fluconazole",
                 # Cockcroft-Gault on the Janmahasatian lean body weight, in
                 # proportion on CL/F (Duong 2013, R/drugs_metforminER.R)
                 "metforminER",
@@ -138,7 +145,11 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 # rocuronium (Kleijn 2011): Cockcroft-Gault in an exponential
                 # on V1, exp[-0.00143 (CR - 119)], not on its clearance
                 # (R/drugs_rocuronium.R)
-                "rocuronium")
+                "rocuronium",
+                # Cockcroft-Gault per 1.73 m2 (Gehan-George), linear on both
+                # renal and non-renal clearance (Agerso 2004,
+                # R/drugs_desmopressin.R)
+                "desmopressin")
 
 # The elimination clearance of each of a drug's systems: its own and those of
 # its parallel systems (meloxicam's renal term is on its intravenous system),

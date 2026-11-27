@@ -138,17 +138,17 @@ registry <- rbind(
       "PO", "research_ready", "dabigatranHip",
       "Full Tables III-IV read from the typeset original; time-varying apparent PK (lower absorption and clearance on days 0-1 than days 2-10), gastrin fixed at the median (no field), Cockcroft-Gault CrCl and serum creatinine and age on the later phase; dose-time phase split at 24 h because the surgery-relative breakpoint is not a simulator input; aPTT/ECT PD not plotted; doses as mg dabigatran etexilate.",
       "https://doi.org/10.1177/0091270006297228"),
+  reg("tnz_barrett_2001", "low molecular weight heparin",
+      "SC, DVT treatment and prophylaxis", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
+      "SC", "research_ready", "tinzaparin",
+      "Final Table 3 (DVT-treatment full data set) read from the typeset original: two-compartment first-order SC model, per-kilogram apparent parameters (CL/F 0.0176 L/h/kg, Vc 0.0981, Q 0.007, V3 0.864 L/kg, ka 0.206 /h), clearance on raw plasma creatinine and percent above ideal body weight centred on the medians (1.0 mg/dL, 14%); the 0.098 IU/mL endogenous baseline is documented but not added, so the drug increment is plotted; apparent scale, F = 1. Innohep withdrawn from the US market in 2011.",
+      "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
   # --- Pending: label-only or specialty extensions, no portable fit ----------
   reg("dalteparin_label", "low molecular weight heparin",
       "SC", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
       "SC", "pending", NA,
       "No general adult population ka/CL/V/Q vector; label PK is a validation envelope only.",
       "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=23527b8b-9b28-4e6d-9751-33b143975ac7"),
-  reg("tinzaparin_label", "low molecular weight heparin",
-      "SC", "anti-Xa activity (IU/mL)", "LMWH anti-Xa",
-      "SC", "pending", NA,
-      "Barrett abstract gives CL/F and Vc/F but not ka, Q or Vp; no full population fit.",
-      "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=d3e5fbbf-4a1f-4aa2-8e80-9729f6cf04ee"),
   reg("phenprocoumon", "vitamin K antagonist",
       "oral", "phenprocoumon -> INR", "INR",
       "PO", "pending", NA,
@@ -191,6 +191,7 @@ par <- function(drug, parameter, value, units, provenance, population, source_ur
 
 JIA  <- "41 enrolled (32 completed) cardiac-bypass patients, Jia 2015"
 DEL17 <- "50 cardiac-bypass patients, Delavenne 2017 (reference 70 kg)"
+BARR <- "425 DVT patients, 2,631 anti-Xa observations, Barrett 2001 (DVT-treatment full data set)"
 ZH   <- "36 young healthy Chinese volunteers, Zhang 2012"
 CIR  <- "4385 subjects (phase I-III), Cirincione 2018 NVAF reference"
 BYON <- "970 subjects (phase I-III VTE), Byon 2017 reference 60 y, 85 kg, 100 mL/min"
@@ -336,6 +337,15 @@ parameters <- rbind(
   par("enoxaparin", "V2 (central)", 6.43, "L (x (WT/65)^1.25)", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
   par("enoxaparin", "Q", 0.34, "L/h", "fixed", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
   par("enoxaparin", "V3 (peripheral)", 8.18, "L", "estimated", BER, "https://doi.org/10.1111/j.1365-2125.2007.02920.x"),
+
+  par("tinzaparin", "ka", 0.206, "1/h (SC)", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "CL/F", 0.0176, "L/h/kg (x exp(-0.213 (CREA-1) - 0.006 (PIBW-14)))", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "Vc/F (central)", 0.0981, "L/kg", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "Q/F", 0.007, "L/h/kg", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "V3/F (peripheral)", 0.864, "L/kg", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "ENDO (baseline, not added)", 0.098, "IU/mL", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "CL on plasma creatinine", -0.213, "exponent (CREA mg/dL, median 1.0)", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
+  par("tinzaparin", "CL on percent above ideal weight", -0.006, "exponent (PIBW %, median 14)", "estimated", BARR, "https://pubmed.ncbi.nlm.nih.gov/11680668/"),
 
   par("fondaparinux", "Ka", 0.716, "1/h (SC)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),
   par("fondaparinux", "Cl/F", 0.278, "L/h (x (WT/68)^0.534 x (CLcr/87)^0.532 x (Age/74)^-0.461)", "estimated", DEL, "https://doi.org/10.1160/TH10-02-0127"),

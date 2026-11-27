@@ -743,7 +743,8 @@ through `Calc`: the forward calculation, which holds the last ten ticks of a
 run and applies the test for three ticks, and the history replay, which
 applies it for two. Its CSV writer reports history values except for the last
 ten ticks, which come from the forward buffer (`ResultsAt`), although a
-comment in `GasDoc.cpp` says the history path is always used. So a printed
+comment in `GasDoc.cpp` says the getters always use the historical
+`ResultsAt()` path (which, for the last ten ticks, is the forward buffer). So a printed
 value depends on the end time asked for: in the 5 kg case the alveolar
 tension at 1:18 is 0.731791 with `--end` 84, 90 or 120 s and 0.644180 with
 `--end` 180 s, 13.6% apart. The restatements follow the history replay,
@@ -763,6 +764,33 @@ scenario writer), so no comparison was affected; only the human-readable
 settings table says "Semi-closed". Whether this explains the early
 discrepancy Epstein reported is not established (his scenario is not in the
 repository).
+
+### Reproducing both with GasMan itself
+
+The inputs are in `inst/validation/gasman_defects/` (ChatGPT's round-2 gas
+audit, A-05, which reproduced both claims; rerun 2026-11-26 on a
+`gasman_run` built from d3a2dd3 with g++ 13.3). Run `gasman_run` from the
+directory that holds it and `gasman.ini`, passing the file's path. The
+`--every 6` matters: the tool's default is every 10 seconds, which never
+prints 1:18.
+
+- `forward_history.csv` (5 kg, semi-closed, `dt_ms` 6000; VA, FGF, CO and
+  sevoflurane 1, 1, 1 L/min and 0% from 0:00, then 4, 20, 1 L/min and 2%
+  from 1:00). Compare the `ALV` cell of the 0:1:18 row:
+
+  ```
+  gasman_run forward_history.csv --start 78 --end 84 --every 6    # 0.731791
+  gasman_run forward_history.csv --start 78 --end 180 --every 6   # 0.64418
+  ```
+
+  The same two values come back through the shared library's
+  `GasManJsonToCsv` (the audit called it on the converted JSON).
+- `circuit_names.csv` (70 kg, VA 4, FGF 8, CO 5 L/min, 2% sevoflurane).
+  Run `gasman_run circuit_names.csv --start 120 --end 120 --every 6`, then
+  change its one `circuit` cell from `Semi` to `Semi-closed`, `Closed` and
+  `Ideal` and run it again. The `ALV` at 0:2:0 is 0.789155 for `Semi`,
+  0.72834 for both `Semi-closed` and `Closed` (whose `VEN` is 0: venous
+  return off), and 1.2494 for `Ideal`.
 
 ### Corrections
 

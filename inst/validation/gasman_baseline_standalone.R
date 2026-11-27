@@ -66,9 +66,9 @@
 # KNOWN GAPS, stated up front so they are not mistaken for findings
 # ------------------------------------------------------------------
 #   * ART.  GasMan's export has an arterial column.  This code reports
-#     ART = ALV, on the assumption that blood leaving the lung equilibrates
-#     with alveolar gas.  That is an ASSUMPTION and has not been checked
-#     against GetART().  If ART disagrees but ALV agrees, this is why.
+#     ART = ALV, as GasMan does: GasDoc.cpp's GetART() returns the ALV result
+#     in both of its branches (checked at d3a2dd3; ChatGPT's round-2 gas
+#     audit).
 #   * m_bVapEnb is CONFIRMED false by default (InitDocument sets
 #     m_bVapEnb = false), so `vaporizer_effect = FALSE` here is right.
 #   * Weight.  CORRECTED 2026-09-03.  An earlier version of this file said
@@ -84,6 +84,13 @@
 #     the weight; the API's defaults do not scale (InitDocument computes the
 #     factor at weight 70).  An explicit scenario overrides them, so that does
 #     not enter a comparison that sets va and co.
+#   * The fast-decay test's clock.  Like R/advanceGasManBaseline.R, this
+#     follows GasMan's history replay, which applies the test for two ticks,
+#     not its forward calculation, which applies it for three and supplies
+#     the last ten ticks of a CSV export (VALIDATION.md, "What remains is
+#     GasMan's"; ChatGPT's round-2 gas audit).
+#   * Agents.  The table below has seven of gasman.ini's agents; ether and
+#     xenon, also in gasman.ini, are not restated.
 #   * Not restated (ChatGPT's gas-engine audit of 2026-11-23, A-01): liquid
 #     injection, the flush, the "closed" label, and GasMan's vaporiser
 #     expansion at a setting of 99% or more.  With `vaporizer_effect = TRUE`
@@ -454,9 +461,14 @@ gasman_simulate <- function(agents,
   # Note this is REPORTING only -- the model is untouched either way.
   va_rep <- va_rec        # recorded per tick in the loop above, see the note there
 
+  # The fresh gas flow as GasMan's GetFGF() reports it: expanded by the
+  # vapour when the option is on (ChatGPT's round-2 gas audit, A-04: this
+  # reported the setting while delivering at the expanded flow)
+  fgf_rep <- function(i)
+    if (vaporizer_effect && del[i] < 99) fgf / ((100 - del[i]) / 100) else fgf
   res <- do.call(rbind, lapply(seq_along(agents), function(i) data.frame(
     Time = out_times, Agent = names_in[i],
-    FGF = fgf, VA = va_rep, CO = co,
+    FGF = fgf_rep(i), VA = va_rep, CO = co,
     CKT = rec[[i]][, "CKT"], ALV = rec[[i]][, "ALV"],
     ART = rec[[i]][, "ALV"],          # ASSUMPTION -- see KNOWN GAPS
     VRG = rec[[i]][, "VRG"], MUS = rec[[i]][, "MUS"], FAT = rec[[i]][, "FAT"],

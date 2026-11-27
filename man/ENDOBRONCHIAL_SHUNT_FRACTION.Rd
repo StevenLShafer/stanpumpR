@@ -5,7 +5,8 @@
 \title{Share of cardiac output through the unventilated lung (Eger and Shafer's
 chapter: the non-ventilated lung is still perfused, half the blood; kept
 at 50\% on Shafer's decision of 2026-11-19, without hypoxic pulmonary
-vasoconstriction)}
+vasoconstriction).  Since 2026-11-25 the default and the most the Shunt
+fraction slider gives.}
 \usage{
 ENDOBRONCHIAL_SHUNT_FRACTION
 }
@@ -13,6 +14,7 @@ ENDOBRONCHIAL_SHUNT_FRACTION
 Share of cardiac output through the unventilated lung (Eger and Shafer's
 chapter: the non-ventilated lung is still perfused, half the blood; kept
 at 50\% on Shafer's decision of 2026-11-19, without hypoxic pulmonary
-vasoconstriction)
+vasoconstriction).  Since 2026-11-25 the default and the most the Shunt
+fraction slider gives.
 }
 \keyword{internal}

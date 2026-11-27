@@ -15,6 +15,34 @@ Until 2026-11-18 that meant they existed **only** on the Drive, with no history,
 backup — three of them were changed that day, and nothing recorded what they had been. Hence this
 folder.
 
+## Where papers arrive: `C:\dev\Pending Uploads`, and nowhere else
+
+Changed on 2026-11-25 (Shafer). Until then both filers scanned `~/Downloads`, which had
+collected hundreds of PDFs unrelated to stanpumpR — the last run that read it reported **136
+recent ones it could not place** — and every run re-read and re-hashed them. Shafer now moves
+what he wants filed into `C:\dev\Pending Uploads`; Downloads is not scanned at all.
+
+Two consequences worth knowing:
+
+- **`file_supplements.py` had Downloads hard-coded and no `--dir` at all**, and `update.bat`
+  passes no arguments, so after the inbox moved it would have scanned the wrong folder for
+  ever and reported "Filed 0" every run without anything looking wrong. It now takes `--dir`
+  like `file_downloads.py`, and both default to the inbox. The run on the evening of the
+  change filed **0 PDFs and 0 supplements** for exactly this reason, which is how it was found.
+- **`file_downloads.py` still scans the archive as well.** That is how a second copy of an
+  already-filed paper is recognised and recycled, and has nothing to do with where new files
+  land.
+
+`unplaced_downloads.txt` is now `unplaced_uploads.txt`: a short to-do of what is still sitting
+in the inbox, not a survey of somebody's Downloads folder.
+
+**Recycle on success, keep and report on failure.** A file that files cleanly is moved to the
+Recycle Bin and logged in `recycled_log.json`, so the inbox stays short on its own. A file the
+filer CANNOT identify is left where it is and named in the report — never deleted. Deleting it
+silently would lose a paper nobody had noticed was unidentifiable, and the evening of the
+change produced three such files (an Avycaz corrigendum and two supplements) that all turned
+out to be wanted once a person looked at them.
+
 ## Keeping the two in step
 
 `check_in_step.py` compares them and names anything that differs, is in the archive but not
@@ -58,6 +86,29 @@ python check_in_step.py [--repo <path>] [--archive <path>]
 
 **After changing a script in the archive, copy it here and commit it**, saying in the message what
 changed and why. The next `update.bat` will tell you if you forgot.
+
+### Subfolders are in the record only if they are named
+
+`check_in_step.py` walks `_build` and **one level** of subfolder, and only the subfolders
+`SUB_FOLDERS` names — today just `test_digest_run`, the tests for `digest_run.py`'s deadline,
+per-card logging and queue order. Those tests had never been committed or compared, because both
+this mirror and the check used a flat `os.listdir`: the gap this folder exists to close, reopened
+one directory down. A named subfolder takes `.txt` and `.md` as well as the script suffixes, since
+a test folder's README records what its tests slice out of the shipped code and is useless apart
+from them.
+
+**The list is explicit for a reason, and widening it is not a tidy-up.** The first version of this
+took *any* subfolder whose files had a recorded suffix, and the run that found the tests also
+listed about 2,000 files from `_build/text` — `pdftotext` output for every paper in the archive —
+as "not in git", advising that they be committed. That would have put copyrighted paper text into
+a public repository, the one thing `papers/README.md` says must never happen and the reason the
+digests can be published at all. `_build/context` holds a JSON extraction per paper and would have
+followed. A named folder cannot do that; a suffix rule was one new directory away from doing it
+again. So: to bring a new subfolder into the record, add it to `SUB_FOLDERS` deliberately, having
+looked at what is in it.
+
+Deeper than one level is not walked. Nothing has needed it, and a stated limit beats a recursion
+whose reach nobody knows.
 
 ## The filing cache and the queue, an invariant worth keeping
 
@@ -131,7 +182,7 @@ belong in the chain.
 |---|---|
 | `fetch_pmc.py` | Downloads the free PMC copy of any paper the reference list **or the download queue** wants, verifies its **first two pages** against the title and first author, and files it. Two outcomes are neither a match nor a mismatch, and they are treated differently. **Extraction succeeded and returned no text from those two pages**, and PubMed lists a first author: filed unverified, with `check by eye` in its log line, for `ocr_scans.py` to look at later — what a blank two pages shows is that there was nothing to check against, not that the document has no text layer. **Extraction failed** (`pdftotext` missing, timing out, or exiting non-zero), or PubMed lists **no author** to check against: nothing was established about the PDF, so it is **held, not filed**, for the next run to retry. Run outside the `&&` chain, so a PMC outage cannot stop the filing below. |
 | `file_supplements.py` | Files publisher supplements beside their article, by sha. |
-| `file_downloads.py` | Identifies each new PDF in Downloads by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
+| `file_downloads.py` | Identifies each new PDF in the inbox (`C:\dev\Pending Uploads`; `--dir` overrides) by printed DOI, or by title and first author, and files it as `PMID_<pmid>.pdf`. Accepts a file named by hand when the reference list **or the download queue** asks for that PMID. Strips a multipart form envelope left around a Clio delivery first. |
 | `ocr_scans.py` | Adds a text layer to a scan that has none. |
 | `merge.py` | Merges the per-document extractions. |
 | `build.py` | Rebuilds `stanpumpR-references.xlsx` and `stanpumpr-queue.csv` from the works the stanpumpR source cites, keeping rows `arrivals.py` added. |

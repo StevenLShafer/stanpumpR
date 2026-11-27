@@ -67,8 +67,19 @@
 # BODY SIZE (docs/weight-adjustment.md)
 # =====================================
 # The model's own covariate, body-surface area (the paper names no formula;
-# Mosteller's is used), from the pharmacokinetic weight with the switch on and
-# total weight with it off.
+# Mosteller's is used, Shafer's default since 2026-11-23), computed from TOTAL
+# BODY WEIGHT in BOTH switch positions, so this drug's curve does not depend on
+# the fat-free-mass switch at all.
+#
+# Until 2026-11-25 the switch-on case fed `pkSizeFactors()$pkWeight` into the BSA,
+# which applied the size adjustment TWICE: Panetta fitted ln CL/F and ln V/F
+# against the BSA of the children as they actually were, whatever formula he used,
+# so evaluating that covariate at a fat-free-adjusted weight asks the equation a
+# question it was never fitted to answer, and the FFM scaling is then also inside
+# the covariate it feeds.  Shafer's decision of 2026-11-25 (Group B item 11), on
+# the principle that a covariate fitted against real weight is evaluated at real
+# weight.  The missing BSA formula is a separate and smaller uncertainty --
+# Mosteller and Du Bois differ by a few per cent over the studied 0.45-2.1 m2.
 #
 # PREGNANCY: see its registry row.  NO EFFECT SITE, NO BAND.
 # -----------------------------------------------------------------------------
@@ -108,10 +119,11 @@ temozolomidePanettaClV <- function(bsa)
 temozolomidePanetta <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   p <- TEMOZOLOMIDE_PANETTA
-  size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                        legacyVolume = 1, legacyClearance = 1)
-  w <- if (isTRUE(adjustToFFM)) size$pkWeight else weight
-  m <- temozolomidePanettaClV(bsaMosteller(w, height))
+  # BSA from TOTAL weight whichever way the switch is set: the covariate was fitted
+  # against the children's actual size, so `adjustToFFM` must not reach it (see the
+  # BODY SIZE note above).  pkSizeFactors() is deliberately not called -- this model
+  # carries its own size covariate and needs no generic factors.
+  m <- temozolomidePanettaClV(bsaMosteller(weight, height))
 
   default <- list(
     v1  = m$v,

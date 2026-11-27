@@ -17,8 +17,8 @@ alveoli second)}
 \item{inspired}{for the ideal and open circuits, by gas, what the lungs
 draw in where the pressure rises, as percent of the gas drawn: the fresh
 gas's composition times its share of the inspired gas after the step,
-so less than 100 in all where the flow does not cover the draw.  NULL,
-or the semi-closed circuit, draws the circuit's own gas.}
+so less than 100 in all where the flow does not cover the draw.  NULL
+draws the circuit's own gas.}
 }
 \value{
 the state after the step
@@ -32,10 +32,12 @@ that is \code{100 (P - 47) / (760 - 47)}.  At a step in altitude the
 lungs and the circuit keep their volume.  Where the pressure falls, gas
 leaves each of them at its own composition, so every tension is scaled by
 the new total over the old.  Where it rises, gas enters: the alveoli keep
-what they hold and draw in gas to make up the difference.  In the
-semi-closed circuit that gas is the circuit's own, compressed, and the
-circuit, refilled from the fresh gas, which it nearly matches, is scaled.
-The ideal and open circuits hold no gas, so the only gas the lungs can
+what they hold and draw in gas to make up the difference.  The
+semi-closed circuit, GasMan's, is not stepped: \code{advanceClosedFormGas()}
+refuses a step in altitude with it (Steven Shafer, 2026-11-26; ChatGPT's
+round-2 gas audit, B-02), since GasMan has no altitude and scaling its
+stored gas up created gas with no source.  The ideal and open circuits
+hold no gas, so the only gas the lungs can
 draw is fresh gas at the new pressure, in the share of the inspired gas it
 makes up (\code{gasCircuitBlend()}; the engine computes it,
 \code{inspired}): all of the rise where the flow covers what they draw,

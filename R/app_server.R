@@ -1487,9 +1487,14 @@ app_server <- function(input, output, session) {
         altitude = altitude(),
         endobronchial = endobronchial(),
         haemoglobin = haemoglobin(),
+        shunt = shunt(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
-        maximum = plotMaximum()
+        maximum = plotMaximum(),
+        # The compartments scaled by body composition (getGasBody())
+        height  = height(),
+        sex     = sex(),
+        adjustToFFM = adjustToFFM()
       )
       gasRows <- DT[isGasDrug(DT$Drug), , drop = FALSE]
 
@@ -1562,6 +1567,11 @@ app_server <- function(input, output, session) {
   haemoglobin <- debounce(reactive({
     haemoglobinFromInput(input$physiology_haemoglobin)
   }), PHYSIOLOGY_DEBOUNCE_MS)
+  # The share of cardiac output through the unventilated lung, a fraction
+  # (R/endobronchial.R; Shafer, 2026-11-25)
+  shunt <- debounce(reactive({
+    shuntFromInput(input$physiology_shunt)
+  }), PHYSIOLOGY_DEBOUNCE_MS)
 
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
@@ -1571,6 +1581,7 @@ app_server <- function(input, output, session) {
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
     updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    updateSliderInput(session, "physiology_shunt", value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
@@ -1632,7 +1643,11 @@ app_server <- function(input, output, session) {
       temperature = bodyTemperatureFromInput(input$physiology_temperature),
       altitude = altitudeFromInput(input$physiology_altitude),
       endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)),
-      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin))
+      haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin),
+      # The shunt acts only through the tube: without it the default, so an
+      # event's settings do not carry a hidden slider's value
+      shunt = if (endobronchialFromInput(input$endobronchialIntubation))
+        shuntFromInput(input$physiology_shunt) else ENDOBRONCHIAL_SHUNT_FRACTION)
   }
 
   observeEvent(input$physiologyCreateEventBtn, {
@@ -1786,10 +1801,14 @@ app_server <- function(input, output, session) {
       # The failures too, so that a fit that ran out of time is not tried
       # again until its inputs change (bayesianUpdateDrugs())
       bayesFitCache <<- result$cache
-      if (!normal)
+      if (!normal) {
+        # The individuals at normal physiology, for the physiology ribbon's
+        # nominal curves (nominalDrugs())
+        result$normalDrugs <- result$drugs
         result$drugs <- bayesianAtPhysiology(result$drugs, priors, function(drug, individual) {
           drugPK(DT[DT$Drug == drug, , drop = FALSE], individual = individual)[[drug]]
         })
+      }
       result
     }, name = "bayesUpdate() reactive")
   })
@@ -1849,6 +1868,57 @@ app_server <- function(input, output, session) {
 
       c(newDrugs, gasEntries)
     }, name = "drugs() reactive")
+  })
+
+  # The drugs at nominal (normal) physiology, for the physiology ribbon
+  # (R/physiologyRibbon.R; Shafer, 2026-11-25): simulated only while the
+  # physiology is off normal, by the sliders or by events, and NULL
+  # otherwise.  The intravenous drugs are rebuilt at normal physiology (a
+  # measured drug's individual as fitted, which is at normal physiology,
+  # bayesUpdate()), the gases simulated with every panel setting normal.
+  # The companion models are not: the ribbon is the drug's own.  A failure
+  # here costs the ribbon, never the plot.
+  nominalSimulationCache <- NULL
+  nominalDrugs <- reactive({
+    profileCode({
+      ivChanged <- !physiologyIsNormal(physiology()) || nrow(physiologyEvents()) > 0
+      gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial())
+      if (!gasChanged) return(NULL)
+      tryCatch({
+        DT <- doseTableIV()
+        out <- list()
+        if (ivChanged && !is.null(DT) && nrow(DT) > 0) {
+          bu <- bayesUpdate()
+          entries <- if (!is.null(bu$normalDrugs)) bu$normalDrugs else
+            drugPK(DT, normalPhysiology = TRUE)
+          entries <- Filter(function(e) !isAlternativeModelEntry(e), entries)
+          entries <- drawnDrugEntries(entries, tableDrugs(DT))
+          DTn <- DT[DT$Drug %in% names(entries), , drop = FALSE]
+          out <- processdoseTable(DTn, eventTableClean(), entries, plotMaximum(), FALSE,
+                                  cache = nominalSimulationCache,
+                                  plotMinimum = plotMinimum(),
+                                  antiseizureInteractions = antiseizureInteractions())
+          nominalSimulationCache <<- out
+          out <- Filter(function(e) !isAlternativeModelEntry(e), out)
+        }
+        DTg <- doseTableClean()
+        if (!is.null(DTg) && any(isGasDrug(DTg$Drug)) && is.null(gasRowsProblem())) {
+          sim <- simulateGases(DTg, weight = weight(), age = age(), maximum = plotMaximum(),
+                               height = height(), sex = sex(), adjustToFFM = adjustToFFM())
+          gasEntries <- gasDrugEntries(sim, DTg[isGasDrug(DTg$Drug), , drop = FALSE],
+                                       drugDefaults(), plotMaximum(), age = age(),
+                                       macThreshold = macThreshold())
+          if (isTRUE(input$opioidMacInteraction))
+            gasEntries <- applyOpioidMacInteraction(gasEntries, if (length(out)) out else drugs())
+          out <- c(out, gasEntries)
+        }
+        out
+      }, error = function(e) {
+        if (inherits(e, "shiny.silent.error")) stop(e)
+        outputComments("Nominal-physiology simulation failed:", conditionMessage(e))
+        NULL
+      })
+    }, name = "nominalDrugs() reactive")
   })
 
   ###########################
@@ -2266,7 +2336,9 @@ app_server <- function(input, output, session) {
         # graphics device's limit is measured against (maxPlotDevicePixels())
         pixelRatio = if (is.null(session$clientData$pixelratio)) 1 else session$clientData$pixelratio,
         # The Bayesian update's measured concentrations, as points
-        observations = bayesPoints()
+        observations = bayesPoints(),
+        # The drugs at normal physiology, for the physiology ribbon
+        nominal = nominalDrugs()
       )
     }, name = "simulationPlotRetval() reactive")
   })
@@ -2357,6 +2429,7 @@ app_server <- function(input, output, session) {
       altitude = altitude(),
       endobronchial = endobronchial(),
       haemoglobin = haemoglobin(),
+      shunt = shunt(),
       physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).
