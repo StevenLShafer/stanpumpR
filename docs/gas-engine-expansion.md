@@ -50,6 +50,71 @@ So the gotcha belongs to volume control on a machine that neither decouples nor 
 5. **[decision] Oxygen consumption and temperature.** Oxygen consumption and CO₂ production fall in hypothermia. The size of the fall, per °C, is to be read in a source, not taken from memory. Today the temperature slider does not change them, so the end-tidal CO₂ of a cold patient would read high. Should they follow the slider?
 6. **[decision] The respiratory quotient**, 0.8, which `R/gasProperties.R` says he has not yet confirmed. End-tidal CO₂ is proportional to it.
 
+## Decided so far (the "Gas Engine Expansion" session, 2026-11-26 and 27)
+
+Recorded by `session_0169csHovKX7NBB69aNCSNRj`, the session that is building the expansion. Nothing below has been built yet. Each entry gives Dr Shafer's words and how they will be applied; the application is Claude's reading, which he accepted where it says so.
+
+**What is to be added** (2026-11-26): "I want to expand the gas engine to include end-tidal carbon dioxide, arterial oxygen saturation, arterial oxygen partial pressure (use a percent of 1 atmosphere at sea level for now, we may change the units later), a slider for respiratory quotient, and a slider for hemoglobin / hematocrit. The slider will move both hct and hbg jointly. [...] The engine should also include the slider on changes in metabolism." This reshapes decision 6 above: the quotient becomes a slider, so 0.8 is its default and no longer a constant awaiting confirmation. Its range, and the metabolism slider's, are not yet decided.
+
+**The key concepts** (2026-11-26): "Key concept is the alveolar gas equation. Another is the oxyhemoglobin dissociation curve."
+
+**Every physiology control bears on it** (2026-11-26): "Please look over the existing physiology sliders. Nearly all will affect the relationship between ventilation, CO2, and alveolar oxygen."
+
+**Alpha-stat** (2026-11-26): "We will go with alpha stat, which will be explained in the documentation." Claude's reading, put to him and not yet confirmed: the engine computes the in-vivo gas-phase values at body temperature (the alveolar and end-tidal CO₂ and oxygen a capnograph reads), and reports arterial pH, PaCO₂ and PaO₂ as a blood gas machine reads them at 37 °C, uncorrected; the saturation is the same either way.
+
+**Hematocrit and solubility** (2026-11-27): "Hematocrit changes solubility. Use Zhou's 2002 coefficients." Applied as follows, which he accepted ("I accept your assumptions as sound recommendations"):
+- Each volatile agent's blood:gas coefficient is multiplied by exp(c × (Hct − 45)), Hct in per cent, with c = 0.0094 for desflurane, 0.0092 for sevoflurane and 0.0154 for isoflurane (Zhou, Liu and Liu 2002, abstract and Table 1, read on the page images).
+- The reference is 45%, the default haemoglobin of 15 g/dL times 3, so the default patient and the GasMan validation do not move.
+- Tissue:gas coefficients are unchanged, so tissue:blood changes with hematocrit.
+- Nitrous oxide and nitrogen are unchanged: Zhou measured neither.
+- The haemoglobin slider is shown whenever an inhaled agent is in the dose table, no longer only with the endobronchial tube.
+- The regression is applied across the whole slider (4 to 20 g/dL, 12 to 60% hematocrit), beyond the 20 to 40% Zhou measured by saline dilution. The documentation is to say that both ends are extrapolated, and that the measurements are of dilution with saline.
+
+**Temperature and the tissues** (2026-11-27): "Yes, use tissue specific slopes relative to temperature." and "Use the brain slope for the vessel-rich group." Until now every tissue:gas coefficient of an agent took its blood:gas slope. The slopes of ln(partition coefficient) on temperature, in % per °C of cooling:
+
+| Coefficient | Source | Desflurane | Sevoflurane | Isoflurane |
+|---|---|---|---|---|
+| Blood:gas | Zhou, Liu and Liu 2002 (unchanged) | 3.02 | 2.95 | 3.82 |
+| Vessel-rich group | Zhou and Liu 2001, Table 1, brain | 3.22 | 3.07 | 3.03 |
+| Muscle group | Zhou and Liu 2001, Table 1, muscle | 3.93 | 3.82 | 4.05 |
+| Fat group | Zhou and Liu 2001, Table 1, fat | 3.25 | 3.78 | 4.34 |
+
+Nitrous oxide keeps Allott 1973's coefficients. When the cardiac slider splits the brain and heart from the rest of the vessel-rich group, both parts keep the brain slope. Nothing changes at 37 °C. Away from it the tissue:blood ratios now move with temperature, so the help page's statement that they do not, its temperature table and the tests pinned at 32 °C change.
+
+**The write-ups** (2026-11-26): "it needs to be in the stanpumpR documentation. Second, I would like a write up a formal statement of the mathematics using LaTex. Lastly, I will want to revise the 'gasman defect report' [...] The write-ups should all be well referenced." And: "I will also want the documentation to include the full mathematics of the interactions in the gas engine related to the physiology." The LaTeX statement is to be the master and the help page a plain-text rendering of it, since the help renderer typesets no equations. The letter to James Philip is his correspondence: it is written last and is not kept in the repository.
+
+**The order of work** (2026-11-27): the sources are read first; then the mathematics is drafted for his review; then the expansion is built, one pull request per piece; then the help page and the LaTeX statement; then he runs Gemini's round-2 audit ("I will run that after this work is done"), which needs a new prompt and bundle, `PROMPT-2.md` being pinned to a commit from before the expansion; the letter goes after that.
+
+**Still open**, beside decisions 1 to 5 above:
+- whether the reading of alpha-stat above is right;
+- the dissolved oxygen: Severinghaus 1979 gives 0.0031 mL/dL/mmHg, `OXYGEN_DISSOLVED` is 0.003 with no source (`papers/pending-work.csv`, the row for PMID 35496);
+- which dissociation curve: Severinghaus 1979's equation 1 with his temperature and Bohr corrections, or Dash, Korman and Bassingthwaighte 2016 throughout, which also gives the blood's CO₂ content and uses hematocrit. The two agree on the Bohr effect and differ on temperature (P50 at 32 °C about 18.8 against 20.6 mmHg by Claude's arithmetic, not yet run in code);
+- the bicarbonate from which pH is computed (a fixed 24 mEq/L was proposed);
+- the water vapour pressure in a cold patient: `R/altitude.R` holds it at 47 mmHg at every temperature on purpose, "which leaves sea level untouched by the temperature slider";
+- the time until threshold if the fresh gas coupling of decision 1 goes in: it turns the fresh gas up until nothing is rebreathed with "ventilation stays what it was", which a coupled machine would not allow.
+
+## Sources read for the expansion
+
+Read by the "Gas Engine Expansion" session on the PDF (the page images where the text layer was unusable), 2026-11-26 and 27. "Checked" means each number the code attributes to the paper was found on its page; it does not mean every page was read.
+
+| Source | What was read | Result |
+|---|---|---|
+| Curran-Everett 2006, *Adv Physiol Educ* 30:58 (PMID 16709734) | The alveolar gas equation, after Fenn, Rahn and Otis 1946: PIO₂ = (PB − 47) FIO₂; PAO₂ = PIO₂ + PACO₂ FIO₂ (1 − R)/R − PACO₂/R | The engine's steady-state alveolar oxygen agrees with it to within 1 mmHg in four fresh gas settings (70 kg, 6 L/min) |
+| Severinghaus 1979, *J Appl Physiol* 46:599 (PMID 35496) | All of it | Equation 1 as coded; equations 2 to 5 and the content equation recorded in `papers/pending-work.csv` |
+| Dash, Korman and Bassingthwaighte 2016, *Eur J Appl Physiol* 116:97 (PMID 26298270) | The model equations and Table 1, not the appendix or the validation figures | A candidate for the dissociation curve; standard hematocrit 0.45 with haemoglobin 2.33 mM (15 g/dL) |
+| Chatzopoulou 2025, *Cureus* (PMID 40755621) | All of it | A systematic review of outcomes with alpha-stat and pH-stat; it has no equations |
+| Zhou, Liu and Liu 2002, *Chin Med J* 115:1014 (PMID 12150733) | Abstract and Table 1 | The three blood:gas slopes checked; the hematocrit coefficients above. Its blood:gas values at 37 °C and 40% hematocrit (0.55, 0.68, 1.38) differ from the engine's, which are GasMan's (0.42, 0.65, 1.3) |
+| Zhou and Liu 2001, *Anesth Analg* 93:234 (PMID 11429373) | Abstract, Table 1 and the discussion | Checked; the tissue slopes above. The authors conclude the increases are "approximately the same" as blood's |
+| Liu, Hu and Liu 2001, *Anesthesiology* 94:429 (PMID 11374601) | The regression and the text beside it | Checked, with the code's remark that the text's 5.1% and 16.2 °C do not follow from the regression |
+| James and White 1984, *Anesth Analg* 63:1097 (PMID 6239572) | The vaporizer and flowmeter experiments | Checked. The flow error is not constant: close to the density prediction above 4 L/min and much smaller below, with no low-flow flowmeter tested, which is the evidence for the open `[decision]` on flowmeter calibration in `R/altitude.R` |
+| James, Manson and Dennett 1982, *Anaesthesia* 37:285 (PMID 7091603) | Summary, methods and Table 2 | Checked |
+| Andrews and Johnston 1993, *Anesth Analg* 76:1338 (PMID 8498675) | The altitude and carrier gas sections (a scan) | Checked |
+| Cicman 1993, part II, *J Clin Monit* 9:104 (PMID 8478649) | The ventilator's cycle | The relief valve to the scavenger is held shut during inspiration, and excess fresh gas vents with the last of the exhaled gas in the expiratory pause. No sentence states that fresh gas adds to the delivered tidal volume, so it supports the mechanism of decision 1 without quantifying it |
+
+Until 2026-11-27 the two Zhou papers, both James papers and Andrews and Johnston were cited in the code as read in full without being in stanpumpRPapers; Dr Shafer supplied them that day and Paper management is filing them.
+
+Not yet read by this session: Kelman and Nunn 1966, Ashwood 1983, Rosenthal 1948 and Severinghaus 1966 (the temperature mathematics behind alpha-stat); Cicman 1992, part I; Allott 1973, Antognini 1994, West 1996, Williams and Leggett 1989, Mapleson 1996, Weber 2021, the five Peyton papers and Eger's chapter 8, all in the archive. Not obtained: Fenn, Rahn and Otis 1946. No source has been identified for oxygen consumption against temperature or for the body's CO₂ stores.
+
 ## Not in this expansion
 
 - The circle's own volume. A pending-work row proposes it, for his decision, with Herbert and Magee 2017 and Lerou and Booij's system model as its sources.
