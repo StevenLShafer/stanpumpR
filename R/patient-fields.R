@@ -184,7 +184,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "emicizumab's clearance (lower albumin, higher clearance; held within",
       "its studied 1.68-5.66 g/dL); and the clearance and central volume of",
       "total mycophenolic acid (lower albumin, higher both; held within its",
-      "studied 2.2-5.3 g/dL)."
+      "studied 2.2-5.3 g/dL); and, at 2.5 g/dL or less, micafungin's",
+      "clearance and volumes in the intensive-care model (14% higher)."
     ),
     ast = paste(
       "The patient's serum aspartate aminotransferase (AST), in U/L. It sets",
@@ -246,7 +247,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "Leave blank to hold each model's reference albumin (4 g/dL in the",
     "adult methotrexate model, a normal albumin in the children's, 3.9 g/dL",
     "for nab-paclitaxel, 4.4 g/dL for tolcapone, 4.5 g/dL for emicizumab,",
-    "3.0 g/dL for mycophenolate); hypoalbuminaemia is then",
+    "3.0 g/dL for mycophenolate, above 2.5 g/dL for micafungin);",
+    "hypoalbuminaemia is then",
     "not represented."
   ) else if (arg %in% names(FACTOR_BASELINE_FIELDS)) paste(
     "Leave blank to take the baseline of the population the model was",

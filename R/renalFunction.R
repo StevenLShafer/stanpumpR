@@ -282,6 +282,28 @@ egfrCKDEPI2009 <- function(age, sex, scr = adultCreatinine(sex))
   141 * min(ratio, 1)^alpha * max(ratio, 1)^(-1.209) * 0.993^age * sexFactor
 }
 
+#' CKD-EPI 2021 estimated glomerular filtration rate
+#'
+#' The 2021 creatinine equation without race (Inker et al., N Engl J Med
+#' 2021;385:1737-1749, Table 2; papers/digests/PMID_34554658.md):
+#' 142 x min(Scr/kappa, 1)^a1 x max(Scr/kappa, 1)^-1.200 x 0.9938^age, times
+#' 1.012 for a woman, with kappa 0.7 (women) or 0.9 (men) and a1 -0.241
+#' (women) or -0.302 (men).  Indexed to 1.73 m^2.  Fitted in adults.
+#'
+#' @inheritParams creatinineClearanceCG
+#' @return eGFR in mL/min/1.73 m^2
+#' @keywords internal
+egfrCKDEPI2021 <- function(age, sex, scr = adultCreatinine(sex))
+{
+  if (sex == SEX_FEMALE) {
+    kappa <- 0.7; alpha <- -0.241; sexFactor <- 1.012
+  } else {
+    kappa <- 0.9; alpha <- -0.302; sexFactor <- 1
+  }
+  ratio <- scr / kappa
+  142 * min(ratio, 1)^alpha * max(ratio, 1)^(-1.200) * 0.9938^age * sexFactor
+}
+
 #' De-indexed CKD-EPI 2009 eGFR, in mL/min
 #'
 #' The indexed estimate multiplied by the patient's body surface area over

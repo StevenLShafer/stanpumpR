@@ -3113,6 +3113,17 @@ registry <- rbind(
       source_url = "",
       to_obtain = "",
       notes = "Voriconazole is cleared by CYP2C19, CYP2C9 and CYP3A4 with saturable elimination; CYP3A4 activity rises in pregnancy, but nothing is quantified. Contraindicated in pregnancy unless the benefit outweighs the fetal risk."),
+  row("fluconazole", "Other", "applied",
+      finding = "No measured pharmacokinetics of fluconazole in pregnancy: a PubMed search on 2026-11-26 (fluconazole pharmacokinetics pregnancy, 11 records) found a PBPK model of renally cleared drugs in Chinese pregnant women (Song 2020, Biopharm Drug Dispos 41:248, abstract read), an ex vivo placental perfusion (Mathiesen 2025) and case reports. The DIFLUCAN label (Roerig, 2026, read) gives no pregnancy pharmacokinetics. Fluconazole is cleared mainly unchanged by the kidney (the label: about 80% of a dose unchanged in urine).",
+      applied = "CKD-EPI eGFR x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy). Clearance follows (eGFR/80)^0.532, so it rises 1.5^0.532 = 1.24-fold.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); DIFLUCAN label, Roerig, DailyMed 2026-04-09",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "Pregnancy was not studied in the source (Vuong 2025). None of the papers named has Gideon Koren among its authors (PubMed author lists)."),
   row("posaconazole", "Other", "unknown",
       finding = "NOXAFIL label (NDA 205596, rev. 2/2026, read): 'Available data for use of Noxafil in pregnant women are insufficient to establish a drug-associated risk'; skeletal malformations in rats at 1.4 times the clinical exposure. A PubMed search (2026-11-26) found case reports of posaconazole started after delivery and one review (Pilmis 2015, J Antimicrob Chemother 70:14-22, abstract read) calling clinical data on posaconazole in pregnancy 'critically needed'; no pharmacokinetic study.",
       applied = "",
@@ -3124,6 +3135,17 @@ registry <- rbind(
       source_url = "https://doi.org/10.1093/jac/dku355",
       to_obtain = "",
       notes = "Posaconazole is cleared mainly by UDP-glucuronidation and is a P-glycoprotein substrate; renal excretion of parent drug is negligible, so the rise in filtration of pregnancy does not reach it. Nothing is quantified."),
+  row("micafungin", "Other", "unknown",
+      finding = "Micafungin label (Fresenius Kabi, ANDA 207344, rev. 10/2025, read): 'There is insufficient human data on the use of micafungin in pregnant women to inform a drug-associated risk'; visceral abnormalities and abortion in rabbits at four times the human dose. A PubMed search (2026-11-27: micafungin pregnancy, 9 records) found susceptibility surveys of Candida isolated in pregnancy, neonatal reviews and a drug review; no pharmacokinetic study.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = 0L, confidence = "low",
+      evidence_read = "full_text",
+      source = "Micafungin for Injection label, Fresenius Kabi, ANDA 207344, rev. 10/2025; PubMed search 2026-11-27",
+      source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=dc5241be-4b85-4f04-8553-9819603373b8",
+      to_obtain = "",
+      notes = "Micafungin is more than 99% bound to albumin and cleared by metabolism (arylsulfatase, then catechol-O-methyltransferase) and excreted mainly in the faeces, not by the kidneys, so the rise in filtration of pregnancy does not reach it. The fall in albumin in pregnancy may raise its total clearance, as a low albumin did in Jullien 2017's ICU patients; nothing is quantified."),
   row("clozapine", "Antipsychotics", "unquantified",
       finding = "Westin 2018 (Clin Pharmacol Ther 103:477-484, Norwegian TDM data linked to the birth registry): clozapine in 4 pregnancies of 4 women, 10 measurements in pregnancy and 114 at baseline, dose-adjusted to 300 mg/day: baseline 418.6 ng/mL, week 34 322.1 ng/mL (-23%, 95% CI -46% to +9%), no p-value with fewer than 10 pregnancies. Case reports go the other way (Tsukiji 2025: concentration-to-dose ratio 2.35 the day before delivery against 0.79 at 14 months postpartum; Aoki 2024: concentrations rose through pregnancy).",
       applied = "",
@@ -3768,7 +3790,9 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              ambrisentanOkour = "ambrisentan", ambrisentanMiura = "ambrisentan",
              # the landiolol group's candidates (2026-11-25)
              landiololHonda = "landiolol", landiololKunisawa2014 = "landiolol",
-             landiololKunisawa2015 = "landiolol")
+             landiololKunisawa2015 = "landiolol",
+             # the micafungin group's candidates (2026-11-27)
+             micafunginJullien = "micafungin", micafunginWasmann = "micafungin")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)

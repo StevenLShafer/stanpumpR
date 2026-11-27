@@ -149,6 +149,17 @@ MODEL_GROUPS <- list(
     ageMin = c(0, 18), ageMax = c(19, 85),
     weightMin = c(NA, NA), weightMax = c(NA, NA),
     n = c(184, 32), year = c(2017, 2000)),
+  # Micafungin (R/drugs_micafunginJullien.R, R/drugs_micafunginWasmann.R):
+  # Jullien 2017's ventilated ICU patients and Wasmann 2019's normal-weight
+  # and morbidly obese volunteers, each range read on its Table 1
+  # (2026-11-26).  Neither studied children, who are given the nearer by age,
+  # Wasmann's.
+  micafungin = data.frame(
+    model = c("micafunginJullien", "micafunginWasmann"),
+    source = c("Jullien 2017", "Wasmann 2019"),
+    ageMin = c(29.9, 22), ageMax = c(92.7, 61),
+    weightMin = c(48, 61.5), weightMax = c(141, 184),
+    n = c(99, 24), year = c(2017, 2019)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -440,3 +451,14 @@ landiolol <- modelGroup("landiolol")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 antithrombin <- modelGroup("antithrombin")
+
+#' Micafungin: the model chosen for the patient
+#'
+#' Jullien 2017 (99 ventilated ICU patients, 29.9-92.7 years, 48-141 kg) or
+#' Wasmann 2019 (24 normal-weight and morbidly obese adults, 22-61 years,
+#' 61.5-184 kg), chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams micafunginJullien
+#' @inheritParams micafunginWasmann
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+micafungin <- modelGroup("micafungin")

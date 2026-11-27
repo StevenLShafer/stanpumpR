@@ -308,6 +308,7 @@ caffeineNeonatal,mcg,mg/kg citrate,,mg/kg citrate,"mg/kg citrate,mg citrate,mg/k
 tacrolimus,ng,,,mg PO bid,"mg PO,mg PO bid",#6A1B9A,4,11,7.5,0,0,IV,Other
 sotalol,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg PO bid",#455A64,0,0,0,0,0,IV,Other
 voriconazole,mcg,mg/kg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO bid",#00695C,2,6,4,0,0,IV,Other
+fluconazole,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr,mg PO,mg PO qd,mg/kg PO,mg/kg PO qd",#1B4F72,0,0,0,0,0,IV,Other
 posaconazole,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4A235A,0,0,0,0,0,IV,Other
 clozapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#7E57C2,350,600,475,0,0,IV,Antipsychotics
 norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,
@@ -385,4 +386,7 @@ antithrombinMoffett,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,
 antithrombinIlias,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,
 desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal
+micafungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
+micafunginJullien,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,
+micafunginWasmann,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
 methylergonovine,ng,mg,,mg IM,"mg,mcg,mg IM,mcg IM,mg PO,mcg PO,mg IM qid,mg IM q4h,mg PO tid,mg PO qid,mg PO q4h",#B0436F,0,0,0,0,0,IV,Other
