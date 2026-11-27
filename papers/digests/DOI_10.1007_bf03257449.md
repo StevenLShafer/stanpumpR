@@ -8,7 +8,7 @@ drugs:
 source_read: 'page images (PDF pages 2, 4, 5 rendered and read: Tables I-IV, Fig 1, Table II; pages 4 and 5 re-rendered on 2026-11-27 at higher magnification to read Table II''s footnote markers, Table IV in full per subject, and Figure 1''s peak region -- the text layer interleaves the two-column table rows and offsets Table IV''s values by one row, so it must not be transcribed; remaining pages text layer)'
 edition: published
 digest_by: Claude (unattended digest_run.py), 2026-11-26; reworked by hand on 2026-11-27 at Steven L. Shafer's direction -- the closed form for V1, the median/log-OLS refit, the Figure 1 digitisation and the oral deconvolution
-checked_against: stanpumpR master 8e491545 (re-checked against 6a5bff47 on 2026-11-27: still no methylergonovine model)
+checked_against: "stanpumpR master 8e491545 (re-checked against 6a5bff47 on 2026-11-27 -- still no methylergonovine model)"
 verification: not-applicable
 open_questions:
 - '[check] Table II''s footnote b (Model-independent) marks t_abs and footnote c (1-compartment model) marks MAT. Footnote b is contradicted by the paper''s own numbers: t_abs reproduces the printed tmax through the 1-compartment formula tmax = tlag + ln(ka/k)/(ka-k) to three decimals (subject 1, 0.995 against 0.99; subject 4, 0.401 against 0.40), so it is the fitted absorption half-life, not a model-independent quantity. Footnote c is right, and MAT is 1-compartment-derived through MRT_po. Do not take t_abs as a model-free input parameter on the strength of that footnote.'
