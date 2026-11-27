@@ -209,6 +209,7 @@ landiololHonda,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A
 landiololKunisawa2014,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 landiololKunisawa2015,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 levosimendan,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#AD1457,0,0,0,0,0,IV,Vasoactive and resuscitation
+OR1896,ng,,,,,#F06292,0,0,0,0,0,IV,
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
 propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation

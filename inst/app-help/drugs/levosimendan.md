@@ -14,9 +14,9 @@ The parent falls with a half-life of about 45 minutes, which carries 99% of a bo
 
 ### What is plotted, and what is not
 
-Levosimendan itself in **plasma**, ng/mL. Its haemodynamic effect lasts days after the infusion stops. That comes from the active metabolite OR-1896, which forms slowly (half-life about 70 to 80 hours), and stanpumpR does not draw it yet. So the curve here falls within hours while the effect persists, and there is no effect site and no therapeutic range.
+Levosimendan itself in **plasma**, ng/mL, and below it its long-acting active metabolite, [OR-1896](help:drugs/OR1896). The haemodynamic effect lasts days after the infusion stops, and it is OR-1896 that carries it: the parent falls within hours, while OR-1896 forms slowly through OR-1855 and is still rising for two days after a 7-day infusion ends. Neither panel has an effect site or a therapeutic range.
 
-The metabolite waits for Kivikko and colleagues' study of OR-1896 after a 24-hour infusion, and for a way to calculate a metabolite formed from another metabolite.
+OR-1896 comes from Bertin and colleagues' model (*Clin Pharmacokinet* 2026), joined to Jonsson's parent by the one quantity concentrations identify, the share of the parent's elimination that becomes the metabolite. Its page explains the join and how it compares with Antila 2004's measured 7-day infusions.
 
 ### Body size
 
@@ -26,6 +26,6 @@ Weight enters clearance and central volume linearly, as Jonsson fitted it, withi
 
 - Levosimendan is not approved in the United States (it is sold as Simdax elsewhere), so there is no US label.
 - The variability is large: 39% between patients in clearance and 60% in central volume.
-- Bertin and colleagues (*Clin Pharmacokinet* 2026) modelled levosimendan and both metabolites in 21 critically ill patients on VA-ECMO, including six neonates and infants. That model is recorded but not used.
+- Bertin and colleagues (*Clin Pharmacokinet* 2026) modelled levosimendan and both metabolites in 21 critically ill patients on VA-ECMO, including six neonates and infants. Its parent model is not used (Jonsson's is larger and fitted in heart failure); its metabolite chain draws OR-1896.
 
 See [the vasoactive and resuscitation drugs](help:models/vasoactive).

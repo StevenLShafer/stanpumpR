@@ -60,6 +60,20 @@
 # bioavailability_PO, at its time plus tlag_PO, and an oral rate takes the same
 # lag.  An intravenous bolus enters the central compartment.
 #
+# AN INTRAVENOUS PARENT (n = 0; 2026-11-27, Shafer's decision of that day, for
+# levosimendan's OR-1896): no chain at all, the parent's central compartment
+# state 1, and an oral dose refused.  It is here only for the metabolite it
+# forms.  AND A SECOND MOIETY IN THE METABOLITE'S PERIPHERAL COMPARTMENT: with
+# kelPeripheral the peripheral eliminates on its own, with vPeripheral it has
+# the volume the source gives it rather than the one its rate constants
+# imply, and with plotted = "peripheral" its concentration is the metabolite
+# curve (CpMetabolite), times mwRatio, its molecular weight over the
+# parent's; C2Metabolite is then 0.  Bertin 2026's chain is exactly that:
+# levosimendan's metabolic loss through one transit to OR-1855 (the
+# metabolite's central compartment, not drawn), acetylated to OR-1896 (the
+# "peripheral") and converted back.  Every field defaults to what enalapril
+# and artemether use, so their curves are unchanged.
+#
 # The two chains differ in their last step, and that asymmetry is the source's
 # rather than this engine's: Faisal 2019 names a separate rate constant of
 # absorption out of the last transit of the parent's chain and names no such
@@ -323,9 +337,12 @@ validateTransitChain <- function(tc, pkSet, drug)
   whole <- function(v) is_valid_number(v) && v >= 0 && v == round(v)
   positive <- function(v) is_valid_number(v) && v > 0
 
-  if (!is.list(tc) || !whole(tc$n) || tc$n < 1)
+  # n = 0: an intravenous parent with no absorption chain at all, carried here
+  # for the metabolite it forms (levosimendan's OR-1896, Bertin 2026).
+  if (!is.list(tc) || !whole(tc$n))
     stop("Invalid transitChain for ", drug, ": n must be a whole number of ",
-         "chain compartments, one or more (the last is the depot).")
+         "chain compartments, zero (an intravenous parent) or more (the last ",
+         "is the depot).")
   if (tc$n > 1 && !positive(tc$ktr))
     stop("Invalid transitChain for ", drug, ": ktr must be positive (per ",
          "minute) when n is above one.")
@@ -333,7 +350,7 @@ validateTransitChain <- function(tc, pkSet, drug)
   if (is.null(route))
     stop("Invalid transitChain for ", drug, ": route must be \"", ROUTE_PO,
          "\" (the default) or \"", ROUTE_SC, "\".")
-  if (!positive(pkSet[[transitChainField("ka", route)]]))
+  if (tc$n >= 1 && !positive(pkSet[[transitChainField("ka", route)]]))
     stop("Invalid transitChain for ", drug, ": the chain's last compartment ",
          "empties at ", if (route == ROUTE_PO) "ka_PO" else "ka_SC",
          ", so the model must give a positive one.")
@@ -395,6 +412,29 @@ validateTransitChain <- function(tc, pkSet, drug)
     if ((k12 > 0) != (k21 > 0))
       stop("Invalid transitChain for ", drug, ": a metabolite peripheral ",
            "compartment needs both k12 and k21, or neither.")
+    # The metabolite's second compartment may be a moiety of its own, with
+    # its own elimination and volume, and may be the one drawn (OR-1896,
+    # formed from OR-1855 and converted back, Bertin 2026).
+    kelP <- if (is.null(met$kelPeripheral)) 0 else met$kelPeripheral
+    if (!(is_valid_number(kelP) && kelP >= 0))
+      stop("Invalid transitChain for ", drug,
+           ": metabolite kelPeripheral must be zero or positive (per minute).")
+    if (!is.null(met$vPeripheral) && !positive(met$vPeripheral))
+      stop("Invalid transitChain for ", drug,
+           ": metabolite vPeripheral must be positive (L).")
+    plotted <- if (is.null(met$plotted)) "central" else met$plotted
+    if (!(is.character(plotted) && length(plotted) == 1 &&
+          plotted %in% c("central", "peripheral")))
+      stop("Invalid transitChain for ", drug, ": metabolite plotted must be ",
+           "\"central\" or \"peripheral\".")
+    if ((kelP > 0 || !is.null(met$vPeripheral) || plotted == "peripheral") &&
+        k12 <= 0)
+      stop("Invalid transitChain for ", drug, ": kelPeripheral, vPeripheral ",
+           "and plotted = \"peripheral\" need a metabolite peripheral ",
+           "compartment (k12 and k21).")
+    if (!is.null(met$mwRatio) && !positive(met$mwRatio))
+      stop("Invalid transitChain for ", drug,
+           ": metabolite mwRatio must be positive.")
     if (kMet <= 0)
       stop("Invalid transitChain for ", drug, ": a metabolite is declared but ",
            "kMetabolic is zero, so none would ever be formed.")
@@ -431,11 +471,13 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # fields: oral, or the tissue depot's for a subcutaneous chain.
   headRoute <- transitChainRoute(tc)
   headRoutes <- if (headRoute == ROUTE_PO) ROUTE_PO else TISSUE_ROUTES
+  # An intravenous parent (n = 0) has no chain for any dose to enter.
+  if (as.integer(tc$n) == 0L) headRoutes <- character(0)
   headF   <- orZero(pkSet[[transitChainField("bioavailability", headRoute)]], 1)
   headLag <- orZero(pkSet[[transitChainField("tlag", headRoute)]])
   n    <- as.integer(tc$n)
   ktr  <- orZero(tc$ktr)
-  ka   <- pkSet[[transitChainField("ka", headRoute)]]
+  ka   <- orZero(pkSet[[transitChainField("ka", headRoute)]])
   V    <- pkSet$v1
   kMet <- orZero(tc$kMetabolic)
   # The parent's loss that does NOT form the metabolite.  max() only against
@@ -473,7 +515,14 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # The metabolite's peripheral volume is implied by its rate constants, the
   # same relation advanceMichaelisMenten() uses for GHB's k23/k32.
   mVP  <- if (mK21 > 0) mV * mK12 / mK21 else 1
-  mScale <- if (is.null(met)) 1 else orZero(met$unitScale, 1)
+  # Unless the peripheral is a moiety of its own, with a volume and an
+  # elimination the source gives it (OR-1896, Bertin 2026: V4 = V1, keM2).
+  if (!is.null(met$vPeripheral)) mVP <- met$vPeripheral
+  mKelP <- if (is.null(met)) 0 else orZero(met$kelPeripheral)
+  mPlotPeripheral <- !is.null(met) && identical(met$plotted, "peripheral")
+  # The engine carries the parent's amount; a metabolite drawn by mass takes
+  # its molecular weight over the parent's (formation is molar).
+  mScale <- if (is.null(met)) 1 else orZero(met$unitScale, 1) * orZero(met$mwRatio, 1)
 
   # ---- The system matrix ----
   A <- matrix(0, iOneOral, iOneOral)
@@ -492,7 +541,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
   # in force when the propagator is applied.
   A[iC, iOne] <- 1
   # And a unit oral rate into the head of the chain, bioavailability included.
-  A[1L, iOneOral] <- headF
+  if (n > 0) A[1L, iOneOral] <- headF
   if (ke0 > 0) { A[iE, iC] <- ke0 / V; A[iE, iE] <- -ke0 }
   if (!is.null(met))
   {
@@ -507,7 +556,7 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     A[iMC, iMC] <- -(mKel + mK12)
     if (mK12 > 0)
     {
-      A[iMC, iMP] <- mK21; A[iMP, iMC] <- mK12; A[iMP, iMP] <- -mK21
+      A[iMC, iMP] <- mK21; A[iMP, iMC] <- mK12; A[iMP, iMP] <- -(mK21 + mKelP)
     }
   }
 
@@ -635,8 +684,14 @@ advanceTransitChain <- function(dose, PK, maximum, plotRecovery = FALSE,
     depot[i] <- sum(x[depotStates])
     if (!is.null(met))
     {
-      Cm[i] <- x[iMC] * mScale / mV
-      if (mK12 > 0) C2m[i] <- x[iMP] * mScale / mVP
+      if (mPlotPeripheral)
+      {
+        # The second moiety is the curve; the first (OR-1855) is not drawn.
+        Cm[i] <- x[iMP] * mScale / mVP
+      } else {
+        Cm[i] <- x[iMC] * mScale / mV
+        if (mK12 > 0) C2m[i] <- x[iMP] * mScale / mVP
+      }
     }
   }
 
