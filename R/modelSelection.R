@@ -138,6 +138,15 @@ MODEL_GROUPS <- list(
     ageMin = c(20, 37, 64), ageMax = c(33, 71, 84),
     weightMin = c(50.7, 47.1, 40.4), weightMax = c(77.2, 73.0, 71.8),
     n = c(47, 9, 8), year = c(2008, 2015, 2015)),
+  # Ciprofol (R/ciprofol.R; Shafer, 2026-11-26): Liu 2024's 462 adults
+  # (18-77 years, 41.6-97.9 kg, Table 1) and Wang 2026's 25 children (1-9
+  # years, 9.8-37 kg), ranges read on the papers.
+  ciprofol = data.frame(
+    model = c("ciprofolLiu", "ciprofolWang"),
+    source = c("Liu 2024", "Wang 2026"),
+    ageMin = c(18, 1), ageMax = c(77, 9),
+    weightMin = c(41.6, 9.8), weightMax = c(97.9, 37),
+    n = c(462, 25), year = c(2024, 2026)),
   # Antithrombin III, plasma-derived (Shafer, 2026-11-26): Moffett 2017's
   # children (inclusion "<19 years", adolescents 13-18) and Ilias 2000's
   # adults with severe sepsis (18-85 years), ranges read on the PDFs; no
@@ -451,6 +460,22 @@ ambrisentan <- modelGroup("ambrisentan")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 landiolol <- modelGroup("landiolol")
+
+#' Ciprofol: the model chosen for the patient
+#'
+#' Liu 2024 (462 adults, 18-77 years) or Wang 2026 (25 children, 1-9 years),
+#' chosen by \code{selectModel()}; see \code{R/modelSelection.R} and
+#' \code{R/ciprofol.R}.
+#' @inheritParams ciprofolLiu
+#' @param age age in years; it chooses the model, and Liu's V1 age term is held
+#'   at 18 below that age
+#' @param adjustToFFM \code{TRUE} (the default) scales the chosen model by
+#'   fat-free mass (for Liu, the clearance's weight term at the adjusted weight
+#'   and the other parameters anchored at Liu's cohort; for Wang, the per-kg
+#'   values on the adjusted weight); \code{FALSE} uses the published values.
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+ciprofol <- modelGroup("ciprofol")
 
 #' Antithrombin III (human), Thrombate III: the model chosen for the patient
 #'
