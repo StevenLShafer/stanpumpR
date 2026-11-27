@@ -121,7 +121,14 @@ ciprofolResult <- function(default, reference)
 #' Ciprofol, intravenous, adults (Liu 2024)
 #'
 #' Arterial, long-infusion, non-ICU parameters; see `R/ciprofol.R`.
-#' @inheritParams cefazolin
+#' @param weight weight in kg
+#' @param height height in cm
+#' @param age age in years (the V1 age term is held at 18 below that age)
+#' @param sex \code{"male"} or \code{"female"}
+#' @param adjustToFFM \code{TRUE} (the default) evaluates the clearance's weight
+#'   term at the fat-free-mass-adjusted weight and scales the other volumes and
+#'   clearances by fat-free mass anchored at Liu's cohort; \code{FALSE} uses
+#'   the published values unscaled.
 #' @export
 ciprofolLiu <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
@@ -154,7 +161,13 @@ ciprofolLiu <- function(weight, height, age, sex, adjustToFFM = TRUE)
 #'
 #' Three compartments per kilogram in children aged 1-9 years; see
 #' `R/ciprofol.R`.
-#' @inheritParams cefazolin
+#' @param weight weight in kg
+#' @param height height in cm
+#' @param age age in years
+#' @param sex \code{"male"} or \code{"female"}
+#' @param adjustToFFM \code{TRUE} (the default) applies the per-kilogram
+#'   values to the fat-free-mass-adjusted weight; \code{FALSE} to the total
+#'   weight.
 #' @export
 ciprofolWang <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {

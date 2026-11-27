@@ -11,16 +11,14 @@ ciprofol(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{height}{height in cm}
 
-\item{age}{age in years}
+\item{age}{age in years (the V1 age term is held at 18 below that age)}
 
-\item{sex}{sex as a string}
+\item{sex}{\code{"male"} or \code{"female"}}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{\code{TRUE} (the default) evaluates the clearance's weight
+term at the fat-free-mass-adjusted weight and scales the other volumes and
+clearances by fat-free mass anchored at Liu's cohort; \code{FALSE} uses
+the published values unscaled.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
