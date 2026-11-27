@@ -1,6 +1,11 @@
 # -----------------------------------------------------------------------------
-# Antithrombin III (human), Thrombate III: one compartment, intravenous
+# Antithrombin III (human), Thrombate III, in children (Moffett 2017): one
+# compartment, intravenous; a candidate of the antithrombin group
 # -----------------------------------------------------------------------------
+# A candidate of the model group antithrombin (R/modelSelection.R; Shafer,
+# 2026-11-26): chosen for children, Ilias 2000 (R/drugs_antithrombinIlias.R)
+# for adults.  Until then it was the drug antithrombin itself, used at every
+# age.
 # Units: time in minutes, volumes in litres, clearances in L/min, amounts in
 # units of 10 IU, activity in IU/dL (= % of normal).  Plotted as the patient's
 # own antithrombin activity plus the infused activity (R/factorBaselines.R;
@@ -64,8 +69,9 @@
 # baseline is the value typed, unheld.
 #
 # WHO IT DESCRIBES: children under 19 years, mostly infants, critically ill,
-# on heparin.  It is used for adults as the only model of a plasma-derived
-# concentrate (Shafer, 2026-11-26).  At 70 kg and a baseline of 60 the
+# on heparin.  It was used for adults, as the only model of a plasma-derived
+# concentrate, until Ilias 2000 was read (Shafer, 2026-11-26); the group now
+# gives adults Ilias's sepsis model.  At 70 kg and a baseline of 60 the
 # half-life is 51 hours (2.1 days) and the incremental recovery 1.03 IU/dL
 # per IU/kg.  The Thrombate III label (12.3), 8 asymptomatic patients with
 # hereditary deficiency, functional assay: recovery 1.4 +/- 0.1 IU/dL per
@@ -118,11 +124,13 @@ ANTITHROMBIN_BASE_MAX <- 93
 # Blank: the source's reference baseline
 ANTITHROMBIN_BASELINE <- 60  # IU/dL
 
-#' Antithrombin III (human), Thrombate III (Moffett 2017)
+#' Antithrombin III (human), Thrombate III, in children (Moffett 2017)
 #'
 #' One compartment, allometric in weight, plotted as the patient's own
 #' antithrombin activity plus the infused, in IU/dL; the heparin term is held
-#' at 0. See the header of \code{R/drugs_antithrombin.R}.
+#' at 0. A candidate of the
+#' \code{antithrombin} group. See the header of
+#' \code{R/drugs_antithrombinMoffett.R}.
 #'
 #' @inheritParams cefazolin
 #' @param antithrombinBaseline the patient's own antithrombin activity in
@@ -130,7 +138,7 @@ ANTITHROMBIN_BASELINE <- 60  # IU/dL
 #'   on which the volume depends (held within 25 to 93 IU/dL there)
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-antithrombin <- function(weight, height, age, sex, adjustToFFM = TRUE,
+antithrombinMoffett <- function(weight, height, age, sex, adjustToFFM = TRUE,
                          antithrombinBaseline = NULL)
 {
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM)
@@ -157,7 +165,7 @@ antithrombin <- function(weight, height, age, sex, adjustToFFM = TRUE,
     "Moffett 2017 (184 children under 19 years, median 5.2 kg, given Thrombate): ",
     "one compartment, CL 0.917 dL/h x (weight/70)^0.75 + 0.129 x heparin units/h / 173, ",
     "VD 67.9 dL x weight/70 x (baseline/60)^-0.389; the heparin term held at 0 ",
-    "(no heparin), used beyond the children it was fitted in. Plotted as the patient's ",
+    "(no heparin). Plotted as the patient's ",
     "antithrombin activity plus the infused: baseline ", signif(baseline, 3), " IU/dL",
     if (is.null(antithrombinBaseline)) " (blank: the source's reference)" else "",
     ". Band: the label's target, 80-120 IU/dL. https://doi.org/10.1111/bcp.13359")
