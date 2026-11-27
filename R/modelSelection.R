@@ -456,6 +456,12 @@ landiolol <- modelGroup("landiolol")
 #' chosen by \code{selectModel()}; see \code{R/modelSelection.R} and
 #' \code{R/ciprofol.R}.
 #' @inheritParams ciprofolLiu
+#' @param age age in years; it chooses the model, and Liu's V1 age term is held
+#'   at 18 below that age
+#' @param adjustToFFM \code{TRUE} (the default) scales the chosen model by
+#'   fat-free mass (for Liu, the clearance's weight term at the adjusted weight
+#'   and the other parameters anchored at Liu's cohort; for Wang, the per-kg
+#'   values on the adjusted weight); \code{FALSE} uses the published values.
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 ciprofol <- modelGroup("ciprofol")

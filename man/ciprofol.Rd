@@ -11,14 +11,15 @@ ciprofol(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{height}{height in cm}
 
-\item{age}{age in years (the V1 age term is held at 18 below that age)}
+\item{age}{age in years; it chooses the model, and Liu's V1 age term is held
+at 18 below that age}
 
 \item{sex}{\code{"male"} or \code{"female"}}
 
-\item{adjustToFFM}{\code{TRUE} (the default) evaluates the clearance's weight
-term at the fat-free-mass-adjusted weight and scales the other volumes and
-clearances by fat-free mass anchored at Liu's cohort; \code{FALSE} uses
-the published values unscaled.}
+\item{adjustToFFM}{\code{TRUE} (the default) scales the chosen model by
+fat-free mass (for Liu, the clearance's weight term at the adjusted weight
+and the other parameters anchored at Liu's cohort; for Wang, the per-kg
+values on the adjusted weight); \code{FALSE} uses the published values.}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects
