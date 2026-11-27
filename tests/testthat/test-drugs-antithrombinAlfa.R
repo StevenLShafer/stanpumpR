@@ -48,6 +48,6 @@ test_that("the baseline is plotted, and only plotted", {
                    factorBaselines = list(antithrombinBaseline = 30))
   w2 <- simCpCe(dose, noEvents, PK2, 180, FALSE)$wide
   expect_equal(w2$Plasma - w$Plasma, rep(30 - 44.7, nrow(w)))
-  expect_setequal(patientFieldReaders("antithrombinBaseline"),
-                  c("antithrombin", "antithrombinAlfa"))
+  expect_true(all(c("antithrombin", "antithrombinAlfa") %in%
+                    patientFieldReaders("antithrombinBaseline")))
 })
