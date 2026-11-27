@@ -388,6 +388,27 @@ def doi_named_ref(name, path):
                       "check it by hand" % (hit.get("doi", ""), (hit.get("title") or "")[:70],
                                             hit.get("first_author", ""), hit.get("year", ""), lack))
     doi = (hit.get("doi") or "").lower()
+    # A DOI_ name is for a paper PubMed does NOT have.  If PubMed does have it, the archive's
+    # name is PMID_<n>.pdf: archive_name() prefers the PMID, and everything downstream is keyed
+    # by it -- the download queue, queue_add.archived(), arrivals.py's "now in the archive" and
+    # the digest manifest all match PMID_(\d+)\.pdf and would never see a DOI_ name.  Filing one
+    # under its DOI therefore hides it from the very reports that exist to find it.
+    # Found hours after this route shipped: Fenn 1946 was filed here as
+    # DOI_10.1152_ajplegacy.1946.146.5.637.pdf on the belief that a 1946 paper predates PubMed.
+    # It does not -- PMID 20996488, the AJP Legacy backfile, carrying that same DOI -- and the
+    # gas session citing the PMID is what caught it.  Crossref cannot answer this; PubMed must be
+    # asked.  Fail CLOSED if it cannot be reached: an unchecked DOI_ name is how the mis-keyed
+    # entry got in, and the file is reported rather than filed so the next run asks again.
+    try:
+        import ncbi
+        _n, known = ncbi.esearch("%s[DOI]" % doi, retmax=2)   # (count, idlist), not a list
+    except Exception:
+        return None, ("named for doi %s, which resolves, but PubMed could not be reached to check "
+                      "whether it has a PMID: run update.bat again later" % doi)
+    if known:
+        return None, ("named for doi %s, but PubMed has that paper as PMID %s: an archived paper "
+                      "with a PMID is named PMID_%s.pdf, which everything downstream keys on, so "
+                      "rename it and it will file" % (doi, known[0], known[0]))
     return {"pmid": "", "doi": doi, "title": hit["title"], "tw": words(hit["title"]),
             "journal_n": norm(hit.get("journal") or ""), "surname": sur, "sur_re": None,
             "fpage": first_page(hit.get("pages")), "year": hit.get("year"),
