@@ -33,4 +33,4 @@ The shaded band runs from 200 to 750 ng/mL, the therapeutic reference range for 
 
 ### Where to be careful
 
-This is a model fitted to published means, not a published model; the two intravenous studies behind it disagree with each other by about 1.6-fold, and the oral studies by up to twofold. Temazepam adds to the sedation and respiratory depression of opioids and other sedatives. Its binding to plasma proteins varies with free fatty acids, so the free fraction, and possibly the effect at a given total concentration, changes over hours.
+This is a model fitted to published means, not a published model; the two intravenous studies behind it disagree with each other by about 1.6-fold, and the oral studies by up to twofold. Temazepam adds to the sedation and ventilatory depression of opioids and other sedatives. Its binding to plasma proteins varies with free fatty acids, so the free fraction, and possibly the effect at a given total concentration, changes over hours.

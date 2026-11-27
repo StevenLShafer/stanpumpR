@@ -29,4 +29,4 @@ The shaded band and threshold come from Barr and colleagues. They estimated the 
 
 ### Where to be careful
 
-Barr's models predict that, for a 71-year-old, 70 kg man, emergence after a 72-hour infusion takes 11.9 hours from light and 31.1 hours from deep sedation with lorazepam, against 3.6 and 14.9 hours with midazolam; in their patients, emergence to a sedation score of 2 took 8.7 hours with lorazepam against 3.0 with midazolam. The injection's propylene glycol vehicle accumulates during high-dose infusions and is not modelled. Lorazepam adds to the respiratory depression of opioids.
+Barr's models predict that, for a 71-year-old, 70 kg man, emergence after a 72-hour infusion takes 11.9 hours from light and 31.1 hours from deep sedation with lorazepam, against 3.6 and 14.9 hours with midazolam; in their patients, emergence to a sedation score of 2 took 8.7 hours with lorazepam against 3.0 with midazolam. The injection's propylene glycol vehicle accumulates during high-dose infusions and is not modelled. Lorazepam adds to the ventilatory depression of opioids.

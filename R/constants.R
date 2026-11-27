@@ -921,7 +921,7 @@ BUPRENORPHINE_OFFSET_MIN     <- 0.5
 BUPRENORPHINE_OFFSET_MAX     <- 2
 BUPRENORPHINE_OFFSET_DEFAULT <- 1
 PLOT_NAME_OCCUPANCY    <- "receptor occupancy"
-PLOT_NAME_RESP         <- "resp. depression"
+PLOT_NAME_RESP         <- "vent. depression"
 PLOT_NAME_ANALGESIA    <- "analgesia (MEAC eq)"
 OR_FREE_LABEL          <- "free receptor"
 
