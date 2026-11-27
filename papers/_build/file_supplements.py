@@ -256,6 +256,21 @@ for root, dirs, files in os.walk(DOWNLOADS):
         if r is None:
             waiting.append({"file": path, "size": os.path.getsize(path), "sha256": h,
                             "first_line": first_line(txt if txt is not None else text_of(path)),
+                            # [to do, 2026-11-26] "not in the reference list" is usually not "not in
+                            # the archive".  refs comes from works.json, which holds only the works
+                            # resolved at the last citation round (2026-10-30), so an article cited by
+                            # code merged since is absent from it even when its PDF is filed.  Both
+                            # supplements waiting tonight are of that kind: the Springer name resolves
+                            # the Vuong 2025 fluconazole DOI and the SAGE name would resolve the
+                            # Sharabiani 2026 Perfusion DOI, and PMID_41085604.pdf and PMID_41131745.pdf
+                            # are both in the archive.  THE FIX, small and the same shape as
+                            # doi_named_ref() in file_downloads.py: when from_name() yields a DOI that
+                            # refs lacks, ask PubMed for its PMID (ncbi.esearch("<doi>[DOI]"), which
+                            # returns (count, idlist)) and, if PMID_<n>.pdf is in the archive, file the
+                            # supplement beside it.  That fixes both without waiting for round W, whose
+                            # scope is itself an open decision (README.txt).  SAGE also needs a name
+                            # pattern of its own -- sj-<ext>-<n>-<journal>-<doi with _ for />, e.g.
+                            # sj-pdf-1-prf-10.1177_02676591251385838 -- which no rule here matches yet.
                             "why": ("article not in the reference list (%s)" % name_how) if name_how else "no article identified"})
             continue
         label = label or free_label(r["stem"], ext)
