@@ -131,6 +131,8 @@ plasmaOnly <- c(
     "liothyronine",
     # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
     "tafenoquine",
+    # dolutegravir (Zhang 2015, 2026-11-27): plasma only
+    "dolutegravir",
     # Coartem's components (Ding 2026, 2026-11-24): plasma only
     "artemether", "dihydroartemisinin", "lumefantrine",
     # ceftolozane, drawn for Zerbaxa (Zhang 2021, 2026-11-25): plasma only

@@ -433,6 +433,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "liothyronine",
     # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
     "tafenoquine",
+    # dolutegravir (Zhang 2015, 2026-11-27): plasma only
+    "dolutegravir",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only
