@@ -63,14 +63,13 @@
 # parameter per kg (Table 3): CL 31.2 mL/min/kg, V1 506 mL/kg, Q2 28.2
 # mL/min/kg, V2 231 mL/kg, Q3 19.8 mL/min/kg, V3 1360 mL/kg.  V1's BUN term
 # (BUN/5 mmol/L)^-0.821 is held at its reference: the Patient Profile has
-# no BUN.  [decision] The children's time to peak effect is taken as the
-# adults' 2.94 min, no paediatric effect-site study existing: Shafer to
-# confirm.
+# no BUN.  The children's time to peak effect is the adults' 2.94 min, no
+# paediatric effect-site study existing (Shafer's decision, 2026-11-27).
 #
 # NO BAND, NO TCI.  Neither paper gives a therapeutic range; the BIS model
-# is drawn as % effect instead.  [decision] A band from BIS 40-60 (about
-# 450-675 ng/mL at an assumed baseline BIS of 95) is possible: Shafer to
-# decide.  Target-controlled infusion is not offered.
+# is drawn as % effect instead.  A band from BIS 40-60 (about 450-675
+# ng/mL at an assumed baseline BIS of 95) is not drawn (Shafer's decision,
+# 2026-11-27).  Target-controlled infusion is not offered.
 # -----------------------------------------------------------------------------
 
 #' Time to peak effect of ciprofol after a bolus, minutes
