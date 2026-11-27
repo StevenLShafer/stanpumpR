@@ -2134,6 +2134,17 @@ registry <- rbind(
       source_url = "https://doi.org/10.1007/s00540-011-1305-2",
       to_obtain = "",
       notes = "Landiolol is hydrolysed in plasma by pseudocholinesterase and carboxylesterases (label 12.3), so a change in plasma esterase activity in pregnancy could change its clearance; no landiolol study measures it."),
+  row("ciprofol", "Hypnotics and sedatives", "unknown",
+      finding = "Searched PubMed (ciprofol OR HSK3486, with pregnancy, pregnant, cesarean or obstetric, and pharmacokinetics, 2026-11-26): no pharmacokinetic study in pregnancy. The records are clinical trials of ciprofol for sedation or induction at caesarean delivery and for hysteroscopy, reporting doses, haemodynamics and Apgar scores but no maternal clearance. Ciprofol is not approved in the US, so there is no FDA label.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "PubMed search, 2026-11-26",
+      source_url = "",
+      to_obtain = "",
+      notes = "Ciprofol is cleared mainly by glucuronidation (UGT1A9), like propofol; pregnancy's rise in hepatic blood flow and glucuronidation could raise its clearance, but no ciprofol study measures it."),
   row("levosimendan", "Vasoactive and resuscitation", "unknown",
       finding = "Searched PubMed (levosimendan AND pregnancy, and with pharmacokinetics or concentrations, 2026-11-25): no pharmacokinetic study in pregnancy. The records are case reports of peripartum cardiomyopathy and in-vitro studies of human umbilical artery and myometrium (Yildiz 2006, Hehir 2010).",
       applied = "",
@@ -3780,6 +3791,8 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              # the landiolol group's candidates (2026-11-25)
              landiololHonda = "landiolol", landiololKunisawa2014 = "landiolol",
              landiololKunisawa2015 = "landiolol",
+             # the ciprofol group's candidates (2026-11-26)
+             ciprofolLiu = "ciprofol", ciprofolWang = "ciprofol",
              # the micafungin group's candidates (2026-11-27)
              micafunginJullien = "micafungin", micafunginWasmann = "micafungin")
 copies <- registry[match(renamed, registry$drug), ]

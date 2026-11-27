@@ -25,6 +25,7 @@ oxytocin,ng,mcg,mcg/min,U,"U,U/hr,U/min,mU/min,mcg,mg,mg/kg,mcg/min",#008F7D,0.0
 oxycodone,ng,mg,mg/hr,mg PO,"mg,mg/hr,Plasma target,Effect site target,mg PO,mg PO liquid,mg/kg PO liquid,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg PO liquid qd,mg PO liquid bid,mg PO liquid tid,mg PO liquid qid,mg PO liquid q4h,mg/kg PO liquid qd,mg/kg PO liquid bid,mg/kg PO liquid tid,mg/kg PO liquid qid,mg/kg PO liquid q4h",#032FED,10,20,14,12,10,IV,Opioids
 oliceridine,ng,mg,mcg/kg/min,mg,"mg,mcg/kg/min",#FF00CC,18.296,37.504,27.4,27.9,27.4,IV,Opioids
 remimazolam,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,Plasma target,Effect site target",#E36C0A,0.3,0.6,0.45,0,0.2,IV,Hypnotics and sedatives
+ciprofol,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,Hypnotics and sedatives
 diazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#B5651D,606,1824,1248,0,606,IV,Hypnotics and sedatives
 lorazepam,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg PO,mg IM,mg qd,mg bid,mg tid,mg qid,mg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#F28C28,51,152,104,0,51,IV,Hypnotics and sedatives
 alprazolam,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h",#C55A11,5,44,25,0,0,IV,Hypnotics and sedatives
@@ -389,3 +390,5 @@ antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,
 micafungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
 micafunginJullien,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,
 micafunginWasmann,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
+ciprofolLiu,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
+ciprofolWang,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
