@@ -44,11 +44,17 @@ test_that("Wang's per-kilogram parameters, switch off", {
 })
 
 test_that("with the switch on, Wang's parameters scale with the adjusted weight", {
-  # a 30 kg, 140 cm, 8-year-old girl: the per-kg values on pkSizeFactors()'s
+  # a 40 kg, 130 cm, 8-year-old girl (BMI 23.7): the per-kg values on pkSizeFactors()'s
   # adjusted weight
-  s <- ciprofolWang(30, 140, 8, "female")$PK$default
-  w <- pkSizeFactors(30, 140, 8, "female", TRUE)$pkWeight
-  expect_false(isTRUE(all.equal(w, 30)))
+  s <- ciprofolWang(40, 130, 8, "female")$PK$default
+  # her Al-Sallami fat-free mass, written out, over the reference man's,
+  # times 70 kg
+  bmi <- 40 / 1.3^2
+  ffm <- (1.11 + (1 - 1.11) / (1 + (8 / 7.1)^-1.1)) * 9270 * 40 / (8780 + 244 * bmi)
+  ffmRef <- 9270 * 70 / (6680 + 216 * 70 / 1.7^2) *
+    (0.88 + 0.12 / (1 + (35 / 13.4)^-12.7))
+  w <- 70 * ffm / ffmRef
+  expect_equal(round(w, 4), 34.4182)
   expect_equal(s$v1, 0.506 * w)
   expect_equal(s$v2, 0.231 * w)
   expect_equal(s$v3, 1.36 * w)
