@@ -447,7 +447,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "methyleneBlue",
     "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "fluconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
     "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
     # suzetrigine and its metabolite (2026-11-16): plasma only
@@ -482,6 +482,8 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "immunoglobulin",
     "antithrombin",
     "antithrombinAlfa",
+    "antithrombinIlias",
+    "antithrombinMoffett",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",

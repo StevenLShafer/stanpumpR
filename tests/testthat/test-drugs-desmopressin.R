@@ -1,5 +1,6 @@
 # Desmopressin (R/drugs_desmopressin.R): Agerso 2004's disposition with its
-# creatinine-clearance terms, Argenti 1997's von Willebrand factor ke0.
+# creatinine-clearance terms, Argenti 1997's factor VIII:C ke0 (Shafer,
+# 2026-11-26).
 # Drafted by Claude Code, 2026-11-26.
 
 events <- data.frame(Time = double(), Event = character())
@@ -55,9 +56,13 @@ test_that("with the switch on, a 120 kg man's parameters are pinned", {
   expect_equal_rounded(0.57352795, s$cl3)
 })
 
-test_that("the effect site is Argenti's von Willebrand factor ke0", {
+test_that("the effect site is Argenti's factor VIII:C ke0, peaking at 30 min", {
   out <- desmopressin(70, 170, 35, "male")
-  expect_equal(out$ke0, 2.16 / 60)
+  expect_equal(out$ke0, 2.59 / 60)
+  p <- getDrugPK("desmopressin", 70, 170, 35, "male")$PK$default
+  peak <- effectSitePeakTime(c(p$p_coef_bolus_l1, p$p_coef_bolus_l2, p$p_coef_bolus_l3),
+                             c(p$lambda_1, p$lambda_2, p$lambda_3), p$ke0)
+  expect_equal(round(peak, 1), 29.5)
   expect_null(out$tPeak)
   expect_equal(c(out$MEAC, out$typical, out$lowerTypical, out$upperTypical),
                rep(0, 4))

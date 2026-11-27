@@ -64,7 +64,7 @@ FACTOR_BASELINE_FIELDS <- list(
   ),
   # Antithrombin activity, IU/dL (= % of normal), as the factors are
   # (Shafer, 2026-11-26); the antithrombin model also reads it as a covariate
-  # on its volume (R/drugs_antithrombin.R)
+  # on its volume (R/drugs_antithrombinMoffett.R)
   antithrombinBaseline = list(
     label = "Antithrombin baseline",
     units = "IU/dL",

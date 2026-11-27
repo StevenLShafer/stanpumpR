@@ -44,3 +44,55 @@ test_that("3 mg/kg SC daily at 20 kg: the steady state against NOMID's", {
   expect_equal(peak, 1421, tolerance = 0.03)
   expect_true(trough > 53 && trough < 1979 && peak > 655 && peak < 8511)
 })
+
+# The intravenous route: Ogungbenro 2016, Table 1 (updated model), a parallel
+# system that takes only intravenous doses
+ogungbenro <- c(v1 = 5.74, v2 = 3.56, cl1 = 7.86 / 60, cl2 = 0.65 / 60)
+ivOf <- function(...) {
+  p <- getDrugPK("anakinra", ...)$parallelSystems[[1]]
+  expect_equal(p$routes, ROUTE_IV)
+  unlist(p$PK$default[c("v1", "v2", "cl1", "cl2")])
+}
+noEvents <- data.frame(Time = numeric(0), Event = character(0))
+
+test_that("intravenous: Table 1 at the reference man, the published values with the switch off", {
+  expect_equal(ivOf(70, 170, 35, "male"), ogungbenro)
+  expect_equal(ivOf(50, 160, 60, "female", adjustToFFM = FALSE), ogungbenro)
+  size <- pkSizeFactors(110, 165, 50, "female", TRUE)
+  expect_equal(ivOf(110, 165, 50, "female"),
+               ogungbenro * c(size$volume, size$volume, size$clearance, size$clearance))
+  expect_equal(getDrugPK("anakinra", 70, 170, 35, "male")$routes, ROUTE_SC)
+})
+
+test_that("intravenous: 100 mg then 2 mg/kg/h reaches 140/7.86 mg/L; each route runs on its own model", {
+  PK <- getDrugPK("anakinra", 70, 170, 35, "male")
+  iv <- data.frame(Drug = "anakinra", Time = c(0, 0), Dose = c(100, 2),
+                   Units = c("mg", "mg/kg/hr"))
+  w <- simCpCe(iv, noEvents, PK, 2880, FALSE)$wide
+  expect_equal(w$Plasma[w$Time == 2880], 140 / 7.86 * 1000, tolerance = 2e-3)  # ng/mL
+  expect_equal(max(w$Plasma[w$Time <= 0.01]), 100 / 5.74 * 1000, tolerance = 1e-3)
+  # an SC dose is untouched by the IV system, an IV dose by the SC one
+  sc <- data.frame(Drug = "anakinra", Time = 0, Dose = 100, Units = "mg SC")
+  wSC <- simCpCe(sc, noEvents, PK, 1440, FALSE)$wide
+  wBoth <- simCpCe(rbind(sc, data.frame(Drug = "anakinra", Time = 0, Dose = 100, Units = "mg")),
+                   noEvents, PK, 1440, FALSE)$wide
+  wIV <- simCpCe(data.frame(Drug = "anakinra", Time = 0, Dose = 100, Units = "mg"),
+                 noEvents, PK, 1440, FALSE)$wide
+  t <- intersect(intersect(wSC$Time, wIV$Time), wBoth$Time)
+  t <- t[t > 0][round(seq(1, sum(t > 0), length.out = 4))]
+  pick <- function(x) sapply(t, function(s) x$Plasma[x$Time == s][1])
+  expect_equal(pick(wBoth), pick(wSC) + pick(wIV), tolerance = 1e-8)
+  ref <- anakinra(70, 170, 35, "male")$PK$default
+  k <- ref$cl1 / ref$v1; ka <- ref$ka_SC
+  expect_equal(pick(wSC), 100 / ref$v1 * ka / (ka - k) *
+                 (exp(-k * t) - exp(-ka * t)) * 1000, tolerance = 1e-6)
+})
+
+test_that("intravenous: against Yang 2003's healthy men, which it was not fitted to", {
+  p <- ivOf(70, 170, 35, "male")
+  expect_equal(p[["cl1"]] * 60 / 8.22, 0.956, tolerance = 1e-3)   # CL 137 mL/min
+  k10 <- p[["cl1"]] / p[["v1"]]; k12 <- p[["cl2"]] / p[["v1"]]; k21 <- p[["cl2"]] / p[["v2"]]
+  b <- k10 + k12 + k21
+  hl <- log(2) / ((b + c(1, -1) * sqrt(b^2 - 4 * k10 * k21)) / 2) / 60
+  expect_equal(hl, c(0.4626, 4.154), tolerance = 1e-3)
+})
