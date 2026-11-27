@@ -366,7 +366,7 @@ rosuvastatin,ng,,,mg PO qd,"mg PO,mg PO qd",#B23A48,0,0,0,0,0,IV,Other
 evolocumab,mcg,,,mg SC,"mg SC",#5E8C31,0,0,0,0,0,IV,Other
 mirabegron,ng,,,mg PO,"mg PO,mg PO qd",#8E44AD,0,0,0,0,0,IV,Other
 modafinil,mcg,,,mg PO,"mg PO,mg PO qd",#00838F,1,1.7,1.35,0,0,IV,Stimulants
-anakinra,ng,,,mg SC qd,"mg SC,mg/kg SC,mg SC qd,mg/kg SC qd,mg SC bid,mg/kg SC bid",#00838F,0,0,0,0,0,IV,Other
+anakinra,ng,mg,mg/hr,mg SC qd,"mg SC,mg/kg SC,mg SC qd,mg/kg SC qd,mg SC bid,mg/kg SC bid,mg,mg/kg,mg/hr,mg/kg/hr",#00838F,0,0,0,0,0,IV,Other
 thrombomodulinAlfa,ng,mg,,mg/kg,"mg,mg/kg,mg/kg/hr",#00695C,0,0,0,0,0,IV,Anticoagulants
 emicizumab,mcg,,,mg/kg SC qwk,"mg/kg SC,mg/kg SC qwk,mg/kg SC q2wk,mg/kg SC q4wk,mg SC,mg SC qwk,mg SC q2wk,mg SC q4wk",#7B1FA2,0,0,0,0,0,IV,Hemostasis and reversal
 tenecteplase,mcg,mg,,mg,"mg,mg/kg",#C62828,0,0,0,0,0,IV,Anticoagulants
@@ -379,6 +379,8 @@ eftrenonacogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#6A1B9A,60,
 fibrinogen,mgdL,mg/kg,,mg/kg,"mg/kg,g,mg",#F9A825,100,450,200,0,0,IV,Hemostasis and reversal
 immunoglobulin,gL,g/kg,mg/kg/min,g/kg,"g/kg,g,mg/kg/min",#5D4037,0,0,0,0,0,IV,Other
 antithrombin,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,Hemostasis and reversal
+antithrombinMoffett,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,
+antithrombinIlias,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,
 desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal
 micafungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
