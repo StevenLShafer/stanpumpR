@@ -427,7 +427,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     # Anticoagulants (2026-10-17): plasma activity or concentration, or the
     # INR; no effect site (R/drugs_heparin.R and the others).
     "heparin", "bivalirudin", "apixaban", "rivaroxaban",
-    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "heparinCPB", "argatroban", "enoxaparin", "fondaparinux",
+    "edoxaban", "dabigatran", "dabigatranHip", "apixabanVTE", "heparinCPB", "argatroban", "enoxaparin", "tinzaparin", "fondaparinux",
     "warfarin", "fluindione", "acenocoumarol",
     # The antihypertensives joined on 2026-10-17: concentration only, no
     # published equilibration constant, and no blood pressure is plotted for
@@ -447,8 +447,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "digoxinIVPediatric",
     "methyleneBlue",
     "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
+    "OR1896",  # levosimendan's metabolite, concentration only (2026-11-27)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
     "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
     # suzetrigine and its metabolite (2026-11-16): plasma only
@@ -481,6 +482,10 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "eftrenonacogAlfa",
     "fibrinogen",
     "immunoglobulin",
+    "antithrombin",
+    "antithrombinAlfa",
+    "antithrombinIlias",
+    "antithrombinMoffett",
     "thrombomodulinAlfa",
     "emicizumab",
     "tenecteplase",

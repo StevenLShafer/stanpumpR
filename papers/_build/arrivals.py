@@ -238,12 +238,28 @@ def wanted_pmids():
     return out
 
 
+# A row is finished when its status is the word "done", alone or followed by the pull request
+# that finished it.  Anything else is live, however it is worded.
+DONE_STATUS = re.compile(r"done(\s+https?://\S+)?$")
+
+
 def pending_work():
-    """The `pending` rows of papers/pending-work.csv, read from origin/master.
+    """The LIVE rows of papers/pending-work.csv, read from origin/master.
 
     A row records work that was ready except for one paper, kept when its pull request was merged
     and closed so that closing cost nothing.  Read from master deliberately: a row still sitting on
-    a closed branch is invisible, which is the one way this register can fail."""
+    a closed branch is invisible, which is the one way this register can fail.
+
+    A row is LIVE unless its status records completion ("done <pull request URL>").  It used to
+    have to say exactly "pending", which is how three rows written "open" -- among them
+    antithrombin's DeJongh 2014, the adult source Shafer chose to wait for -- became invisible to
+    this report (found 2026-11-26, when that paper was filed because it was noticed in the inbox
+    and not because the register said so).  The register's only failure mode is a row nobody sees,
+    so no spelling of a live status may hide one: an unfamiliar status is reported, not dropped.
+
+    Completion is matched as a FORMAT, not as a prefix (CodeRabbit, PR #965): the first draft of
+    this skipped any status beginning "done", which would itself have hidden a live row worded
+    "done after the paper arrives" -- the same fault it was written to remove."""
     import csv
     import io
     text = git("show", "%s:papers/pending-work.csv" % REF)
@@ -251,7 +267,7 @@ def pending_work():
         return []
     out = []
     for r in csv.DictReader(io.StringIO(text)):
-        if (r.get("status") or "").strip().lower() != "pending":
+        if DONE_STATUS.match((r.get("status") or "").strip().lower()):
             continue
         pmid = re.sub(r"\D", "", r.get("pmid") or "")
         if pmid:

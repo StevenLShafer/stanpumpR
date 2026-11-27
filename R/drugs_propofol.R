@@ -273,6 +273,31 @@ propofol <- function(weight, height, age, sex, adjustToFFM = TRUE,
   events <- c(PK_EVENT_DEFAULT)
   PK <- sapply(events, function(x) list(get0(x)))
 
+  # Time to peak effect, 1.6 min.  Schnider TW, Minto CF, Shafer SL, et al., Anesthesiology
+  # 1999;90(6):1502-1516 (PMID 10360845) gives the range: 1.7 min predicted from the
+  # parametric ke0 of 0.456 /min, and 1.6 min assessed visually from the EEG (range 1-2.4).
+  #
+  # SETTLED, and not to be reopened without Steven L. Shafer's decision (2026-11-26).  Seven
+  # papers digested on 2026-11-25/26 circle this number, several arguing from BIS-derived ke0
+  # values as slow as 0.114 and 0.17 /min that 0.456 is too fast (PMID 28872658, 19690246).
+  # It is not.  Schnider's own conclusion is that equilibration is FASTER than previously
+  # reported, and the 1.6 min is the VISUALLY assessed time of peak EEG effect, independent of
+  # the model fit.  What the BIS-derived values measure is not the same quantity: Schnider
+  # fitted the canonical univariate parameter, derived from the EEG power spectrum to
+  # correlate with the effect site, whereas BIS is a proprietary index whose own calculation
+  # delay (14-155 s in the literature its authors cite) is absorbed into any ke0 fitted to it.
+  # PMID 32925339 is consistent with that and does not independently confirm 0.456: its 49 s
+  # is a lag FITTED to collapse the hysteresis between BIS and a Schnider effect site that
+  # already assumed ke0 0.456, so it explains why a BIS-fitted ke0 reads slow rather than
+  # proving the faster value.  1.6 min applies to the Eleveld kinetics this model runs and to
+  # the Schnider companion (R/alternativeModels.R).
+  #
+  # Propofol carries NO EEG-index pharmacodynamic endpoint, and is not to be given one
+  # without Shafer's decision (2026-11-26).  The EEG is not solely a measure of drug
+  # effect: on emergence it can be nearly unchanged for minutes after the drug stops and
+  # then change at once as the patient opens their eyes, so the index moves while the
+  # concentration does not -- and the drugs of an anaesthetic do not move it in one
+  # direction.  The full reasoning is in R/pdEffect.R.
   tPeak <- 1.600 # tPeak per Schnider TW et al., Anesthesiology 1999;90(6):1502-1516. https://pubmed.ncbi.nlm.nih.gov/10360845/
   reference <- "Eleveld DJ et al., Br J Anaesth 2018;120(5):942-959. https://pubmed.ncbi.nlm.nih.gov/29661412/"
   if (isTRUE(pregnant)) {

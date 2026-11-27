@@ -282,7 +282,7 @@ test_that("validateTransitChain refuses every malformed block", {
     tc <- modifyList(ok, change)
     expect_error(validateTransitChain(tc, s, "enalapril"), "transitChain")
   }
-  bad(list(n = 0L))
+  bad(list(n = -1L))
   bad(list(n = 2.5))
   bad(list(ktr = 0))
   bad(list(ktr = -1))
@@ -305,6 +305,56 @@ test_that("validateTransitChain refuses every malformed block", {
   # And the real block passes
   expect_identical(validateTransitChain(ok, s, "enalapril")$n, ok$n)
   expect_null(validateTransitChain(NULL, s, "enalapril"))
+  # An intravenous parent (n = 0) needs no ka_PO (levosimendan, 2026-11-27)
+  expect_identical(
+    validateTransitChain(modifyList(ok, list(n = 0L)),
+                         modifyList(s, list(ka_PO = 0)), "levosimendan")$n, 0L)
+  # The metabolite's second moiety: an elimination, a volume and the choice
+  # to draw it all need a peripheral compartment, and must be readable
+  noPeriph <- modifyList(ok$metabolite, list(k12 = 0, k21 = 0))
+  bad(list(metabolite = modifyList(noPeriph, list(kelPeripheral = 0.001))))
+  bad(list(metabolite = modifyList(noPeriph, list(plotted = "peripheral"))))
+  bad(list(metabolite = modifyList(noPeriph, list(vPeripheral = 10))))
+  bad(list(metabolite = modifyList(ok$metabolite, list(kelPeripheral = -1))))
+  bad(list(metabolite = modifyList(ok$metabolite, list(vPeripheral = 0))))
+  bad(list(metabolite = modifyList(ok$metabolite, list(plotted = "both"))))
+  bad(list(metabolite = modifyList(ok$metabolite, list(mwRatio = 0))))
+})
+
+test_that("an eliminating, drawn second moiety matches an independent solution", {
+  # An intravenous parent (n = 0) forming a metabolite through one transit,
+  # whose peripheral is a moiety of its own (OR-1896's structure, Bertin
+  # 2026), against an eigen-decomposition written here.
+  s <- list(v1 = 20, v2 = 30, v3 = 1, cl1 = 0.2, cl2 = 0.05, cl3 = 0,
+            k10 = 0.01, k12 = 0.0025, k21 = 0.05 / 30, k13 = 0, k31 = 0)
+  met <- list(name = "OR1896", n = 1L, ktr = 0.002, v = 15, kel = 0.0003,
+              k12 = 0.0012, k21 = 0.0002, kelPeripheral = 0.00017,
+              vPeripheral = 15, plotted = "peripheral", mwRatio = 0.875)
+  PK <- list(PK = list(default = s),
+             transitChain = list(n = 0L, kMetabolic = 0.0002, metabolite = met))
+  d <- classifyDoses(c(0, 600), c(1000, 0), "mcg/min")
+  r <- advanceTransitChain(d, PK, 6000)
+  A <- matrix(0, 5, 5)
+  A[1, 1] <- -(s$k10 + s$k12); A[1, 2] <- s$k21
+  A[2, 1] <- s$k12; A[2, 2] <- -s$k21
+  A[3, 1] <- 0.0002; A[3, 3] <- -met$ktr
+  A[4, 3] <- met$ktr; A[4, 4] <- -(met$kel + met$k12); A[4, 5] <- met$k21
+  A[5, 4] <- met$k12; A[5, 5] <- -(met$k21 + met$kelPeripheral)
+  e <- eigen(A); V <- e$vectors; Vi <- solve(V); lam <- e$values
+  b <- c(1000, 0, 0, 0, 0)
+  during <- function(t) Re(V %*% (((exp(lam * t) - 1) / lam) * (Vi %*% b)))
+  x600 <- during(600)
+  state <- function(t) if (t <= 600) during(t) else
+    Re(V %*% (exp(lam * (t - 600)) * (Vi %*% x600)))
+  pick <- which(r$Time %in% c(100, 600, 1500, 3000, 6000))
+  expect_equal(r$CpMetabolite[pick],
+               vapply(r$Time[pick], function(t) state(t)[5], 0) / 15 * 0.875,
+               tolerance = 1e-8)
+  expect_equal(r$Cp[pick],
+               vapply(r$Time[pick], function(t) state(t)[1], 0) / 20,
+               tolerance = 1e-8)
+  # The first moiety is not drawn
+  expect_true(all(r$C2Metabolite == 0))
 })
 
 test_that("getDrugPK refuses a transit chain beside an incompatible mode", {

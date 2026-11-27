@@ -96,7 +96,7 @@ plasmaOnly <- c(
   # Anticoagulants (2026-10-17): plasma activity or concentration, or the INR;
   # no effect site, MEAC or recovery (R/drugs_heparin.R and the others).
   "heparin", "heparinCPB", "bivalirudin", "apixaban", "apixabanVTE", "rivaroxaban", "warfarin",
-  "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "fondaparinux",
+  "edoxaban", "dabigatran", "dabigatranHip", "argatroban", "enoxaparin", "tinzaparin", "fondaparinux",
   "fluindione", "acenocoumarol",
   # The antihypertensives (2026-10-17): concentration only.  Neither source
   # publishes an equilibration rate constant, and no blood pressure is
@@ -111,9 +111,9 @@ plasmaOnly <- c(
     "digoxinIVPediatric",
     "methyleneBlue",
     # levosimendan (2026-11-25): no measured time to peak haemodynamic effect
-    "levosimendan",
+    "levosimendan", "OR1896",
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
     "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
     # suzetrigine and its metabolite (2026-11-16): plasma only
@@ -152,6 +152,10 @@ plasmaOnly <- c(
     "eftrenonacogAlfa",
     "fibrinogen",
     "immunoglobulin",
+    "antithrombin",
+    "antithrombinAlfa",
+    "antithrombinIlias",
+    "antithrombinMoffett",
     "thrombomodulinAlfa",
     # emicizumab (Retout 2020, 2026-11-25): plasma only, subcutaneous
     "emicizumab",

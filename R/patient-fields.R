@@ -225,6 +225,11 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The patient's own serum IgG, in g/L, before any intravenous",
       "immunoglobulin. The immunoglobulin curve is this level plus the IgG",
       "infused."
+    ),
+    antithrombinBaseline = paste(
+      "The patient's own antithrombin activity, in IU/dL (% of normal),",
+      "before any concentrate. The antithrombin curve is this level plus the",
+      "activity infused, and the model's volume depends on it."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -247,7 +252,9 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "Leave blank to take the baseline of the population the model was",
     "fitted in, which the drug's help page gives (severe haemophilia A or B",
     "for factors VIII and IX, afibrinogenaemia for fibrinogen, Guillain-Barre",
-    "syndrome for immunoglobulin): a patient with a different level is then",
+    "syndrome for immunoglobulin, 60 IU/dL in the children antithrombin was",
+    "fitted in, hereditary deficiency for antithrombin alfa): a patient with",
+    "a different level is then",
     "drawn too high or too low."
   ) else if (arg == "ast") sprintf(
     "Leave blank to assume a normal AST (%s U/L): liver dysfunction is then not represented.",

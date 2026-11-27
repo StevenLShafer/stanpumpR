@@ -6,7 +6,7 @@ Nitrous oxide 4 L/min with oxygen 2 L/min, a fresh gas of two-thirds nitrous oxi
 
 **Everything fills fast.** End-tidal reaches 34 per cent in 30 seconds, 48 in a minute and 58 in two, three-quarters of the inspired level within a minute (sevoflurane reaches under three-fifths). The vessel-rich group, the effect site, is within a tenth of end-tidal from 4.3 minutes. Muscle reaches three-quarters of end-tidal and fat two-fifths by the end of the hour, far nearer than any volatile agent's.
 
-**The amounts are litres.** Nitrous oxide is inspired at two-thirds of an atmosphere, not 2 per cent, so the flows are hundreds of mL a minute: 549 mL/min into the vessel-rich group at one minute. In the first ten minutes the patient takes up 6.3 L of the gas, and 16.4 L by the hour. That bulk uptake is what concentrates the gases left behind in the lungs, the concentration and second gas effects.
+**The amounts are litres.** Nitrous oxide is inspired at two-thirds of an atmosphere, not 2 per cent, so the flows are hundreds of mL a minute: 549 mL/min into the vessel-rich group at one minute. By ten minutes the patient holds 6.3 L of the gas, 1.6 L of it in the lungs and 4.7 L taken up into the tissues; by the hour 16.4 L, 14.8 L of it in the tissues. That bulk uptake from the lungs into the blood is what concentrates the gases left behind in the lungs, the concentration and second gas effects.
 
 **Nitrous oxide alone is not an anesthetic.** At 66 per cent end-tidal, the readout gives 0.64 MAC: its MAC, 104 per cent at this age, is above one atmosphere.
 
