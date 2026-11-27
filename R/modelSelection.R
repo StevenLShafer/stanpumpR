@@ -160,6 +160,17 @@ MODEL_GROUPS <- list(
     ageMin = c(29.9, 22), ageMax = c(92.7, 61),
     weightMin = c(48, 61.5), weightMax = c(141, 184),
     n = c(99, 24), year = c(2017, 2019)),
+  # Teicoplanin (R/drugs_teicoplanin*.R; Shafer, 2026-11-27: Kim 2024 for
+  # every adult, Zhang 2020 for children): Kim's healthy adults (inclusion
+  # 19-55 years; no weight range printed), chosen by the nearest rule above
+  # 55, and Zhang's children, each read in full.  Wang 2023 was rejected for
+  # its A2-2-only assay (R/drugs_teicoplaninKim.R).
+  teicoplanin = data.frame(
+    model = c("teicoplaninKim", "teicoplaninZhang"),
+    source = c("Kim 2024", "Zhang 2020"),
+    ageMin = c(19, 0.2), ageMax = c(55, 14),
+    weightMin = c(NA, 2.9), weightMax = c(NA, 69),
+    n = c(12, 159), year = c(2024, 2020)),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -462,3 +473,14 @@ antithrombin <- modelGroup("antithrombin")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 micafungin <- modelGroup("micafungin")
+
+#' Teicoplanin: the model chosen for the patient
+#'
+#' Kim 2024 (12 healthy adults, 19-55 years; every adult, by the nearest
+#' rule above 55) or Zhang 2020 (159 children, 0.2-14 years, 2.9-69 kg),
+#' chosen by \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams teicoplaninKim
+#' @inheritParams teicoplaninZhang
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+teicoplanin <- modelGroup("teicoplanin")

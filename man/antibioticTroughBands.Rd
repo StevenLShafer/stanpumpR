@@ -18,6 +18,8 @@ recommends, on the plotted (total) curve, with the reason.  An exception
 approved by Steven L. Shafer on 2026-11-13 for linezolid, which the Zyvox
 label calls bacteriostatic against enterococci and staphylococci (its MBC
 against them is 64 to 2048 mg/L: Sandoe 2006, Shah 2024), and whose
-bactericidal activity against streptococci is known only from abstracts.
+bactericidal activity against streptococci is known only from abstracts;
+and teicoplanin (Shafer, 2026-11-27), whose MBCs against staphylococci are
+too often those of tolerant isolates to place a band.
 }
 \keyword{internal}
