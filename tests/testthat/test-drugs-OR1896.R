@@ -37,6 +37,32 @@ test_that("the chain is Bertin 2026's supplement estimates at 70 kg, switch off"
   expect_equal(ch100$v, 15.9 * (100 / 70)^0.574)
 })
 
+test_that("the chain is pinned with the size switch on, away from the reference", {
+  # The patient test-drugs-levosimendan.R pins the parent at: 120 kg, 175 cm,
+  # 50 years, a man; pharmacokinetic weight 94.3906 kg, and the fat-free-mass
+  # clearance factor over the volume factor 0.927988.  Bertin's own weight
+  # terms are evaluated at the pharmacokinetic weight; the size-free rate
+  # constants take that ratio.
+  ch <- levosimendanOR1896Chain(120, 175, 50, "male", adjustToFFM = TRUE)
+  w <- 94.3906332567 / 70
+  rate <- 0.9279878392
+  expect_equal_rounded(15.9 * w^0.574, ch$v)
+  expect_equal_rounded(18.87643765, ch$v)
+  expect_equal_rounded(ch$v, ch$vPeripheral)
+  expect_equal_rounded(0.0127 / (13.9 * w^0.75 / ch$v), ch$fm)
+  expect_equal_rounded(0.01378274794, ch$fm)
+  expect_equal_rounded(0.0127 * rate / 60, ch$ktr)
+  expect_equal_rounded(1.964240926e-04, ch$ktr)
+  expect_equal_rounded(0.01 * w^-0.611 / 60, ch$kel)
+  expect_equal_rounded(1.388423943e-04, ch$kel)
+  expect_equal_rounded(0.0722 * rate / 60, ch$k12)
+  expect_equal_rounded(1.116678700e-03, ch$k12)
+  expect_equal_rounded(0.012 * rate / 60, ch$k21)
+  expect_equal_rounded(1.855975678e-04, ch$k21)
+  expect_equal_rounded(0.01 * rate / 60, ch$kelPeripheral)
+  expect_equal_rounded(1.546646399e-04, ch$kelPeripheral)
+})
+
 test_that("levosimendan forms OR1896 through an intravenous transit chain", {
   X <- getDrugPK("levosimendan", 70, 170, 35, "male", adjustToFFM = FALSE)
   expect_identical(X$transitChain$n, 0L)
@@ -104,7 +130,8 @@ test_that("OR1896 reproduces Antila 2004's 7-day infusions", {
     expect_lt(abs(max(c) / case$cmax - 1), 0.2)
     expect_lt(abs(auc / case$auc - 1), 0.3)
     expect_lt(abs(log(2) / -slope / 81 - 1), 0.15)
-    # The peak follows the end of the 7-day infusion, as measured
+    # The peak follows the end of the 7-day infusion (the measured medians
+    # 2 and 12 h after it; the model's about 2 days after)
     expect_gt(t[which.max(c)], 168)
   }
   # Pinned at 0.1 mcg/kg/min

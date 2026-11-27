@@ -14,9 +14,9 @@ The parent falls with a half-life of about 45 minutes, which carries 99% of a bo
 
 ### What is plotted, and what is not
 
-Levosimendan itself in **plasma**, ng/mL, and below it its long-acting active metabolite, [OR-1896](help:drugs/OR1896). The haemodynamic effect lasts days after the infusion stops, and it is OR-1896 that carries it: the parent falls within hours, while OR-1896 forms slowly through OR-1855 and is still rising for two days after a 7-day infusion ends. Neither panel has an effect site or a therapeutic range.
+Levosimendan itself in **plasma**, ng/mL, and below it its long-acting active metabolite, [OR-1896](help:drugs/OR1896). The haemodynamic effect lasts days after the infusion stops, and it is OR-1896 that carries it: the parent falls within hours, while OR-1896 forms slowly through OR-1855 and peaks after the infusion stops. In the measured studies the peak came from a few hours (after a 7-day infusion) to about two days (after a 24-hour one) after the infusion ended, and this model puts it about two days later than measured. Neither panel has an effect site or a therapeutic range.
 
-OR-1896 comes from Bertin and colleagues' model (*Clin Pharmacokinet* 2026), joined to Jonsson's parent by the one quantity concentrations identify, the share of the parent's elimination that becomes the metabolite. Its page explains the join and how it compares with Antila 2004's measured 7-day infusions.
+OR-1896 comes from Bertin and colleagues' model (*Clin Pharmacokinet* 2026), joined to Jonsson's parent through Bertin's share of the parent's elimination that becomes the metabolite. Concentrations identify only the ratio of a metabolite's formation to its clearance, so that share is taken together with Bertin's own metabolite parameters, not as a quantity known on its own. Its page explains the join and how it compares with Antila 2004's measured 7-day infusions.
 
 ### Body size
 

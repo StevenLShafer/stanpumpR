@@ -36,9 +36,11 @@
 # The parent is Jonsson 2003 (R/drugs_levosimendan.R).  OR-1855 is formed
 # from the share of the parent's elimination Bertin's model sends through the
 # transit, K13 / (CL/V1) = 1.45% at 70 kg, evaluated at the patient's weight
-# on Bertin's own size terms and applied to Jonsson's k10.  Only that share
-# is identifiable from concentrations (the metabolite's formation and its
-# clearance enter as a ratio), so this is what joins the two sources.  The
+# on Bertin's own size terms and applied to Jonsson's k10.  That share
+# carries Bertin's fit into the join: concentrations identify only the ratio
+# of a metabolite's formation to its clearance, not the share on its own, so
+# the share is used together with Bertin's own metabolite parameters, which
+# keeps that ratio as Bertin fitted it.  The
 # transit-chain engine (R/advanceTransitChain.R) carries the whole system
 # exactly: an intravenous parent with no absorption chain (n = 0), one
 # formation transit, OR-1855 in the metabolite's central compartment, and
@@ -71,7 +73,7 @@
 # 48-120), AUC 948 +/- 535, half-life 77 +/- 31 h; this model 5.3, 120 h,
 # 1350 and 92 h, the parent at 24 h 68 against 62.6.  Both studies say the
 # same: the peak is right, but OR-1896 rises and falls more slowly than
-# measured (peak 1-2 days late, areas high, half-life 10-20% long).  The
+# measured (peak about 2 days late, areas high, half-life 10-20% long).  The
 # fixed literature values Bertin used (keM1, keM2, kM2-M1, and the transit
 # rate) are the likely place; they are kept as published, the bias stated
 # rather than fitted away (a model is not refitted to its checks).  OR-1855 is about 3x low against the
@@ -185,7 +187,7 @@ OR1896 <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "acetylated at 0.0722 /h to OR-1896 (keM2 0.01 /h, back to OR-1855 at ",
       "0.012 /h), both in 15.9 L x (BW/70)^0.574; adults. Checked against Antila ",
       "2004's 7-day and Kivikko 2002's 24-hour infusions (OR-1896 peaks within 14%; ",
-      "the peak 1-2 days late and the areas up to 43% high). ",
+      "the peak about 2 days late and the areas up to 43% high). ",
       "https://doi.org/10.1007/s40262-025-01591-4")
   )
 }
