@@ -167,6 +167,7 @@ heparinCPB,ACT,IU,IU/hr,IU,"IU,IU/kg,IU/hr,IU/kg/hr",#455A64,480,600,480,0,0,IV,
 bivalirudin,mcg,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg/min,mg/kg/min",#AD1457,0,0,0,0,0,IV,Anticoagulants
 argatroban,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mcg,mcg/kg,mcg/min,mcg/kg/min,mcg/hr,mcg/kg/hr",#E65100,0,0,0,0,0,IV,Anticoagulants
 enoxaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#00695C,0,0,0,0,0,IV,Anticoagulants
+tinzaparin,IU,IU SC,,IU SC,"IU SC,IU/kg SC",#F9A825,0,0,0,0,0,IV,Anticoagulants
 fondaparinux,mcg,mg SC,,mg SC,"mg SC,mg/kg SC",#5D4037,0,0,0,0,0,IV,Anticoagulants
 apixaban,ng,,,mg PO,"mg PO,mg PO bid",#1565C0,0,0,0,0,0,IV,Anticoagulants
 apixabanVTE,ng,,,mg PO,"mg PO,mg PO bid",#0288D1,0,0,0,0,0,IV,Anticoagulants
@@ -209,6 +210,7 @@ landiololHonda,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A
 landiololKunisawa2014,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 landiololKunisawa2015,mcg,mg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mg/kg,mcg/kg/min",#2F5D8A,0,0,0,0,0,IV,
 levosimendan,ng,mcg/kg,mcg/kg/min,mcg/kg/min,"mg,mcg/kg,mcg/kg/min",#AD1457,0,0,0,0,0,IV,Vasoactive and resuscitation
+OR1896,ng,,,,,#F06292,0,0,0,0,0,IV,
 dopamine,ng,mcg,mcg/kg/min,mcg/kg/min,"mcg/kg/min,mcg/min",#EF6C00,0,0,0,0,0,IV,Vasoactive and resuscitation
 atropine,ng,mg,mg/hr,mg,"mg,mcg/kg",#558B2F,0,0,0,0,0,IV,Vasoactive and resuscitation
 propranolol,ng,mg,mg/hr,mg,"mg,mcg/kg",#37474F,0,0,0,0,0,IV,Vasoactive and resuscitation
@@ -306,6 +308,7 @@ caffeineNeonatal,mcg,mg/kg citrate,,mg/kg citrate,"mg/kg citrate,mg citrate,mg/k
 tacrolimus,ng,,,mg PO bid,"mg PO,mg PO bid",#6A1B9A,4,11,7.5,0,0,IV,Other
 sotalol,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg PO bid",#455A64,0,0,0,0,0,IV,Other
 voriconazole,mcg,mg/kg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO bid",#00695C,2,6,4,0,0,IV,Other
+fluconazole,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr,mg PO,mg PO qd,mg/kg PO,mg/kg PO qd",#1B4F72,0,0,0,0,0,IV,Other
 posaconazole,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4A235A,0,0,0,0,0,IV,Other
 clozapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#7E57C2,350,600,475,0,0,IV,Antipsychotics
 norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,

@@ -214,14 +214,14 @@ registry <- rbind(
   reg("levosimendan__heart_failure__jonsson2003", "levosimendan",
       "190 patients with NYHA III-IV heart failure, 30-84 years, 46-130 kg; 10-min load then 0.05-0.6 mcg/kg/min for 6-48 h", "levosimendan (parent)", "plasma",
       "implemented", "levosimendan", "full_text",
-      "Read on the PDF (2026-11-25): two compartments, weight linear on CL and V1 about 76 kg (held within the studied 46-130 kg, allometric beyond).  The parent only: the long-acting metabolite OR-1896 needs Kivikko 2002 (papers/pending-work.csv) and an engine for a metabolite of a metabolite.  Shafer's choice of source, 2026-11-25 (card PMID_41288922).",
+      "Read on the PDF (2026-11-25): two compartments, weight linear on CL and V1 about 76 kg (held within the studied 46-130 kg, allometric beyond).  Shafer's choice of source, 2026-11-25 (card PMID_41288922).  Since 2026-11-27 it forms OR-1896 through Bertin 2026's chain on the transit-chain engine (row below; Kivikko 2002 being unobtainable, Antila 2004 is its check).",
       NA,
       "Jonsson EN, Antila S, McFadyen L, Lehtonen L, Karlsson MO. Population pharmacokinetics of levosimendan in patients with congestive heart failure. Br J Clin Pharmacol 2003;55(6):544-551. PMID 12814448.",
       doi("10.1046/j.1365-2125.2003.01778.x")),
   reg("levosimendan__va_ecmo__bertin2026", "levosimendan",
       "21 critically ill patients on VA-ECMO: 15 adults and 6 neonates and infants", "levosimendan, OR-1855 and OR-1896", "plasma (arterial)",
-      "complete_not_implemented", NA, "full_text",
-      "Read on the PDF with its supplement (2026-11-25): two compartments for the parent, a transit compartment to OR-1855, OR-1896 formed from it with back-conversion; estimates rounded in Table 2, full precision in the supplement.  Kept as the record for ECMO and infants; Jonsson 2003's 190 adults are the parent's source.",
+      "implemented", "OR1896", "full_text",
+      "Read on the PDF with its supplement (2026-11-25): two compartments for the parent, a transit compartment to OR-1855, OR-1896 formed from it with back-conversion; estimates rounded in Table 2, full precision in the supplement.  Its parent is not used (Jonsson 2003's 190 adults are the parent's source); its adult metabolite chain draws OR1896 since 2026-11-27 (Shafer's decisions of 2026-11-26 and 2026-11-27), joined to Jonsson by the formation share K13/(CL/V1), on the transit-chain engine (n = 0).  Checked against Antila 2004 (PMID 15025738, 7-day infusions, never fitted): OR-1896 peaks 17% and 4% low, areas 1% and 23% high, half-life 89 h against 81; and against Kivikko 2002 (PMID 12395979, 24-h infusion, Table 2 read on the PDF image): peak 5.2 against 5.5 ng/mL, but at 120 h against 77 h, area 1330 against 948 +/- 535, half-life 92 h against 77 (the fixed literature rates the likely cause, kept as published).  OR-1855 is not drawn (about 3x low against Antila; NAT2 untyped); the children's acetylation is not applied.",
       NA,
       "Bertin S, Guidi M, Haefliger D, et al. Population pharmacokinetics of levosimendan and its metabolites OR-1855 and OR-1896 in critically ill adults, neonates and infants on veno-arterial ECMO. Clin Pharmacokinet 2026;65:241-255. PMID 41288922.",
       doi("10.1007/s40262-025-01591-4")),
@@ -809,6 +809,7 @@ DU  <- doi("10.1002/jcph.1328")
 KA  <- pubmed(7203731)
 KU15 <- doi("10.2147/TCRM.S74867")
 JON03 <- doi("10.1046/j.1365-2125.2003.01778.x")
+BER26 <- doi("10.1007/s40262-025-01591-4")
 HON08 <- doi("10.2133/dmpk.23.447")
 KU14 <- doi("10.1007/s00540-014-1908-5")
 HO  <- doi("10.1097/00007691-198804000-00006")
@@ -989,6 +990,15 @@ parameters <- rbind(
   par("levosimendan", "weight on V1", 0.9, "% per kg about 76 kg", "estimated", "full_text", JON03),
   par("levosimendan", "Q", 2.33, "L/h", "estimated", "full_text", JON03),
   par("levosimendan", "V2", 30.0, "L", "estimated", "full_text", JON03),
+  par("levosimendan", "OR-1896 chain: K13 = ktr (Bertin 2026)", 0.0127, "/h", "estimated", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: Bertin's CL (70 kg), for the formation share", 13.9, "L/h, x (BW/70)^0.75", "estimated", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: V1 = V(OR-1855) = V(OR-1896) (70 kg)", 15.9, "L, x (BW/70)^0.574", "estimated", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: keM1 (OR-1855 elimination)", 0.01, "/h, x (BW/70)^-0.611", "fixed", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: weight on keM1", -0.611, "exponent", "estimated", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: kM2 (OR-1855 to OR-1896, adults)", 0.0722, "/h", "estimated", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: keM2 (OR-1896 elimination)", 0.01, "/h", "fixed", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: kM2-M1 (OR-1896 back to OR-1855)", 0.012, "/h", "fixed", "full_text", BER26),
+  par("levosimendan", "OR-1896 chain: formation share K13/(CL/V1) at 70 kg", 0.0145, "fraction", "derived", "full_text", BER26),
   par("esmolol", "tPeak", 2, "min (Krumpl 2017: lowest heart rate 2 min after 1 mg/kg over 30 s)", "estimated", "full_text", doi("10.1007/s00228-016-2176-0")),
   par("metoprolol", "tPeak", 5, "min (Ritchie 1998: peak effects observed 5-10 min after a bolus; fixed at 5 on the user's decision)", "fixed", "full_text", doi("10.1021/js9702776")),
   par("phenylephrine", "tPeak", 0.7, "min (Schwinn 1989: MAP, CO and SVR changes maximal about 42 s after a bolus)", "estimated", "abstract", pubmed(2541637)),

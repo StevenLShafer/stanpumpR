@@ -25,7 +25,7 @@ Intravenous doses run on a model of their own (Steven L. Shafer, 2026-11-26): Og
 
 The paper prints no body size, so these are taken as the 70 kg reference man's and scaled to the patient's fat-free mass; with the switch off they are the published values. At 70 kg the half-lives are 28 minutes and 4.2 hours, and 100 mg then 2 mg/kg/hour reaches a steady state of about 17,800 ng/mL. Yang 2003's 12 healthy men, given 1 mg/kg intravenously and not part of the fit, had a clearance of 137 mL/min (8.2 L/h), within 5% of this model's.
 
-The two routes run as separate systems on separate models, and their concentrations add. A dose by one route does not change the other route's model. The two populations differ: Urien's apparent clearance at 70 kg, 6.24 L/h, divided by the label's subcutaneous bioavailability of 95%, is 6.6 L/h, 16% below Ogungbenro's. Neither model carries renal function, which sepsis often impairs; the curve is that of a patient with normal renal function.
+The two routes run as separate systems on separate models, and their concentrations add. A dose by one route does not change the other route's model. The two populations differ: Urien's apparent clearance at 70 kg, 6.24 L/h, is CL/F; multiplied by the label's subcutaneous bioavailability of 95%, it gives a systemic clearance of 5.93 L/h, 25% below Ogungbenro's. Neither model carries renal function, which sepsis often impairs; the curve is that of a patient with normal renal function.
 
 ### Covariates
 
