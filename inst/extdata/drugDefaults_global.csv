@@ -381,3 +381,6 @@ immunoglobulin,gL,g/kg,mg/kg/min,g/kg,"g/kg,g,mg/kg/min",#5D4037,0,0,0,0,0,IV,Ot
 antithrombin,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,Hemostasis and reversal
 desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal
+micafungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
+micafunginJullien,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,
+micafunginWasmann,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
