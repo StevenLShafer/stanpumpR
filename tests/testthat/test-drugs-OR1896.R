@@ -49,8 +49,9 @@ test_that("the chain is pinned with the size switch on, away from the reference"
   expect_equal_rounded(15.9 * w^0.574, ch$v)
   expect_equal_rounded(18.87643765, ch$v)
   expect_equal_rounded(ch$v, ch$vPeripheral)
-  expect_equal_rounded(0.0127 / (13.9 * w^0.75 / ch$v), ch$fm)
-  expect_equal_rounded(0.01378274794, ch$fm)
+  # K13 has no weight term and equals ktr in the source: it takes the ratio too
+  expect_equal_rounded(0.0127 * rate / (13.9 * w^0.75 / ch$v), ch$fm)
+  expect_equal_rounded(0.01378274794 * 0.9279878392, ch$fm)
   expect_equal_rounded(0.0127 * rate / 60, ch$ktr)
   expect_equal_rounded(1.964240926e-04, ch$ktr)
   expect_equal_rounded(0.01 * w^-0.611 / 60, ch$kel)
@@ -136,7 +137,7 @@ test_that("OR1896 reproduces Antila 2004's 7-day infusions", {
   }
   # Pinned at 0.1 mcg/kg/min
   w <- runLevo(0.1)$OR1896$wide
-  expect_equal(max(w$Plasma), 16.98, tolerance = 1e-3)
+  expect_equal(max(w$Plasma), 16.43, tolerance = 1e-3)
 })
 
 test_that("OR1896 reproduces Kivikko 2002's 24-hour infusion", {
@@ -157,7 +158,7 @@ test_that("OR1896 reproduces Kivikko 2002's 24-hour infusion", {
   slope <- unname(coef(lm(log(c[tail]) ~ t[tail]))[2])
   auc <- sum(diff(t) * (head(c, -1) + tail(c, -1)) / 2) + c[length(c)] / -slope
   expect_lt(abs(max(c) / 5.5 - 1), 0.1)
-  expect_lt(abs(auc - 948), 535)               # within one SD (43% high)
+  expect_lt(abs(auc - 948), 535)               # within one SD (40% high)
   expect_lt(abs(log(2) / -slope - 77.4), 30.6)
   # The peak is late, at the top of the measured range, as against Antila
   expect_gt(t[which.max(c)], 77.2)

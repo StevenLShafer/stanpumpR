@@ -56,9 +56,9 @@
 # failure given 0.05 or 0.1 mcg/kg/min for 7 days, sampled 10-15 days after:
 # OR-1896 Cmax 9.9 and 17.1 ng/mL, AUC 2370 and 3890 ng.h/mL, half-life 81 h,
 # median tmax 180 and 170 h.  At 84 kg (the weight implied by its Table 1,
-# CL in L/h over CL in L/h/kg) this model gives Cmax 8.5 and 17.0, AUC 2470
-# and 4940, half-life 89 h, tmax 217 h: the peaks 14% low and 1% low, the
-# areas 4% and 27% high.  A linear model cannot match both areas, because the
+# CL in L/h over CL in L/h/kg) this model gives Cmax 8.2 and 16.4, AUC 2390
+# and 4780, half-life 89 h, tmax 217 h: the peaks 17% and 4% low, the areas
+# 1% and 23% high.  A linear model cannot match both areas, because the
 # measured ones are not proportional to the dose (3890 at twice the rate of
 # 2370, 18% short of double), and the peaks are (17.1 against 2 x 9.9), so
 # the shortfall is in the study's tails, not in the model's structure; the
@@ -70,8 +70,8 @@
 # 12 patients, 78 kg, 173 cm, 62 years, 0.2 mcg/kg/min for 24 h (the text
 # layer's "mg/kg/min" is the Symbol font's mu, which the figure captions
 # print).  Measured OR-1896 Cmax 5.5 +/- 2.2 ng/mL, Tmax 77 +/- 26 h (range
-# 48-120), AUC 948 +/- 535, half-life 77 +/- 31 h; this model 5.3, 120 h,
-# 1350 and 92 h, the parent at 24 h 68 against 62.6.  Both studies say the
+# 48-120), AUC 948 +/- 535, half-life 77 +/- 31 h; this model 5.2, 120 h,
+# 1330 and 92 h, the parent at 24 h 68 against 62.6.  Both studies say the
 # same: the peak is right, but OR-1896 rises and falls more slowly than
 # measured (peak about 2 days late, areas high, half-life 10-20% long).  The
 # fixed literature values Bertin used (keM1, keM2, kM2-M1, and the transit
@@ -86,7 +86,7 @@
 # The source's own weight terms (keM1, and the metabolite volumes through V1)
 # are kept as fitted, evaluated at the pharmacokinetic weight with the switch
 # on and at total weight with it off.  The rate constants without a size term
-# (ktr, kM2, keM2, kM2-M1) take the fat-free-mass clearance factor over the
+# (K13, ktr, kM2, keM2, kM2-M1) take the fat-free-mass clearance factor over the
 # volume factor, since a rate constant is a clearance over a volume.
 # BODY SIZE ANCHOR: Bertin's Table 1 prints the adults' sex, age and weight
 # but no height, BMI or BSA, so the rule's step 3 needs NCD-RisC's height for
@@ -134,7 +134,7 @@ levosimendanOR1896Chain <- function(weight, height, age, sex, adjustToFFM = TRUE
   v <- OR1896_BERTIN_V1 * (w / 70)^OR1896_V1_EXP
   bertinK10 <- OR1896_BERTIN_CL * (w / 70)^0.75 / v
   list(
-    fm  = OR1896_K13 / bertinK10,
+    fm  = OR1896_K13 * rate / bertinK10,
     ktr = OR1896_KTR * rate / 60,
     v   = v,
     kel = OR1896_KEM1 * (w / 70)^OR1896_KEM1_EXP / 60,
@@ -186,8 +186,8 @@ OR1896 <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "elimination passes a transit (0.0127 /h) to OR-1855 (keM1 0.01 /h), ",
       "acetylated at 0.0722 /h to OR-1896 (keM2 0.01 /h, back to OR-1855 at ",
       "0.012 /h), both in 15.9 L x (BW/70)^0.574; adults. Checked against Antila ",
-      "2004's 7-day and Kivikko 2002's 24-hour infusions (OR-1896 peaks within 14%; ",
-      "the peak about 2 days late and the areas up to 43% high). ",
+      "2004's 7-day and Kivikko 2002's 24-hour infusions (OR-1896 peaks within 17%; ",
+      "the peak about 2 days late and the areas up to 40% high). ",
       "https://doi.org/10.1007/s40262-025-01591-4")
   )
 }
