@@ -6,7 +6,7 @@
 # own antithrombin activity plus the infused activity (R/factorBaselines.R).
 # Drafted by Claude Code, 2026-11-26, at the request of Steven L. Shafer, who
 # chose (2026-11-26) to add ATryn as a drug of its own beside the plasma-
-# derived antithrombin (R/drugs_antithrombin.R); digest card
+# derived antithrombin (R/drugs_antithrombinMoffett.R); digest card
 # papers/digests/PMID_24335249.md.
 #
 # SOURCE
