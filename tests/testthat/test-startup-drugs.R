@@ -13,7 +13,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "enalaprilat", "doxorubicinol", "doxorubicinolPediatric", "doxorubicinolPerezBlanco",
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
                   "norclozapine", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
-                  "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX",
+                  "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX", "OR1896",
                   # the components of a combination product, given only in it
                   # (R/combination-products.R)
                   "artemether", "dihydroartemisinin", "lumefantrine", "ceftolozane",
