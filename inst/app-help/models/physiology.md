@@ -320,9 +320,10 @@ More agent is carried away from the lungs, so FA/FI rises more slowly, most
 for the more soluble isoflurane.
 
 **Haematocrit changes solubility too.** In the same blood, diluted with saline
-to haematocrits of 20 to 40%, Zhou, Liu and Liu found the logarithm of the
-blood:gas coefficient to fall with the haematocrit, by 0.94% a percentage
-point for desflurane, 0.92% for sevoflurane and 1.54% for isoflurane. The
+to haematocrits of 20 to 40%, Zhou, Liu and Liu found the blood:gas
+coefficient to fall as the haematocrit falls: its logarithm by 0.94% for each
+percentage point of haematocrit for desflurane, 0.92% for sevoflurane and
+1.54% for isoflurane. The
 **Haemoglobin** slider sets the haematocrit with it, at three times the
 haemoglobin, and each volatile agent's blood:gas coefficient follows from its
 value at 45% (15 g/dL): at 7 g/dL sevoflurane's is 0.59 where it is 0.74 at
