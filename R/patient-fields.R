@@ -288,7 +288,7 @@ RELEVANT_FIELDS <- unname(c(
   OPIOID_SENSITIVITY_INPUT, BUPRENORPHINE_OFFSET_INPUT,
   vapply(COMPANION_MODEL_GROUPS, `[[`, character(1), "input"),
   ASM_INTERACTIONS_INPUT,
-  "inhaledAgents",
+  "inhaledAgents", "ventilation",
   "showAdaptation", "showEffect",
   "plotMEAC", "plotInteraction"
 ))
@@ -373,6 +373,8 @@ relevantFields <- function(drugs, drugDefaults = getDrugDefaultsGlobal(),
     # The physiology controls that act on the inhaled agents only: altitude
     # and endobronchial intubation (R/altitude.R, R/endobronchial.R)
     inhaledAgents   = gas,
+    # the I:E ratio acts on any gas run: with a ventilation row
+    ventilation     = "ventilation" %in% drugs,
     showAdaptation  = length(pdAdaptationDrugs(plotted, drugDefaults = drugDefaults)) > 0,
     showEffect      = length(pdEffectDrugs(plotted)) > 0,
     plotMEAC        = opioid,

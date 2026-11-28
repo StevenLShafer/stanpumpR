@@ -156,9 +156,11 @@ test_that("at 32 C the time until threshold is to a tenth of the cooled MAC", {
   # brain's washout as it slows its wash-in)
   # (12.46 and 10.81 since Esper's blood:gas coefficients and the tissues'
   # own temperature slopes, the same day)
-  expect_equal(utils::tail(moved, 1), 12.46, tolerance = 2e-3)
+  # (10.61 and 9.31 since the fresh gas adds to the delivered ventilation
+  # and the washout runs at 1.5 times the setting, the same day)
+  expect_equal(utils::tail(moved, 1), 10.61, tolerance = 2e-3)
   held <- gasRecoveryTime(w, "sevoflurane", 0.18, atBodyTemperature = FALSE)
-  expect_equal(utils::tail(held, 1), 10.81, tolerance = 2e-3)
+  expect_equal(utils::tail(held, 1), 9.31, tolerance = 2e-3)
   # The entry draws the threshold at the temperature in force at time 0
   e <- gasDrugEntries(s, d, maximum = 30, washout = w, age = 40)
   expect_equal(e$sevoflurane$endCe, 0.18 * f32)

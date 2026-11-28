@@ -1492,6 +1492,7 @@ app_server <- function(input, output, session) {
         endobronchial = endobronchial(),
         haemoglobin = haemoglobin(),
         shunt = shunt(),
+        ieRatio = ieRatio(),
         physiologyEvents = physiologyEvents(),
         age     = age(),
         maximum = plotMaximum(),
@@ -1571,6 +1572,9 @@ app_server <- function(input, output, session) {
   haemoglobin <- debounce(reactive({
     haemoglobinFromInput(input$physiology_haemoglobin)
   }), PHYSIOLOGY_DEBOUNCE_MS)
+  # The I:E ratio (R/gasProperties.R): the fresh gas's inspiratory share adds
+  # to the delivered ventilation.  One setting for the whole run.
+  ieRatio <- reactive(ieRatioFromInput(input$physiology_ie))
   # The shunt, a fraction of cardiac output (R/endobronchial.R): one slider
   # (Shafer, 2026-11-27), 10% under anesthesia and 50% with the endobronchial
   # tube.  Ticking the box moves the slider to 50% and unticking it back to
@@ -1614,15 +1618,16 @@ app_server <- function(input, output, session) {
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
     updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+    updateSelectInput(session, "physiology_ie", selected = GAS_IE_DEFAULT)
     updateSliderInput(session, "physiology_shunt", value = 100 * GAS_SHUNT_ANESTHESIA)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(list(physiology(), altitude(), endobronchial(), shunt()), {
+  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio()), {
     if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
-        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA)
+        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT)
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -1916,7 +1921,7 @@ app_server <- function(input, output, session) {
       gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial()) ||
         shunt() != GAS_SHUNT_ANESTHESIA ||
         # which the arterial oxygen follows at any shunt (Devin, PR 1022)
-        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN
+        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN || ieRatio() != GAS_IE_DEFAULT
       if (!gasChanged) return(NULL)
       tryCatch({
         DT <- doseTableIV()
@@ -2464,6 +2469,7 @@ app_server <- function(input, output, session) {
       endobronchial = endobronchial(),
       haemoglobin = haemoglobin(),
       shunt = shunt(),
+      ieRatio = ieRatio(),
       physiologyEvents = physiologyEvents(),
       # Whether each companion model was actually drawn, not just its box
       # ticked (companionGroupsShown()).

@@ -1191,6 +1191,30 @@ physiologyPanel <- function()
       placement = "right"
     )
     ),
+    # The I:E ratio (Shafer, 2026-11-27 and 2026-11-28): one setting for the
+    # whole run; the fresh gas's inspiratory share adds to the ventilation.
+    # Shown while the dose table has a ventilation row, an anesthetic or not:
+    # it moves the oxygen curve of a run with oxygen alone (Devin's review of
+    # PR 1029)
+    relevantField(
+    "ventilation",
+    fieldHelp(
+      selectInput(
+        inputId = "physiology_ie",
+        label = "I:E ratio",
+        choices = stats::setNames(unname(GAS_IE_RATIOS), names(GAS_IE_RATIOS)),
+        selected = GAS_IE_DEFAULT
+      ),
+      paste("Inspiration to expiration, for the whole run. The fresh gas that",
+            "enters the circuit during inspiration goes to the patient with",
+            "the ventilator's breath, so the ventilation delivered is the",
+            "ventilation set plus the inspiratory share of the fresh gas",
+            "flow: a third of it at 1:2, half at 1:1, a fifth at 1:4. At high",
+            "fresh gas flows that is a good deal more ventilation than was",
+            "set."),
+      placement = "right"
+    )
+    ),
     actionLink("physiologyReset", "Reset to normal"),
     # Physiology events (R/physiologyEvents.R): these settings recorded in
     # the event table at a time, physiology normal before the first
@@ -1285,7 +1309,7 @@ physiologyFromInputs <- function(values)
 physiologyCovariateRows <- function(physiology, temperature = NULL,
                                     altitude = NULL, endobronchial = FALSE,
                                     events = NULL, haemoglobin = NULL,
-                                    shunt = NULL)
+                                    shunt = NULL, ieRatio = NULL)
 {
   # With physiology events (R/physiologyEvents.R) the simulation ran at
   # normal physiology from time 0 and each event's settings from its time;
@@ -1293,11 +1317,14 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
   if (is.data.frame(events) && nrow(events) > 0)
     return(data.frame(
       Covariate = c("Physiology events",
-                    sprintf("Physiology from %s min", format(events$Time))),
+                    sprintf("Physiology from %s min", format(events$Time)),
+                    # not part of an event: one setting for the whole run
+                    "I:E ratio, inhaled anesthetics"),
       Value = c(sprintf("%d; normal physiology from time 0, the panel's settings not applied",
                         nrow(events)),
                 vapply(seq_len(nrow(events)), function(i)
-                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), "")),
+                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), ""),
+                paste0("1:", format(ieRatioFromInput(ieRatio)))),
       stringsAsFactors = FALSE))
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else
@@ -1312,7 +1339,8 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                            "Altitude (m), inhaled anesthetics",
                            "Endobronchial intubation, inhaled anesthetics",
                            "Shunt fraction (%), inhaled anesthetics",
-                           "Haemoglobin (g/dL), arterial oxygen"),
+                           "Haemoglobin (g/dL), arterial oxygen",
+                           "I:E ratio, inhaled anesthetics"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
@@ -1321,7 +1349,8 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                          s <- tryCatch(checkShunt(shunt, isTRUE(endobronchial)), error = function(e) NULL)
                          if (is.null(s)) "unreadable" else format(round(100 * s, 1))
                        },
-                       format(haemoglobinFromInput(haemoglobin))),
+                       format(haemoglobinFromInput(haemoglobin)),
+                       paste0("1:", format(ieRatioFromInput(ieRatio)))),
              stringsAsFactors = FALSE)
 }
 

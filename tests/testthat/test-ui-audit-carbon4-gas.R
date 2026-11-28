@@ -63,8 +63,7 @@ carbon4Engine <- function(gasDose, weight, t, gas, threshold, horizon,
   vap <- intersect(off, c("sevoflurane", "isoflurane", "desflurane"))
   d <- rbind(d, data.frame(Time = t, Drug = c(flows, vap), Dose = c(now, rep(0, length(vap))),
                            stringsAsFactors = FALSE))
-  b <- advanceClosedFormGas(d, weight = weight, age = 40, maximum = t + horizon,
-                            body = gasShuntBody(weight),
+  b <- gasFlushEngine(d, t, weight, age = 40, maximum = t + horizon,
                             resolution = round((t + horizon) * perMin) + 1,
                             cardiacOutput = cardiacOutput)
   y <- if (gas == "MAC") b$results$Y[b$results$Drug == "MAC"] else b$state[[gas]][, 3]
@@ -113,13 +112,18 @@ test_that("H9.1: a brain under the threshold and falling is followed back above 
   # ... and the full engine, run on from there, has it rise to 0.88% and come
   # back down through 0.6% 208.4 minutes later.  On 59094cf the time read 0.
   ref <- carbon4Engine(DT, 70, 186, "isoflurane", 0.6, horizon = 240, perMin = 10)
-  expect_gt(max(ref$y), 0.92)
+  # (above 0.92 until 2026-11-28: after the flush the 30 L/min of oxygen still
+  # flowing now adds a third of itself to the 0.4 L/min set, and the washout
+  # the time is measured over runs at 1.5 times the setting)
+  expect_gt(max(ref$y), 0.88)
   # (With a five-minute flush and no shunt: 215.51 until 2026-11-28, then
   # 217.11 when the fresh gas was expanded to the lungs' conditions and the
   # oxygen consumed converted from STPD, gasFreshGasExpansion())
   # (208.45 with the shunt and GasMan's blood:gas coefficients; 215.72 with
   # Esper's, the same day)
-  expect_equal(ref$cross, 215.72, tolerance = 1e-4)
+  # (175.86 since the fresh gas adds to the delivered ventilation and the
+  # time until threshold runs at the higher ventilation, the same day)
+  expect_equal(ref$cross, 175.86, tolerance = 1e-4)
   raw <- gasCoupledRecovery(w, off = "isoflurane", target = carbon4BrainTarget(w, "isoflurane"),
                             threshold = 0.6, maxPoints = length(w$Time))
   expect_lt(abs(raw[at] - ref$cross), 0.01)
@@ -144,6 +148,9 @@ test_that("H9.1: the bound that finishes a row lies above the full engine's coup
   boundAt <- function(w, t, target, Y) {
     gases <- names(w$state)
     s <- gasSettingsAt(w$bySetting, t, w$deadSpace)
+    # The washout runs at the ventilation the least flow without rebreathing
+    # delivers (2026-11-28)
+    s$VA <- gasWashoutVentilation(s$MVset, w$deadSpace, w$body)
     blocks <- lapply(gases, function(g)
       gasSystemSoluble(props[props$gas == g, ], w$body, s$Q, s$VA, w$Qco, Ffgf = 0,
                        totUptake = 0, circuit = "open")$A[2:5, 2:5])
@@ -201,7 +208,8 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   expect_equal(raw[change - 1], 0)
   # (281.9 until 2026-11-28, then 282.56 without the shunt under anesthesia)
   # (283.86 before Esper's blood:gas coefficients)
-  expect_equal(raw[change], 298.56, tolerance = 1e-4)
+  # (298.56 before the time until threshold ran at the higher ventilation)
+  expect_equal(raw[change], 212.44, tolerance = 1e-4)
   expect_equal(app[change - 1], 0)
   expect_equal(app[change], raw[change])
   # Every interval's first and last points are integrated, not interpolated
@@ -217,7 +225,10 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   # on the grid graded from each change of setting, since 2026-11-23, that
   # reads up to 8e-8 minute under the curve; the error guarded against, a
   # reading from across the change, was 56 minutes)
-  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-4)
+  # (to 1e-2 minute since 2026-11-28: at the delivered ventilation the
+  # line bends more between the sampled points, and reads up to 0.006
+  # minute under the curve, of 98)
+  expect_gte(min(app[after & w$Time < 250]), min(raw[after & w$Time < 250]) - 1e-2)
 
   # The emergence scenario: the time at the moment the vaporiser is turned
   # off is the peak of the line, 11.93 minutes; on 59094cf the line was drawn
@@ -247,7 +258,9 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   # the 10% shunt under anesthesia)
   # (9.753376520975, 10.821674557110 and 13.043989807575 with the shunt,
   # before Esper's blood:gas coefficients)
-  expect_equal(raw[at], c(8.960591016858, 10.162145244591, 12.860447828580), tolerance = 1e-10)
+  # (8.960591016858, 10.162145244591 and 12.860447828580 with Esper's, at
+  # the ventilation as set)
+  expect_equal(raw[at], c(7.746758976729, 8.525307060475, 10.003053927320), tolerance = 1e-10)
   # (MAC's: 4.9887751535, 5.9116560370 and 7.7032597883 on the graded grid
   # with GasMan's MAC at 40, before Mapleson's was adopted the same day)
   # (5.7624362094, 6.8594149330 and 9.1592082535 at 30.011 and 60.007, before
@@ -255,7 +268,9 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   # (5.7588960545, 6.8524335446 and 9.1592083224 until 2026-11-28, as above)
   # (5.95082403863, 7.06909300948 and 9.47760467983 before the shunt)
   # (5.774955514161, 6.880853131764 and 9.218725462518 with the shunt)
-  expect_equal(rawMac[at], c(5.649325678889, 6.920492205384, 9.877760100121), tolerance = 1e-10)
+  # (5.649325678889, 6.920492205384 and 9.877760100121 with Esper's, at the
+  # ventilation as set)
+  expect_equal(rawMac[at], c(3.857665039286, 4.629816267027, 6.090685444429), tolerance = 1e-10)
   expect_equal(gasRecoveryTime(w, "sevoflurane", thr)[at[3]], raw[at[3]])
   expect_equal(macRecoveryTime(w, 40, GAS_MAC_THRESHOLD)[at[3]], rawMac[at[3]])
 })

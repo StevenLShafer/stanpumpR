@@ -456,9 +456,12 @@ test_that("the workbook records the physiology events in place of the panel", {
   s <- physiologyEventNormal(); s[["renal"]] <- 0.3
   events <- physiologyEventsFrom(eventTableRows(45, "Physiology", physiologyEventEncode(s)))
   rows <- physiologyCovariateRows(c(liver = 2), 37, 0, FALSE, events)
-  expect_equal(nrow(rows), 2)
+  # (and the I:E ratio, which is no part of an event: one setting for the
+  # run, 2026-11-28)
+  expect_equal(nrow(rows), 3)
   expect_match(rows$Value[1], "normal physiology from time 0")
   expect_match(rows$Value[2], "Kidney x0.3")
+  expect_equal(rows$Value[3], "1:2")
 })
 
 test_that("the Visualizer of an intravenous drug follows the physiology events", {

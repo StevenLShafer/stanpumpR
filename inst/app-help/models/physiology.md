@@ -464,6 +464,61 @@ over the pressure, and much less at low flows. Acclimatisation (a larger haemogl
 hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
 keep their own controls. The intravenous drugs do not respond.
 
+## Fresh gas and the delivered ventilation
+
+A ventilator's bellows deliver the breath that was set, and the fresh gas keeps
+flowing into the circuit while they do. During inspiration the valve to the
+scavenger is held shut, so the fresh gas entering then has nowhere to go but
+the patient (Cicman 1993, for the ventilators of that design; a ventilator
+with fresh gas decoupling or compliance compensation does not do this, and
+stanpumpR does not model one). The ventilation delivered is therefore the
+ventilation set plus the inspiratory share of the fresh gas (Steven Shafer,
+27 November 2026: "Fresh gas adds to delivered ventilation"):
+
+```
+delivered ventilation = set ventilation + I / (I + E) x fresh gas flow
+```
+
+The **I:E ratio** in the Physiology panel sets the share: 1:1, 1:1.5, 1:2
+(the default, a third of the fresh gas), 1:3 or 1:4, one setting for the whole
+run. The fresh gas is counted in the lungs' litres, 1.128 per litre on the
+flowmeter at 37 °C and sea level. Dead space is 30 per cent of the delivered
+ventilation. For a 70 kg patient with the ventilation set to 6 L/min at 1:2:
+
+| Fresh gas flow | Delivered ventilation | Alveolar ventilation | Alveolar carbon dioxide |
+|---|---|---|---|
+| 1 L/min | 6.4 L/min | 4.5 L/min | 38 mmHg |
+| 2 L/min | 6.8 L/min | 4.7 L/min | 36 mmHg |
+| 6 L/min | 8.3 L/min | 5.8 L/min | 29 mmHg |
+| 10 L/min | 9.8 L/min | 6.8 L/min | 25 mmHg |
+
+(The carbon dioxide is the steady state of the production the engine assumes,
+0.8 of the oxygen consumed, over the alveolar ventilation. stanpumpR does not
+plot carbon dioxide yet.) So turning the fresh gas up hyperventilates the
+patient, a little at ordinary flows and considerably at high ones, and the
+inhaled anesthetics wash in and out faster with it. With 2 per cent
+sevoflurane in 2 L/min of oxygen and the ventilation set to 5.7 L/min, the
+brain at 30 minutes reads 1.526 per cent at 1:1, 1.520 at 1:2 and 1.516 at
+1:4.
+
+**Rebreathing stops at a higher flow.** The fresh gas must now fill a breath
+that it has itself enlarged. Nothing is rebreathed once the flowmeters read
+the set ventilation (plus any uptake) divided by 1.128 and by the expiratory
+share, E / (I + E): 1.33 times the set ventilation at 1:2 (8.0 L/min for
+6 L/min set), 1.77 times at 1:1 and 1.11 times at 1:4.
+
+**The time until threshold** turns the fresh gas up to that flow, the least
+that stops rebreathing, and runs the washout at the ventilation it delivers:
+the set ventilation over the expiratory share, 1.5 times the setting at 1:2
+(Steven Shafer, 27 November 2026: "It should use the higher ventilation as
+well. The effect of fresh gas flow in a circle system is often modest, but at
+high flows it can be considerable."). In the sevoflurane example above the
+time until the brain falls to 0.18 per cent is 7.8 minutes at 1:1, 8.5 at 1:2
+and 9.1 at 1:4.
+
+GasMan takes the ventilation as set (see [Differences from
+GasMan](help:models/gas-differences)).
+
 ## Shunt under anesthesia
 
 The **Shunt fraction** slider, shown while an inhaled anesthetic is in the
@@ -498,21 +553,23 @@ controlled ventilation from time 0, so nothing in it starts at 3%.
 **Oxygen.** The arterial oxygen is computed from the alveolar oxygen as
 described under *Endobronchial intubation*, below. For a 70 kg patient at a
 cardiac output of 5 L/min, breathing 2% sevoflurane in 6 L/min of fresh gas at
-a minute ventilation of 6 L/min, at 30 minutes and haemoglobin 15 g/dL:
+a minute ventilation set to 6 L/min (8.3 L/min delivered, with the fresh
+gas's share: *Fresh gas and the delivered ventilation*, above), at 30 minutes
+and haemoglobin 15 g/dL:
 
 | Shunt fraction | PaO2 on oxygen | PaO2 on oxygen 2 L/min, air 4 L/min | PaO2 on air | SaO2 on air |
 |---|---|---|---|---|
-| 0% | 659 mmHg | 285 mmHg | 98 mmHg | 98% |
-| 3% | 609 mmHg | 240 mmHg | 91 mmHg | 97% |
-| 5% | 574 mmHg | 210 mmHg | 86 mmHg | 97% |
-| 10% | 479 mmHg | 147 mmHg | 77 mmHg | 95% |
-| 15% | 373 mmHg | 109 mmHg | 70 mmHg | 94% |
-| 20% | 259 mmHg | 88 mmHg | 64 mmHg | 92% |
-| 30% | 102 mmHg | 66 mmHg | 54 mmHg | 88% |
+| 0% | 670 mmHg | 295 mmHg | 107 mmHg | 98% |
+| 3% | 620 mmHg | 248 mmHg | 97 mmHg | 98% |
+| 5% | 584 mmHg | 218 mmHg | 91 mmHg | 97% |
+| 10% | 489 mmHg | 152 mmHg | 81 mmHg | 96% |
+| 15% | 384 mmHg | 111 mmHg | 72 mmHg | 94% |
+| 20% | 269 mmHg | 89 mmHg | 66 mmHg | 93% |
+| 30% | 104 mmHg | 67 mmHg | 55 mmHg | 88% |
 
 At 0% the arterial oxygen is the alveolar. Anaemia matters little at 10% (on
-air the SaO2 is 93% at 7 g/dL and 96% at 17), and altitude a great deal: on
-air the SaO2 is 95% at sea level, 84% at 3000 m and 48% at 5000 m, at the
+air the SaO2 is 94% at 7 g/dL and 96% at 17), and altitude a great deal: on
+air the SaO2 is 96% at sea level, 88% at 3000 m and 68% at 5000 m, at the
 ventilation set (the model does not hyperventilate as an awake person does).
 
 **The anesthetics.** During uptake the arterial partial pressure is below
@@ -520,9 +577,9 @@ end-tidal, by a tenth at the first moment, when the venous blood holds none,
 and by less as the tissues fill; during washout it is above. The brain follows
 the arterial blood, so it rises a little more slowly than without the shunt,
 and end-tidal a little faster, less being taken up. With 2% sevoflurane as
-above on oxygen, the brain reads 1.51% at 10 minutes and 1.68% at 30, where
-without the shunt it would read 1.55% and 1.72%; desflurane 6%, 5.11% and
-5.36% against 5.23% and 5.45%. GasMan has no shunt (see [Differences from
+above on oxygen, the brain reads 1.57% at 10 minutes and 1.73% at 30, where
+without the shunt it would read 1.62% and 1.77%; desflurane 6%, 5.25% and
+5.47% against 5.38% and 5.57%. GasMan has no shunt (see [Differences from
 GasMan](help:models/gas-differences)).
 
 A physiology event records the slider, so a shunt that changes during a case
@@ -551,8 +608,8 @@ arterial partial pressure starts at about half of normal. For a highly soluble
 agent doubling the ventilation doubles the delivery and makes up for it, and
 the arterial rise is barely delayed. Eger and Severinghaus predicted this with
 an analogue model, and Stoelting and Longnecker confirmed it in dogs and
-people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 75% of
-what it is with a tracheal tube for nitrous oxide at 2 minutes and 81% for
+people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 74% of
+what it is with a tracheal tube for nitrous oxide at 2 minutes and 80% for
 isoflurane, 93% and 89% at an hour, while end-tidal reads a little above it. The Visualizer draws the
 arterial bar below the end-tidal one.
 
@@ -570,19 +627,19 @@ gas engine draws from the alveoli. The result is the oxygen panel's second
 line; the hover gives the PaO2 and the SaO2, and the Visualizer shows them
 under its title while the tube is in. For a 70 kg patient at a cardiac output
 of 5 L/min and oxygen use of 0.25 L/min, breathing 2% sevoflurane in 6 L/min of
-fresh gas at a minute ventilation of 6 L/min, half the cardiac output shunted
+fresh gas at a minute ventilation set to 6 L/min, half the cardiac output shunted
 gives, at 30 minutes and haemoglobin 15 g/dL (the sevoflurane dilutes the
-oxygen: without it the PaO2 at a 20% shunt is 271 mmHg, not 259):
+oxygen: without it the PaO2 at a 20% shunt is 281 mmHg, not 269):
 
 | Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
 |---|---|---|---|
-| Oxygen | 659 mmHg | 50 mmHg | 85% |
-| Oxygen 2 L/min, air 4 L/min | 285 mmHg | 43 mmHg | 79% |
-| Air | 98 mmHg | 39 mmHg | 74% |
+| Oxygen | 670 mmHg | 50 mmHg | 85% |
+| Oxygen 2 L/min, air 4 L/min | 295 mmHg | 44 mmHg | 79% |
+| Air | 107 mmHg | 40 mmHg | 75% |
 
 Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
-3 L/min gives 61%, at 12 L/min 75%).
+set to 3 L/min gives 74%, to 12 L/min 75%).
 
 **Shunt fraction.** Ticking the box moves the **Shunt fraction** slider to
 50% of cardiac output, its maximum (Steven Shafer, 25 November 2026; one
@@ -593,12 +650,12 @@ table above:
 
 | Shunt fraction | PaO2 on oxygen | SaO2 on oxygen | PaO2 on air | SaO2 on air |
 |---|---|---|---|---|
-| 50% | 50 mmHg | 85% | 39 mmHg | 74% |
-| 40% | 66 mmHg | 93% | 47 mmHg | 82% |
-| 30% | 102 mmHg | 98% | 54 mmHg | 88% |
-| 20% | 259 mmHg | 100% | 64 mmHg | 92% |
-| 10% | 479 mmHg | 100% | 77 mmHg | 95% |
-| 0% | 659 mmHg | 100% | 98 mmHg | 98% |
+| 50% | 50 mmHg | 85% | 40 mmHg | 75% |
+| 40% | 66 mmHg | 93% | 47 mmHg | 83% |
+| 30% | 104 mmHg | 98% | 55 mmHg | 88% |
+| 20% | 269 mmHg | 100% | 66 mmHg | 93% |
+| 10% | 489 mmHg | 100% | 81 mmHg | 96% |
+| 0% | 670 mmHg | 100% | 107 mmHg | 98% |
 
 On oxygen the PaO2 climbs steeply below a shunt of about 30%, as the
 saturated blood from the ventilated lung comes to outweigh the shunted blood.
@@ -618,8 +675,8 @@ the haematocrit, which moves each volatile agent's blood:gas coefficient
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
-the SaO2 is 74% at sea level, 62% at 3000 m and 27% at 5000 m; on oxygen 85%,
-81% and 80%. (The ventilation is what was set: the model does not
+the SaO2 is 75% at sea level, 67% at 3000 m and 46% at 5000 m; on oxygen 85%,
+82% and 80%. (The ventilation is what was set, with the fresh gas's share: the model does not
 hyperventilate at altitude as an awake person does.)
 
 **Not modelled.** Hypoxic pulmonary vasoconstriction as a process: it
@@ -852,6 +909,9 @@ and gas on induction with inhalation anesthetics. *Anesthesiology*
 
 Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
 scientific autobiography, manuscript, 2017.
+
+Cicman JH, Skibo VF, Yoder JM. Anesthesia systems. Part II: operating
+principles of fundamental components. *J Clin Monit* 1993;9:104-111.
 
 Esper T, Wehner M, Meinecke CD, Rueffert H. Blood/gas partition coefficients
 for isoflurane, sevoflurane, and desflurane in a clinically relevant patient

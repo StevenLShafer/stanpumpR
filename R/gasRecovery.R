@@ -429,7 +429,11 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
     for (iv in unique(interval))
     {
       s <- gasSettingsAt(bySetting, changes[iv], deadSpace, gasPressureRatio(body),
-                         gasFreshGasExpansion(body))
+                         gasFreshGasExpansion(body), gasInspiratoryFraction(body))
+      # With no rebreathing the fresh gas has been turned up to the least
+      # flow that stops it, and the ventilation delivered is what that flow
+      # gives (gasWashoutVentilation())
+      if (!rebreathing) s$VA <- gasWashoutVentilation(s$MVset, deadSpace, body)
       # Agent inflow off, no coupling.  "open" is the no-rebreathing limit:
       # the patient inspires fresh gas only, whatever the flow.
       #
@@ -875,7 +879,10 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     if (length(rows) == 0) next
     t0 <- washout$changes[iv]
     s  <- gasSettingsAt(washout$bySetting, t0, washout$deadSpace, ratio,
-                        gasFreshGasExpansion(body))
+                        gasFreshGasExpansion(body), gasInspiratoryFraction(body))
+    # The fresh gas is turned up to the least flow that stops rebreathing,
+    # and the washout runs at the ventilation that flow delivers
+    s$VA <- gasWashoutVentilation(s$MVset, washout$deadSpace, body)
 
     # Fresh gas once `off` is off.  The carrier flows that remain keep their
     # proportions (the total is turned up, not the mixture changed), the

@@ -856,18 +856,23 @@ settingAt <- function(doseRows, t)
 #' @param expansion litres in the lungs per litre at the flowmeters
 #'   (\code{gasFreshGasExpansion()}); the total flow is returned times it, the
 #'   fractions being unchanged
-#' @returns a list with total fresh gas flow \code{Q}, minute ventilation
-#'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
-#'   pressures
+#' @param inspiratory the share of the breath that is inspiration, I / (I + E)
+#'   (\code{gasInspiratoryFraction()}): the fresh gas that enters the circuit
+#'   during inspiration goes to the patient with the ventilator's tidal
+#'   volume, so the delivered minute ventilation is the ventilation row plus
+#'   this share of the fresh gas flow.  0, the default, is no coupling, as in
+#'   GasMan.
+#' @returns a list with total fresh gas flow \code{Q}, the delivered minute
+#'   ventilation \code{MV}, the alveolar ventilation \code{VA} it gives, the
+#'   ventilator's setting \code{MVset}, and the fresh-gas partial pressures
 #' @keywords internal
 gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
-                          ratio = 1, expansion = 1)
+                          ratio = 1, expansion = 1, inspiratory = 0)
 {
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
   Q_N2O  <- settingAt(split[["nitrousOxide"]], t)
-  MV     <- settingAt(split[["ventilation"]],  t)
-  VA     <- MV * (1 - deadSpace)
+  MVset  <- settingAt(split[["ventilation"]],  t)
 
   # Every volatile agent in the properties table has its vaporiser read here,
   # rather than from a hardcoded list.  Adding desflurane to the table
@@ -878,6 +883,16 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
   F_vap <- vapply(volatiles, function(g) settingAt(split[[g]], t), numeric(1))
 
   Q <- Q_air + Q_O2 + Q_N2O
+
+  # Fresh gas adds to the delivered ventilation (Shafer, 2026-11-27; Cicman
+  # 1993: the valve to the scavenger is shut through inspiration, so the
+  # fresh gas entering then goes to the patient with the bellows' tidal
+  # volume).  Both in the lungs' litres.
+  # Only while the ventilator is cycling: before its first row, or with the
+  # ventilation set to 0, there is no inspiration for the fresh gas to join
+  # (Devin's review of PR 1029)
+  MV <- if (MVset > 0) MVset + inspiratory * Q * expansion else MVset
+  VA <- MV * (1 - deadSpace)
 
   # Vapour displaces carrier gas.  At 2% sevoflurane this is a 2% correction;
   # small, but free to include and it keeps the fractions summing to 100.
@@ -911,7 +926,7 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
   }
   for (g in volatiles) Ffgf[[g]] <- F_vap[[g]]
 
-  list(Q = Q * expansion, VA = VA, MV = MV, Ffgf = Ffgf)
+  list(Q = Q * expansion, VA = VA, MV = MV, MVset = MVset, Ffgf = Ffgf)
 }
 
 
@@ -1317,7 +1332,8 @@ advanceClosedFormGas <- function(
         stepProp <- function(st)
           if (uptakeEffect) coupledProp(st, 1) else buildProp(0, dt = 1)
         if (circuit != "semi-closed") {
-          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body))
+          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body),
+                             gasInspiratoryFraction(body))
           p0 <- stepProp(state)
           drawn <- vapply(props$gas, function(g) {
             p <- p0[[g]]
@@ -1364,7 +1380,8 @@ advanceClosedFormGas <- function(
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear -- apart from the uptake coupling,
     # which is linearised per sub-step below.
-    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body))
+    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body),
+                       gasInspiratoryFraction(body))
 
     # The sub-steps restart short only where something changed: a row that
     # repeats the settings in force carries on where the steps were, inside
@@ -1810,6 +1827,11 @@ gasBodySteps <- function(weight, events, base = getGasBody(weight),
 #'   GasMan's linear scaling in weight
 #' @param volumeConversion as in \code{advanceClosedFormGas()}; FALSE to compare
 #'   with GasMan
+#' @param ieRatio the I:E ratio as the expiratory part to one of inspiration
+#'   (1, 1.5, 2, 3 or 4; NULL for the default 1:2), one for the whole run:
+#'   the delivered ventilation is the ventilation row plus I / (I + E) of the
+#'   fresh gas flow.  No fresh gas is added with the semi-closed circuit or
+#'   \code{volumeConversion = FALSE}, as in GasMan.
 #' @param adjustToFFM FALSE for GasMan's linear scaling whatever is given
 #'   (the Patient Profile's fat-free-mass switch)
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
@@ -1829,7 +1851,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           altitude = NULL, endobronchial = FALSE,
                           physiologyEvents = NULL, haemoglobin = NULL,
                           shunt = NULL, height = NULL, sex = NULL,
-                          adjustToFFM = TRUE, volumeConversion = TRUE)
+                          adjustToFFM = TRUE, volumeConversion = TRUE,
+                          ieRatio = NULL)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1871,6 +1894,11 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   bodySteps <- if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0)
     gasBodySteps(weight, physiologyEvents, base,
                  anesthesiaShunt = if (gasMans) 0 else GAS_SHUNT_ANESTHESIA)
+  # The I:E ratio, one for the whole run: the fresh gas's inspiratory share
+  # adds to the delivered ventilation (gasInspiratoryFraction())
+  body$ieRatio <- checkIERatio(ieRatio)
+  if (!is.null(bodySteps))
+    bodySteps$body <- lapply(bodySteps$body, function(b) { b$ieRatio <- body$ieRatio; b })
 
   sim <- advanceClosedFormGas(
     gasDose,

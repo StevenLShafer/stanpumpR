@@ -185,3 +185,33 @@ gasAsStated <- function(...) advanceClosedFormGas(..., volumeConversion = FALSE)
 # R/endobronchial.R).  For a reference run of advanceClosedFormGas(), which
 # handed no body runs GasMan's, without a shunt.
 gasShuntBody <- function(weight = 70) gasBodyEndobronchial(getGasBody(weight))
+
+# The full engine as the reference for the time until threshold (2026-11-28,
+# the fourth piece of the gas engine expansion).  `d` is the dose table with
+# the agent turned off and the fresh gas raised at `t`.  Until `t` the body is
+# simulateGases()'s (the 10% shunt, the fresh gas adding its inspiratory share
+# to the ventilation at the default I:E).  From `t` the ventilation row is the
+# ventilation the least flow that stops rebreathing delivers, the setting /
+# (1 - I/(I + E)) (gasWashoutVentilation()), on a body that adds no fresh gas
+# to it, so that the flush flow, whatever its size, changes nothing but the
+# rebreathing.
+gasFlushEngine <- function(d, t, weight, ..., ieRatio = GAS_IE_DEFAULT, flush = TRUE) {
+  before <- gasShuntBody(weight); before$ieRatio <- ieRatio
+  # Without the flush the fresh gas is as it was, and so is the ventilation
+  # it delivers (the rebreathing washout)
+  if (!flush) return(advanceClosedFormGas(d, weight = weight, body = before, ...))
+  after <- gasShuntBody(weight)
+  set <- settingAt(d[d$Drug == "ventilation", , drop = FALSE], t)
+  d <- rbind(d, data.frame(Time = t, Drug = "ventilation",
+                           Dose = set / (1 - gasInspiratoryFraction(before)),
+                           stringsAsFactors = FALSE)[, names(d), drop = FALSE])
+  advanceClosedFormGas(d, weight = weight, body = before,
+                       bodySteps = list(time = c(0, t), body = list(before, after)), ...)
+}
+
+# A gas run at the ventilation as set, without the fresh gas's inspiratory
+# share (gasInspiratoryFraction()), for a test of algebra that holds only then
+gasAtSetVentilation <- function(code)
+{
+  testthat::with_mocked_bindings(code, gasInspiratoryFraction = function(body) 0)
+}
