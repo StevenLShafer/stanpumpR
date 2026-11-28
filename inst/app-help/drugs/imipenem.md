@@ -5,7 +5,7 @@ Imipenem is always given with cilastatin, which blocks its breakdown in the kidn
 - **PRIMAXIN** (imipenem and cilastatin): "500 mg" is 500 mg of imipenem with 500 mg of cilastatin. Adults with a creatinine clearance of 90 mL/min or more receive 500 mg every 6 hours, 1000 mg every 8 hours, or 1000 mg every 6 hours. Children from 3 months receive 15 to 25 mg/kg every 6 hours. The label reduces the dose below 90 mL/min.
 - **RECARBRIO** (imipenem, cilastatin and relebactam): 1.25 g is 500 mg of imipenem, 500 mg of cilastatin and 250 mg of relebactam, every 6 hours over 30 minutes. Choose [RECARBRIO](help:drugs/RECARBRIO) in the dose table and enter it as ordered, in grams of the product (`1.25 g`, or the pediatric `37.5 mg/kg`); stanpumpR draws the imipenem it contains, 0.4 of each dose. Relebactam is a beta-lactamase inhibitor and is not drawn.
 
-To enter a 30-minute infusion of 500 mg, enter `1000 mg/hr` at its start and `0 mg/hr` half an hour later, and repeat every 6 hours. A scheduled unit such as `500 mg qid` repeats a bolus, not an infusion: it gives the same amount and the same troughs, but draws each peak higher and earlier than a 30-minute infusion reaches.
+To enter a 30-minute infusion of 500 mg, enter `1000 mg/hr` at its start and `0 mg/hr` half an hour later, and repeat every 6 hours. A scheduled unit such as `500 mg qid` repeats a bolus, not an infusion: it gives the same amount and nearly the same troughs, but draws each peak higher and earlier than a 30-minute infusion reaches.
 
 ### The model
 
