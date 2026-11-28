@@ -109,8 +109,8 @@ The run is the gas engine's own five states for the plot (`gasDrugEntries()` kee
 | `fresh`, `freshFlow`, `ventilation` | In force from each time: the agent's share of the fresh gas (%), the fresh gas flow and the minute ventilation (L/min). |
 | `alveolarVentilation` | In force from each time: the minute ventilation less the dead space the engine took (L/min). Optional. |
 | `venous` | The mixed venous partial pressure at each time, %. Optional: without it no blood is drawn. |
-| `arterial` | The arterial partial pressure at each time, %, where an endobronchial tube shunts blood past the ventilated lung at any time in the run; without it arterial blood is at the end-tidal. Optional. |
-| `saturation`, `paO2` | The arterial oxygen saturation (%) and tension (mmHg) at each time, with such a tube: shown under the title. Optional, and they come together. |
+| `arterial` | The arterial partial pressure at each time, %, where blood is shunted past the ventilated alveoli at any time in the run (10% of the cardiac output under anesthesia, 50% with an endobronchial tube, so every run from the app since 2026-11-28); without it arterial blood is at the end-tidal. Optional. |
+| `saturation`, `paO2` | The arterial oxygen saturation (%) and tension (mmHg) at each time, with such a shunt: shown under the title. Optional, and they come together. |
 | `cardiacOutput` | The cardiac output the engine ran on, L/min. Optional. |
 | `greenhouse` | `gwp100`, `lifetime` (years), `kgPerLitre` (kg of agent in a litre of its vapour at 20 °C), `carKgPerYear` and `source`: what the viewer needs for the CO₂ equivalent of the agent delivered. Optional. |
 | `delivered` | The agent the fresh gas has carried into the circuit since time 0, mL of vapour. |

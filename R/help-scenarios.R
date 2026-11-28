@@ -1533,7 +1533,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
   updateSliderInput(session, "physiology_temperature", value = PHYSIOLOGY_TEMPERATURE_DEFAULT)
   updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
   updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
-  updateSliderInput(session, "physiology_shunt", value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION)
+  updateSliderInput(session, "physiology_shunt", value = 100 * GAS_SHUNT_ANESTHESIA)
   # Blank, a term birth, unless the scenario names a gestational age: sent
   # explicitly, as the creatinine is, so a previous patient's does not survive
   if (is.null(p$gestationalAge)) {

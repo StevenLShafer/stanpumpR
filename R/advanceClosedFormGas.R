@@ -1698,6 +1698,7 @@ gasNotGasMansBody <- function(body)
   if (!is.null(body$temperature) && body$temperature != 37) out <- c(out, "body temperature")
   if (!is.null(body$altitude) && body$altitude != ALTITUDE_DEFAULT) out <- c(out, "altitude")
   if (isTRUE(body$endobronchial)) out <- c(out, "endobronchial intubation")
+  else if (gasShunt(body) > 0) out <- c(out, "a shunt")
   if (!is.null(body$V_vrgRest) || (!is.null(body$cardiac) && body$cardiac != 1))
     out <- c(out, "the cardiac-output slider")
   if (!is.null(body$haemoglobin) && body$haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN)
@@ -1843,7 +1844,12 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
-  body <- gasBodyEndobronchial(body, endobronchial, checkShunt(shunt))
+  # The shunt (R/endobronchial.R): 10% under anesthesia and 50% with an
+  # endobronchial tube unless one is given; none in GasMan's mode, GasMan
+  # having no shunt
+  if (is.null(shunt) && (circuit == "semi-closed" || !isTRUE(volumeConversion)))
+    shunt <- 0
+  body <- gasBodyEndobronchial(body, endobronchial, shunt)
   # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
   # itself does not read it
   haemoglobin <- checkHaemoglobin(haemoglobin)
