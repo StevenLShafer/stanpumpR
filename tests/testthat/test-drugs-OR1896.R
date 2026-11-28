@@ -40,28 +40,32 @@ test_that("the chain is Bertin 2026's supplement estimates at 70 kg, switch off"
 test_that("the chain is pinned with the size switch on, away from the reference", {
   # The patient test-drugs-levosimendan.R pins the parent at: 120 kg, 175 cm,
   # 50 years, a man; pharmacokinetic weight 94.3906 kg, and the fat-free-mass
-  # clearance factor over the volume factor 0.927988.  Bertin's own weight
+  # clearance factor over the volume factor 0.927988, divided by the same
+  # ratio for Bertin's adults (0.98906, the anchor).  Bertin's own weight
   # terms are evaluated at the pharmacokinetic weight; the size-free rate
   # constants take that ratio.
   ch <- levosimendanOR1896Chain(120, 175, 50, "male", adjustToFFM = TRUE)
   w <- 94.3906332567 / 70
-  rate <- 0.9279878392
+  coh <- do.call(cohortSizeFactors, OR1896_COHORT)
+  expect_equal(coh$clearance / coh$volume, 0.98906, tolerance = 1e-5)
+  rate <- 0.9279878392 / (coh$clearance / coh$volume)
+  expect_equal_rounded(0.9382515367, rate)
   expect_equal_rounded(15.9 * w^0.574, ch$v)
   expect_equal_rounded(18.87643765, ch$v)
   expect_equal_rounded(ch$v, ch$vPeripheral)
   # K13 has no weight term and equals ktr in the source: it takes the ratio too
   expect_equal_rounded(0.0127 * rate / (13.9 * w^0.75 / ch$v), ch$fm)
-  expect_equal_rounded(0.01378274794 * 0.9279878392, ch$fm)
+  expect_equal_rounded(0.01378274794 * 0.9382515367, ch$fm)
   expect_equal_rounded(0.0127 * rate / 60, ch$ktr)
-  expect_equal_rounded(1.964240926e-04, ch$ktr)
+  expect_equal_rounded(1.985965753e-04, ch$ktr)
   expect_equal_rounded(0.01 * w^-0.611 / 60, ch$kel)
   expect_equal_rounded(1.388423943e-04, ch$kel)
   expect_equal_rounded(0.0722 * rate / 60, ch$k12)
-  expect_equal_rounded(1.116678700e-03, ch$k12)
+  expect_equal_rounded(1.129029349e-03, ch$k12)
   expect_equal_rounded(0.012 * rate / 60, ch$k21)
-  expect_equal_rounded(1.855975678e-04, ch$k21)
+  expect_equal_rounded(1.876503073e-04, ch$k21)
   expect_equal_rounded(0.01 * rate / 60, ch$kelPeripheral)
-  expect_equal_rounded(1.546646399e-04, ch$kelPeripheral)
+  expect_equal_rounded(1.563752561e-04, ch$kelPeripheral)
 })
 
 test_that("levosimendan forms OR1896 through an intravenous transit chain", {
@@ -137,7 +141,7 @@ test_that("OR1896 reproduces Antila 2004's 7-day infusions", {
   }
   # Pinned at 0.1 mcg/kg/min
   w <- runLevo(0.1)$OR1896$wide
-  expect_equal(max(w$Plasma), 16.43, tolerance = 1e-3)
+  expect_equal(max(w$Plasma), 16.60, tolerance = 1e-3)
 })
 
 test_that("OR1896 reproduces Kivikko 2002's 24-hour infusion", {
