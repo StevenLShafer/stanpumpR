@@ -184,7 +184,11 @@ test_that("an altitude step's row reads the inspired gas in force after it", {
   events <- function(a) physiologyEventsFrom(data.frame(
     Time = c(0, 10), Event = "Physiology", Settings = c(enc(a[1]), enc(a[2])),
     stringsAsFactors = FALSE))
-  d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(6, 2, 6))
+  # (10 L/min of oxygen since 2026-11-28, where it was 6: the fresh gas now
+  # adds a third of itself to the 6 L/min of ventilation set, so nothing is
+  # rebreathed only from 8.0 L/min on the flowmeters, and this test is of
+  # the inspired gas where it is the fresh gas)
+  d <- data.frame(Time = 0, Drug = c("oxygen", "sevoflurane", "ventilation"), Dose = c(10, 2, 6))
   # The descent: the vaporiser's 2% throughout, and no spike with the uptake on
   for (uptake in c(FALSE, TRUE)) {
     s <- simulateGases(d, weight = 70, age = 40, maximum = 20,
