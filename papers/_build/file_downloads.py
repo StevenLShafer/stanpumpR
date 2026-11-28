@@ -301,6 +301,123 @@ def requested_ref_by_doi(doi):
     return requested_ref(pmid) if pmid else None
 
 
+
+def doi_named_ref(name, path):
+    """A ref for a PDF hand-named DOI_<doi>.pdf, confirmed three ways.  (ref, problem).
+
+    The PMID branch in identify_any() lets a person file a paper by naming it, with the download
+    queue as the gate.  A paper with NO PubMed record can never be in that queue -- it is keyed
+    by PMID -- so until 2026-11-26 there was no route by which one could be filed at all, even
+    though archive_name() has always produced DOI_ names and six such papers are in the archive.
+    They got there before the gate existed.  That is how de Groot 1994 (Drug Investigation
+    8:345-351, doi 10.1007/BF03257449), the second source of the methylergonovine model, sat in
+    the inbox with nothing able to take it: Drug Investigation was not fully MEDLINE-indexed in
+    1994, so no PMID, so no queue row, so no gate it could pass.  Shafer asked for this route on
+    2026-11-26.
+
+    A file name is somebody's assertion, so it is not evidence by itself.  Three independent
+    things must agree:
+      1. the NAME, which proposes a DOI;
+      2. CROSSREF, which says what that DOI actually is;
+      3. the DOCUMENT, whose own text must carry that work's title and its first author.
+    Both 2 and 3 are required.  The "own DOI" branch below accepts a title OR an author because
+    it read the DOI off the page itself; here the DOI comes from the name, which is weaker, so
+    the document has to supply both.
+
+    The name is never PARSED into a DOI and trusted.  archive_name() maps "/" and "-" alike to
+    "_", so the mangling is not invertible: "10.1007/s00228-015-1900-5" becomes
+    "10.1007_s00228_015_1900_5", and reading the underscores back gives the wrong DOI.  Instead
+    each plausible reading is resolved, and the DOI CROSSREF RETURNS is re-mangled by
+    archive_name() and must equal the file name exactly.  A wrong guess that happens to resolve
+    to some other real paper fails that round trip; one that passes it was a name that could not
+    have told the two apart anyway, and then the document check decides.  Two readings are tried,
+    which covers the two shapes that occur: a suffix with no hyphens (BF03257449) and one whose
+    every underscore was a hyphen.  A name neither reading resolves is reported, not filed.
+
+    Filed under archive_name(), not under the name as given: every DOI_ file in the archive is
+    the generator's output, and the case of a DOI is not significant.
+    """
+    m = re.fullmatch(r"DOI_(10\.\d{4,9})_(.+)\.pdf", name, re.I)
+    if not m:
+        return None, None
+    prefix, tail = m.group(1), m.group(2)
+    readings, seen = [], set()
+    for suffix in (tail, tail.replace("_", "-")):
+        d = prefix + "/" + suffix
+        if d.lower() not in seen:
+            seen.add(d.lower())
+            readings.append(d)
+    try:
+        from ncbi import crossref_doi
+    except Exception:
+        return None, None
+    hit, resolved = None, False
+    for d in readings:
+        w = crossref_doi(d)
+        if not w or not w.get("title"):
+            continue
+        resolved = True
+        if archive_name(None, (w.get("doi") or "").lower()).lower() == name.lower():
+            hit = w
+            break
+    if not hit:
+        return None, ("named for a DOI, but %s: left where it is" % (
+            "Crossref resolves it to a different DOI than the name spells"
+            if resolved else "no reading of that name resolves at Crossref"))
+    try:
+        page1 = pdf_text(path, last=1, strict=True)
+    except Exception:
+        page1 = ""
+    top, flat = norm(page1)[:3000], norm(pdf_text(path))
+    sur = surname(hit.get("first_author") or "")
+    # The title by its WORDS, not as a contiguous run.  on_top() elsewhere tests norm(title)[:50]
+    # against the top of page 1, which works for a modern single-column PDF and fails on older
+    # typesetting: pdftotext is called without -layout, so a title set across two lines can come
+    # back reordered.  Fenn 1946 (Am J Physiol 146:637) normalises to "...study of the composition
+    # ALVEOLAR AIR AT ALTITUDE 1 OF THE" -- every word present, the trailing "of the" of the first
+    # line emitted after the second -- and the contiguous test called it absent (2026-11-26).
+    # Four fifths of the title's words of more than three letters must appear among page 1's own
+    # words, and at least three such words must exist, so a two-word title cannot pass on one hit.
+    tw = words(hit.get("title") or "")
+    pw = words(page1)
+    ok_title = len(tw) >= 3 and len(tw & pw) >= 0.8 * len(tw)
+    ok_author = bool(sur) and sur in flat
+    if not (ok_title and ok_author):
+        lack = " or ".join(s for s, ok in (("its title", ok_title), ("its first author", ok_author)) if not ok)
+        return None, ('named for doi %s, which Crossref gives as "%s" (%s %s), but the PDF does not carry %s: '
+                      "check it by hand" % (hit.get("doi", ""), (hit.get("title") or "")[:70],
+                                            hit.get("first_author", ""), hit.get("year", ""), lack))
+    doi = (hit.get("doi") or "").lower()
+    # A DOI_ name is for a paper PubMed does NOT have.  If PubMed does have it, the archive's
+    # name is PMID_<n>.pdf: archive_name() prefers the PMID, and everything downstream is keyed
+    # by it -- the download queue, queue_add.archived(), arrivals.py's "now in the archive" and
+    # the digest manifest all match PMID_(\d+)\.pdf and would never see a DOI_ name.  Filing one
+    # under its DOI therefore hides it from the very reports that exist to find it.
+    # Found hours after this route shipped: Fenn 1946 was filed here as
+    # DOI_10.1152_ajplegacy.1946.146.5.637.pdf on the belief that a 1946 paper predates PubMed.
+    # It does not -- PMID 20996488, the AJP Legacy backfile, carrying that same DOI -- and the
+    # gas session citing the PMID is what caught it.  Crossref cannot answer this; PubMed must be
+    # asked.  Fail CLOSED if it cannot be reached: an unchecked DOI_ name is how the mis-keyed
+    # entry got in, and the file is reported rather than filed so the next run asks again.
+    try:
+        import ncbi
+        _n, known = ncbi.esearch("%s[DOI]" % doi, retmax=2)   # (count, idlist), not a list
+    except Exception:
+        return None, ("named for doi %s, which resolves, but PubMed could not be reached to check "
+                      "whether it has a PMID: run update.bat again later" % doi)
+    if known:
+        return None, ("named for doi %s, but PubMed has that paper as PMID %s: an archived paper "
+                      "with a PMID is named PMID_%s.pdf, which everything downstream keys on, so "
+                      "rename it and it will file" % (doi, known[0], known[0]))
+    return {"pmid": "", "doi": doi, "title": hit["title"], "tw": words(hit["title"]),
+            "journal_n": norm(hit.get("journal") or ""), "surname": sur, "sur_re": None,
+            "fpage": first_page(hit.get("pages")), "year": hit.get("year"),
+            "volume": str(hit.get("volume") or "").strip(),
+            "npages": page_count(hit.get("pages")),
+            "label": "%s %s" % (hit.get("first_author", ""), hit.get("year", "")),
+            "file": archive_name(None, doi)}, None
+
+
 def identify_any(path):
     name = os.path.basename(path)
     m = re.fullmatch(r"PMID_(\d+)(?: \(\d+\))?\.pdf", name, re.I)
@@ -308,6 +425,12 @@ def identify_any(path):
         r = by_pmid.get(m.group(1)) or requested_ref(m.group(1))
         if r:
             return r, "named PMID_%s" % m.group(1), None
+    if re.match(r"DOI_", name, re.I):
+        r, problem = doi_named_ref(name, path)
+        if r:
+            return r, "named %s, confirmed at Crossref and on the paper's own page 1" % name[:-4], None
+        if problem:
+            return None, None, problem
     # A web page printed to PDF (Shafer does this when a journal offers no PDF): the print driver puts the page's
     # title in the metadata, often with the middle elided ("Effect of Rifampin on the Plasma Concen...Journal of
     # Clinical Psychopharmacology") and the site appended (" - CNKI", " _ Therapeutic Drug Monitoring").  Microsoft

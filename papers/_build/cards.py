@@ -23,12 +23,14 @@ neither function may assume the worktree's commits or uncommitted files are the 
 """
 import os
 import subprocess
+import time
 
 REPO = r"C:\dev\stanpumpR"
 TREE = r"C:\dev\stanpumpR-digests"
 CARDS = os.path.join(TREE, "papers", "digests")
 BRANCH = "digests/working"              # the worktree's own branch; never pushed under this name
 PUSH_PREFIX = "claude/digests-"         # one pushed branch per run, so nothing is ever force-pushed
+CARD_BRANCH_DAYS = 60                   # how far back unmerged_cards() looks; see its docstring
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARCH = os.path.dirname(HERE)
@@ -133,25 +135,48 @@ def sync(say=print):
 
 
 def unmerged_cards():
-    """{stem: branch} for every card a remote digest branch carries that master has never held.
+    """{stem: branch} for every card ANY recent remote branch carries that master has never held.
 
     NOT `git branch --no-merged`: a squash-merged branch's commits never become ancestors of master,
     so every past run would look unmerged for ever.  What matters is only whether a branch carries a
     card master lacks (cards_not_in_master() compares the content, from the branch's merge base).
-    Both the runner's branches and the digest session's hand-made ones count: a card waiting in
-    either is not to be digested again.
+
+    EVERY remote branch is searched, not just this runner's.  Until 2026-11-26 the search was
+    `origin/<PUSH_PREFIX>*`, i.e. the runner's own branches alone, on the belief that cards are
+    written only by a digest run or by a digest session working by hand.  That has stopped being
+    true: a session that BUILDS A DRUG now cards the paper it built from, on its own branch, in the
+    same pull request.  Those branches are named for the drug, so the prefix never matched them and
+    the run could not see their cards -- it wrote its own, and the two collided as an add/add
+    conflict when both reached master.  That happened FOUR times on 2026-11-26 alone (DeJongh 2014
+    in #949, Ilias 2000 in #983, and both anakinra papers in #984), each costing a hand merge of two
+    cards for one paper, and it also wedged the digest queue: a worktree that cannot merge master
+    skips every paper, so six consecutive runs wrote nothing.
+
+    The cost of looking wider is a card held ONLY by a branch nobody will ever merge, which would be
+    suppressed for ever and never written.  Hence CARD_BRANCH_DAYS: a branch whose tip has not moved
+    in that long no longer counts, so an abandoned branch releases its hold.  A card that IS
+    suppressed is visible rather than silent -- unmerged_branches() names the holding branch, and
+    digest_run.py prints it as a NOTE before the queue.
     """
-    out = git("branch", "-r", "--list", "origin/" + PUSH_PREFIX + "*",
-              "--format=%(refname:short)").stdout.split()
+    cutoff = time.time() - CARD_BRANCH_DAYS * 86400
+    lines = git("branch", "-r", "--format=%(refname:short) %(committerdate:unix)").stdout.splitlines()
     held = {}
-    for b in out:
-        for p in cards_not_in_master(b):
-            held.setdefault(stem_of(p), b)
+    for line in lines:
+        name, _, ts = line.strip().rpartition(" ")
+        if not name or name.endswith("/HEAD"):
+            continue
+        try:
+            if int(ts) < cutoff:
+                continue
+        except ValueError:                 # no date: keep the branch rather than lose a card
+            pass
+        for p in cards_not_in_master(name):
+            held.setdefault(stem_of(p), name)
     return held
 
 
 def unmerged_branches():
-    """Remote digest branches holding a card master does not have, as 'branch (n card(s))'."""
+    """Remote branches holding a card master does not have, as 'branch (n card(s))'."""
     counts = {}
     for b in unmerged_cards().values():
         counts[b] = counts.get(b, 0) + 1

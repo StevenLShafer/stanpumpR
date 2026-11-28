@@ -86,8 +86,18 @@ for w in works:
         for v in variants(work_surname(au)):
             for d in (-1, 0, 1):
                 have_ay.add((v, yr + d))
-# every URL any earlier extraction recorded counts as known too
-for f in os.listdir(os.path.join(B, "extract")):
+# every URL any earlier extraction recorded counts as known too.
+# ONLY *.jsonl.  The archive is a synced Google Drive folder, and Explorer drops a desktop.ini
+# into any folder whose view it has customised -- one appeared in extract/ on 2026-11-23 and
+# this loop, which read every file in the directory, died on "[.ShellClassInfo]" with a bare
+# JSONDecodeError.  A round could not be started at all until 2026-11-26, and nothing said so:
+# the tool is run by hand, so its crash waited for somebody to try.  resolve.py globs *.jsonl
+# and was never affected; a sweep of the other 18 directory listings in _build on 2026-11-26
+# found every one of them already filtered by extension or by a regex, so this was the only
+# site.  Keep the filter: the artefact comes back whenever the folder's view is touched.
+for f in sorted(os.listdir(os.path.join(B, "extract"))):
+    if not f.endswith(".jsonl"):
+        continue
     for l in open(os.path.join(B, "extract", f), encoding="utf-8"):
         if l.strip():
             u = json.loads(l).get("url")

@@ -437,12 +437,28 @@ if True:
     # registry row whose readiness is `needs_full_text`.
     # Marked by the notes prefix: keep the literal in step with REQUEST_NOTE in arrivals.py.
     written = {r["PMID"] or r["DOI"] for r in rows if r["PMID"] or r["DOI"]}
+    # A request row must CLOSE when its paper arrives.  The rows above are rebuilt from the
+    # works the stanpumpR source cites and so pick up "In archive" by themselves; these are
+    # carried over verbatim, and until 2026-11-26 their status was copied unexamined.  The
+    # result was that 681 of the 773 `pending` rows named a paper already filed -- a paper a
+    # pending-work row wants is exactly the kind nothing cites yet, so it never reaches the
+    # loop above, and every paper supplied by hand added one.  The queue then overstated what
+    # was still wanted about sevenfold, which is how a session reading it for a want-list goes
+    # wrong.  Test the archive the way queue_add.archived() does: the UNSUFFIXED name only, so
+    # a supplement (PMID_n_sup0001) or an accepted manuscript (PMID_n_aam) does not close the
+    # request for the article itself.
+    archived_pmids = {m.group(1) for f in os.listdir(ARCHIVE)
+                      for m in [re.fullmatch(r"PMID_(\d+)\.pdf", f, re.I)] if m}
     for key, o in old.items():
         if key in written or not (o.get("notes") or "").startswith("wanted by "):
             continue
+        status = (o.get("status") or "pending").strip() or "pending"
+        stamp = o.get("downloaded_at", "")
+        if status != "done" and (o.get("pmid") or "").strip() in archived_pmids:
+            status, stamp = "done", (stamp or NOW)
         wr.writerow([o.get("pmid", ""), o.get("doi", ""), o.get("journal", ""), o.get("year", ""),
                      o.get("volume", ""), o.get("pages", ""), o.get("download_link", ""),
-                     o.get("status") or "pending", o.get("downloaded_at", ""), o.get("notes", "")])
+                     status, stamp, o.get("notes", "")])
 # Write the whole CSV, then swap it in: the queue is on a synced drive, and writing in place
 # meant a crash or a full disk mid-write left it truncated -- and this file is the only record
 # of what has been asked for but not yet obtained (CodeRabbit on PR #780, 2026-11-18).
