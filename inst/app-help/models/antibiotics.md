@@ -13,6 +13,8 @@ Each of the twelve antibiotics, [cefazolin](help:drugs/cefazolin), [cefalexin](h
 
 [Ceftazidime](help:drugs/ceftazidime), drawn for [Avycaz](help:drugs/Avycaz), also has the MIC line and no band. Its line is free ceftazidime at 8 mg/L, the FDA, CLSI and EUCAST susceptible breakpoint of ceftazidime-avibactam for Enterobacterales and *Pseudomonas*, which is 8.9 mg/L of total ceftazidime. No MBC source for ceftazidime with avibactam has been read.
 
+[Imipenem](help:drugs/imipenem) also has the MIC line and no band. Its line is free imipenem at 2 mg/L, the imipenem/relebactam breakpoint its source assessed, which is 2.5 mg/L of total imipenem. No imipenem MBC source has been read.
+
 ### The rule for the band
 
 Every antibiotic's band follows one rule:

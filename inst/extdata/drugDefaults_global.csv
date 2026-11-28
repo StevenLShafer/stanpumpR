@@ -386,6 +386,8 @@ Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,
 Avycaz,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#6C3483,0,0,0,0,0,IV,Antibiotics
 ceftazidime,mcg,,,,,#6C3483,0,0,0,0,8.9,IV,
+imipenem,mcg,mg,mg/hr,mg,"mg,mg qid,mg q4h,mg tid,mg/kg,mg/kg qid,mg/kg q4h,mg/kg tid,mg/kg bid,g,g qid,g q4h,g tid,mg/hr,mg/kg/hr",#117864,0,0,0,0,2.5,IV,Antibiotics
+RECARBRIO,mcg,g,g/hr,g,"g,g qid,g q4h,g tid,mg,mg qid,mg q4h,mg tid,mg/kg,mg/kg qid,mg/kg q4h,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#117864,0,0,0,0,0,IV,Antibiotics
 factorVIII,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#1565C0,80,120,100,0,0,IV,Hemostasis and reversal
 nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids
 efmoroctocogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#0D47A1,80,120,100,0,0,IV,Hemostasis and reversal

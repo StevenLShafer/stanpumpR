@@ -380,6 +380,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "mycophenolate",  # concentration only, no ke0 (2026-11-25)
     "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
     "ceftazidime",  # Avycaz's drawn component (2026-11-25)
+    "imipenem",  # plasma only (2026-11-25)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",
