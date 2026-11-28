@@ -49,7 +49,7 @@ test_that("the analgesic tPeak of 4.4 min is an equilibration half-time of about
   expect_equal(PK$tPeak, 4.4)
   expect_equal(log(2) / PK$PK$default$ke0, 1, tolerance = 0.01)
   # The library's MEAC is Dahan's analgesic potency and the typical
-  # concentration his respiratory potency (drugDefaults_global.csv).
+  # concentration his ventilatory potency (drugDefaults_global.csv).
   row <- dd[dd$Drug == "oliceridine", ]
   expect_equal(row$MEAC, 27.9)
   expect_equal(row$Typical, 27.4)

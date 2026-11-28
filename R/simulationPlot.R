@@ -329,7 +329,7 @@ simulationPlot <- function(
   plotTable$xmax <- maximum
 
   addPlots <- plotMEAC + plotInteraction + plotCost + plotEvents +
-    (if (!is.null(opioidReceptor)) 3L else 0L)   # occupancy, respiratory, analgesia
+    (if (!is.null(opioidReceptor)) 3L else 0L)   # occupancy, ventilatory, analgesia
 
   # Step D4: finish plotTable apart from extensions below
 
@@ -530,7 +530,7 @@ simulationPlot <- function(
 
   # Buprenorphine / opioid-receptor interaction panels
   # (R/opioidReceptorInteraction.R): one physical occupancy, drawn as occupancy,
-  # respiratory depression and analgesia (MEAC-equivalents).
+  # ventilatory depression and analgesia (MEAC-equivalents).
   if (!is.null(opioidReceptor))
   {
     orT <- opioidReceptor$Time
@@ -552,7 +552,7 @@ simulationPlot <- function(
                          opioidReceptor$rho0 * 100, PLOT_NAME_OCCUPANCY))
     plotTable <- rbind(plotTable, orPanelRow(OR_FREE_LABEL, "grey70", "%", PLOT_NAME_OCCUPANCY))
 
-    # Respiratory depression panel (% of baseline ventilation lost)
+    # Ventilatory depression panel (% of baseline ventilation lost)
     plotResults <- rbind(plotResults, orSeries(PLOT_NAME_RESP,
                          opioidReceptor$ventilation * 100, PLOT_NAME_RESP))
     plotTable <- rbind(plotTable, orPanelRow(PLOT_NAME_RESP, "firebrick", "%", PLOT_NAME_RESP))

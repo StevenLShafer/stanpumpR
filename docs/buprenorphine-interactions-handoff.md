@@ -15,7 +15,7 @@ Buprenorphine is a high-affinity μ-opioid **partial agonist** with **very slow 
 dissociation** (k_off half-life ~37 min). The slow dissociation — not the affinity — is what makes
 it clinically difficult, in three settings:
 
-1. **Pain management** with buprenorphine: a ceiling on respiratory depression (safety), but also a
+1. **Pain management** with buprenorphine: a ceiling on ventilatory depression (safety), but also a
    ceiling and competition that complicate adding other analgesia.
 2. **Opioid use disorder** maintenance: high, durable receptor occupancy that *blocks* subsequently
    taken full agonists — the therapeutic point.

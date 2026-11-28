@@ -28,7 +28,7 @@ oliceridine <- function(weight, height, age, sex, adjustToFFM = TRUE)
 # ANALGESIC potency in healthy male volunteers (the effect-site concentration
 # at which the probability of a 50% rise in cold-pressor hand-withdrawal
 # latency is one half), and the band's typical value and endCe, 27.4 ng/mL,
-# is the RESPIRATORY potency (a 25% fall in the hypercapnic ventilatory
+# is the VENTILATORY potency (a 25% fall in the hypercapnic ventilatory
 # response); the two happen to coincide.  Neither is a postoperative MEAC,
 # and 27.4 is not a concentration at which spontaneous breathing returns.
 
