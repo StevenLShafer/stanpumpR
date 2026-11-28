@@ -44,4 +44,4 @@ The band is the label's VWF:RCo peak target around surgery: 50 to 60 IU/dL for m
 
 - **Recombinant factor VIII** given with Vonvendi, which the label advises when factor VIII is below 40 IU/dL or unknown, is not added to the factor VIII panel. The source fitted factor VIII from Vonvendi alone, and infused factor VIII is cleared by the same process von Willebrand factor slows, which an added curve would not carry. [Factor VIII](help:drugs/factorVIII) can be dosed as a drug of its own, but its curve is drawn without the von Willebrand factor.
 - The patient's own von Willebrand factor is held constant.
-- **Humate-P** and the other plasma-derived von Willebrand factor/factor VIII concentrates, which Bauer also modelled, are not yet in the library.
+- [Humate-P](help:drugs/humateP), the plasma-derived concentrate Bauer also modelled, is a drug of its own; the two given together are refused, since the factor VIII panel cannot add them. Other plasma-derived concentrates are not in the library.

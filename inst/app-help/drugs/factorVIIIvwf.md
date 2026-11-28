@@ -1,6 +1,6 @@
 ### The model
 
-Factor VIII travels in the blood bound to von Willebrand factor, which protects it from clearance. This panel is the factor VIII activity a von Willebrand factor concentrate leaves in the patient. It is **not dosed directly**: it has no dose units and does not appear in the dose table's drug list or the startup menu. Its whole curve comes from the concentrate given, [Vonvendi](help:drugs/vonicogAlfa), the same arrangement [enalaprilat](help:drugs/enalaprilat) has with enalapril.
+Factor VIII travels in the blood bound to von Willebrand factor, which protects it from clearance. This panel is the factor VIII activity a von Willebrand factor concentrate leaves in the patient. It is **not dosed directly**: it has no dose units and does not appear in the dose table's drug list or the startup menu. Its whole curve comes from the concentrate given, [Vonvendi](help:drugs/vonicogAlfa) or [Humate-P](help:drugs/humateP), the same arrangement [enalaprilat](help:drugs/enalaprilat) has with enalapril.
 
 Bauer and colleagues (*J Blood Med* 2023) fitted it as an indirect response in 41 adults given Vonvendi, 31 of them with type 3 von Willebrand disease: the VWF:RCo the patient has slows the elimination of factor VIII,
 
@@ -16,4 +16,4 @@ The band is the Vonvendi label's factor VIII peak target for major surgery, 80 t
 
 ### Not modelled
 
-Factor VIII given as a concentrate of its own is not added here (see [Vonvendi](help:drugs/vonicogAlfa)). The patient's own production of factor VIII is the model's constant kout × F0, so a perioperative rise in it is not drawn.
+Factor VIII given as a concentrate of its own is not added here (see [Vonvendi](help:drugs/vonicogAlfa)); the factor VIII in Humate-P is (see [Humate-P](help:drugs/humateP)), with Imax 0.994 and IC50 0.0577 IU/dL, Humate-P's own. Vonvendi and Humate-P given together are refused. The patient's own production of factor VIII is the model's constant kout × F0, so a perioperative rise in it is not drawn.

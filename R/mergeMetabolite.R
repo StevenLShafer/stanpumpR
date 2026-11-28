@@ -227,6 +227,16 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
   for (target in names(contributions))
   {
     parents <- contributions[[target]]
+    # The factor VIII a VWF concentrate protects is not linear in the
+    # VWF:RCo (R/vwfFactorVIII.R), so two concentrates' integrations cannot
+    # be added: the panel would be neither product's model.
+    nonlinear <- vapply(parents, function(p)
+      isTRUE(attr(drugs[[p]]$metaboliteSeries, "nonlinear")), logical(1))
+    if (length(parents) > 1 && any(nonlinear))
+      stop("The factor VIII drawn as ", target, " is formed by ",
+           paste(parents, collapse = " and "), " together, which the model cannot ",
+           "draw: it is not the sum of each concentrate's own. Give one VWF ",
+           "concentrate at a time.")
     # One line for every contributor at once: the receiving drug's own doses
     # and each parent's.  The state sets' lines are the series' lines, but are
     # included so that the time until threshold, carried onto this line by

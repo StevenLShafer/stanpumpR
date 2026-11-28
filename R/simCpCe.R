@@ -986,11 +986,29 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   # The factor VIII a VWF concentrate protects (R/vwfFactorVIII.R), from the
   # VWF:RCo the patient now has, drawn as the drug its block names
   if (!is.null(PK$factorVIIIResponse))
+  {
+    r <- PK$factorVIIIResponse
+    # A concentrate that carries factor VIII (Humate-P) adds it to the pool:
+    # each dose row in 10 IU of VWF:RCo (or 10 IU per minute) is
+    # Dose x 10 / ratio IU of factor VIII into r$volume litres, so
+    # Dose / (ratio x volume) IU/dL
+    input <- NULL
+    if (!is.null(r$ratio))
+    {
+      scale <- 1 / (r$ratio * r$volume)
+      input <- list(bolusTime = dose$Time[dose$Bolus],
+                    bolus     = dose$Dose[dose$Bolus] * scale,
+                    rateTime  = dose$Time[!dose$Bolus],
+                    rate      = dose$Dose[!dose$Bolus] * scale)
+    }
     metaboliteSeries <- data.frame(
       Time = results$Time,
-      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, PK$factorVIIIResponse),
+      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, r, input),
       Ce   = NA_real_
     )
+    # not to be added to another parent's (foldMetabolites())
+    attr(metaboliteSeries, "nonlinear") <- TRUE
+  }
 
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results
