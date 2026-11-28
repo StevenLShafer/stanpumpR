@@ -117,3 +117,15 @@ test_that("the line is within 16% of Glund 2019's patients' AUC 0-24 h", {
   expect_true(all(abs(model / measured - 1) < 0.16))
   expect_equal(round(model / measured, 2), c(0.85, 0.88, 0.93, 1.08))
 })
+
+test_that("the returned parameters are pinned with the switch off and on", {
+  # the reference man, switch off, creatinine blank (0.9 mg/dL): CrCl 113.4,
+  # CL 4.07 + 0.391 x 113.4 = 48.42 mL/min
+  off <- idarucizumab(70, 170, 35, "male", adjustToFFM = FALSE)$PK$default
+  expect_equal_rounded(c(3.36, 3.689, 0.0484195, 0.005577),
+                       unname(unlist(off[c("v1", "v2", "cl1", "cl2")])), tolerance = 1e-6)
+  # a 95 kg, 160 cm, 72-year-old woman, creatinine 1.4 mg/dL, switch on
+  on <- idarucizumab(95, 160, 72, "female", adjustToFFM = TRUE, creatinine = 1.4)$PK$default
+  expect_equal_rounded(c(3.23581, 3.55265, 0.0182961, 0.00542168),
+                       unname(unlist(on[c("v1", "v2", "cl1", "cl2")])), tolerance = 1e-6)
+})
