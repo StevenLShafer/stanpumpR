@@ -11,9 +11,19 @@ private paper archive, not in this repository; this file is unrelated to it.)
 
 Review by commenting. Do not push commits, open fix pull requests or change the branch under
 review, and do not approve or request changes: nothing here lets a reviewer approve or merge
-(Steven L. Shafer's rule for every automated reviewer, as for CodeRabbit). Auto-Fix should be
-off for this repository; that is an organisation setting in Devin (Settings > Devin >
-Pull requests), not something this file can enforce.
+(Steven L. Shafer's rule for every automated reviewer, as for CodeRabbit). The rule behind it is
+that **no automated reviewer writes code here**. That is a constraint on the reviewers, and not a
+claim that Claude is the only author: `README.md` names the two people who can change the code
+directly, Shafer and Dean Attali, and says "Dean still programs himself. I only use Claude Code."
+Dean Attali is an author of the package.
+
+So Auto-Fix must be off -- and it is set in TWO places: the organisation default
+(Settings > Devin > Pull requests) and each session owner's OWN personal setting, which
+overrides that default. Both have to be checked, and neither is something this file can
+enforce. Checking only the organisation default is not enough: Auto-Fix was found ON and
+turned off on 2026-11-27. CodeRabbit raised the personal override while reviewing the pull
+request that added this file (1016), which merged before the point could be applied; Shafer
+then checked, found Auto-Fix live, and turned it off.
 
 ## Ignore
 
@@ -21,10 +31,47 @@ Do not review, and do not comment on, anything under `papers/digests/`.
 
 These are prose evidence cards about published papers, opened in batches by the unattended
 digest pipeline (`_build/digest_run.py`). They contain no R, no JavaScript and nothing that runs,
-and the digest pipeline, `test-digest-cards.R` and a human reading each batch's
-`open_questions` already check them. The reason is the one in `.coderabbit.yaml`: reviewer
+and the digest pipeline and a human reading each batch's `open_questions` already
+check them -- but see the limit below. The reason is the one in `.coderabbit.yaml`: reviewer
 budget is spent on code. A pull request that changes only files under `papers/digests/`
 needs no review at all. A pull request that also changes anything else is reviewed for
 the rest of its files as usual.
+
+**What does and does not check a card.** `digest_run.py` checks that each card's YAML
+parses as it writes it, and `papers/_build/digest_prep.py` holds a card to the card
+format -- but digest_prep.py belongs to the paper archive's pipeline, not to CI. It
+runs when somebody runs `update.bat`, and it reports to `digests/STATUS.md` in the
+archive, outside this repository. **So no check on a pull request looks at a card's
+format, and a malformed card merges green.** That is not hypothetical: fifteen cards
+reached master with the opening `---` fence missing its newline, so they carried no
+parseable frontmatter at all, and the only thing that noticed was digest_prep.py, days
+later (2026-11-28). An earlier version of this file named a `test-digest-cards.R` as
+the format check; no such test has ever existed here. If the cards are to stay out of
+review, that gap is the thing to close, and closing it is a test in CI rather than a
+reviewer.
+
+**Silence on GitHub does not show this is working.** A digests-only pull request with no
+comment on it is equally consistent with the exclusion being honoured and with a review
+having run, cost its budget, and found nothing worth saying -- and budget is the whole point
+of the exclusion, so the absence of a comment is not the thing to measure. Devin raised this
+about itself while reviewing 1016, which merged before the point could be applied, and then
+raised it again on the fix (1025): saying "check the activity or usage" names no record that
+tells a skip from a silent review. The two reviewers differ in exactly that, so the record
+to look at is different for each.
+
+**CodeRabbit says which it did, in the thread.** On a digests-only pull request it posts
+"Review skipped -- Review was skipped due to path filters" and counts the files it ignored
+(14, on pull request 1015). When it is refused for budget rather than path it says that
+instead, posting its usage-cap warning -- which is itself evidence that it was ASKED, as it
+was on 1024 and 1025. So for CodeRabbit the comment is the record, and no silence needs
+interpreting.
+
+**Devin posts nothing either way, so its record is per pull request and off GitHub:**
+`https://app.devin.ai/review/<owner>/<repo>/pull/<number>`, the address the badge in every
+Devin comment links to. It needs an account, so nothing in this repository can read it and a
+person has to look. The test is a COMPARISON, not a single page: open that record for a
+digests-only pull request beside one for a pull request that changes code. If the
+digests-only one shows a review run, the path exclusion is not reaching Devin and the budget
+this section exists to save is being spent anyway.
 
 Everything else is reviewed.

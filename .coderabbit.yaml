@@ -28,8 +28,18 @@
 # catches on code have been substantial -- twenty findings on PR #730, three
 # more in its second pass over the fixes for them.  The cards are not
 # unreviewed in any case: `digest_run.py` checks that each card's YAML parses,
-# `test-digest-cards.R` holds them to the card format, and a human or a session
-# reads the `open_questions` of every batch before it is merged.
+# `papers/_build/digest_prep.py` holds them to the card format, and a human or a
+# session reads the `open_questions` of every batch before it is merged.
+#
+# BUT NOTE WHERE THAT FORMAT CHECK RUNS.  digest_prep.py is part of the paper
+# archive's pipeline, not of CI: it runs when somebody runs update.bat, and it
+# reports to `digests/STATUS.md` in the archive, outside this repository.  So no
+# check on a pull request looks at a card's format, and a malformed card merges
+# green.  That is not hypothetical: fifteen cards reached master with their
+# opening `---` fence missing its newline, so they had no parseable frontmatter
+# at all, and the only thing that noticed was digest_prep.py, days later
+# (2026-11-28).  Earlier wording here named a `test-digest-cards.R`, which has
+# never existed in this repository.
 #
 # THE RULE THE CARDS STILL HAVE TO MEET, since CodeRabbit will no longer catch
 # a breach of it: a card may quote a paper at most once and never beyond 15
