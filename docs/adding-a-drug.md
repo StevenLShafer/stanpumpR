@@ -134,7 +134,7 @@ section *What this paper actually supports*, which carries every number below).
 
 ### Where the grid starts is the largest single choice
 
-**Include the model's own concentration at time zero, where the model has one.** For an intravenous
+**Include the model's own concentration at time zero, where it is not zero.** For an intravenous
 bolus that is `dose / V1`, the intercept the curve extrapolates back to. It is not a physical
 concentration -- at time zero the drug has not left the injection site -- but it is intrinsic to the
 mammillary model with injection into the central compartment, which is the model being fitted, and it
@@ -152,10 +152,15 @@ makes the grid's start almost irrelevant. On de Groot, over starts of 1 to 10 mi
 and the anchored answer sits on 16.35 L, the median of the six subjects' individual V1, which is what
 anchoring to the median intercept must give.
 
-**Where the model has no intercept, the start matters and must be chosen.** An oral dose, an infusion
-or any absorption input has a true C(0) of zero, so there is nothing to include and `log(0)` would
-stop the fit in step 4. Then **begin at the study's first POSITIVE post-dose observation**, exclude
-any non-positive median, and record which times were dropped. Earlier
+**Where the intercept is zero, the start matters and must be chosen.** Every model has an intercept;
+for an absorption input it is exactly zero, by the equations as much as by logic. Oral into one
+compartment is `A exp(-alpha t) - A exp(-beta t)`, and at t = 0 both exponentials are 1, so the
+intercept is A - A = 0 (Steven L. Shafer, 2026-11-27). A zero intercept carries no information in a
+log fit, and `log(0)` would stop step 4 outright, so it cannot serve as the anchor. Then **begin at
+the study's first POSITIVE post-dose observation**, exclude any non-positive median, and record which
+times were dropped. Where the drug has an **endogenous baseline** -- so that C(0) is that baseline
+rather than zero -- the baseline is the intercept and can anchor the fit as a bolus intercept does.
+Earlier
 than that, the individual models are extrapolated into a region where the study has no data, which is
 exactly where subjects differ most. On de Groot, moving the start from 1 to 5 minutes moved V1 by 32%
 and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
@@ -252,9 +257,9 @@ minutes after a 15-minute lag: it won on AIC by 12 points over first-order at eq
 the Weibull was no better for its extra parameter, and the two parallel paths collapsed to one. That
 is strong evidence against the published first-order ka among the shapes tried; it is not a proof
 that no other shape fits, and seven points from one subject cannot make it one. The bioavailability,
-which is model-independent, was right -- it is the input's kind the published fit got wrong. Check
-whether a published absorption rate is a measurement or a compensation before carrying it into a
-model.
+which is model-independent, was right; what the comparison puts in doubt is the input's KIND, which
+the published fit reports as first-order and these data do not support. Check whether a published
+absorption rate is a measurement or a compensation before carrying it into a model.
 
 ## 1. The model — `R/drugs_<name>.R`
 
