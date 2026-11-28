@@ -687,7 +687,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     rowBody <- function(i) steps$body[[gr$bodyRow[[i]]]]
   }
   # The tissues' capacities at the temperature of the window drawn
-  props <- gasPropertiesAt(body$temperature)
+  props <- gasPropertiesOf(body)
   pr <- props[props$gas == g, ]
   ltg <- gasPartitionTissueGas(pr)
   bodyAt <- function(t) if (is.null(steps)) body else

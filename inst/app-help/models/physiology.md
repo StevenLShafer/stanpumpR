@@ -301,11 +301,39 @@ nitrous oxide, less.
 **Solubility rises.** Cold blood and tissue dissolve more agent. Zhou, Liu and
 Liu measured the blood:gas partition coefficient of desflurane, sevoflurane
 and isoflurane in human blood from 37 to 17 °C. Its logarithm rises in a
-straight line as temperature falls, by 3.0, 3.0 and 3.8% a degree. In human
-brain, heart, liver, muscle and fat the tissue:gas coefficients rise in
-proportion, so tissue:blood does not change. Every partition coefficient of
-the agent is raised by the same factor. More agent is carried away from the
-lungs, so FA/FI rises more slowly, most for the more soluble isoflurane.
+straight line as temperature falls, by 3.0, 3.0 and 3.8% a degree. Zhou and
+Liu measured the same in human brain, heart, liver, muscle and fat, and each
+tissue:gas coefficient takes its own tissue's slope (Steven Shafer, 27
+November 2026; until 28 November every tissue took the blood's, the authors
+having concluded the increases were approximately the same):
+
+| Per degree of cooling | Desflurane | Sevoflurane | Isoflurane |
+|---|---|---|---|
+| Blood | 3.0% | 3.0% | 3.8% |
+| Vessel-rich group (brain) | 3.2% | 3.1% | 3.0% |
+| Muscle group | 3.9% | 3.8% | 4.1% |
+| Fat group | 3.3% | 3.8% | 4.3% |
+
+So tissue:blood changes a little with temperature: at 31 °C isoflurane's
+brain:blood is 5% lower than at 37 °C, and sevoflurane's fat:blood 5% higher.
+More agent is carried away from the lungs, so FA/FI rises more slowly, most
+for the more soluble isoflurane.
+
+**Haematocrit changes solubility too.** In the same blood, diluted with saline
+to haematocrits of 20 to 40%, Zhou, Liu and Liu found the blood:gas
+coefficient to fall as the haematocrit falls: its logarithm by 0.94% for each
+percentage point of haematocrit for desflurane, 0.92% for sevoflurane and
+1.54% for isoflurane. The
+**Haemoglobin** slider sets the haematocrit with it, at three times the
+haemoglobin, and each volatile agent's blood:gas coefficient follows from its
+value at 45% (15 g/dL): at 7 g/dL sevoflurane's is 0.59 where it is 0.74 at
+15, so less is carried from the lungs and end-tidal rises faster. The slider
+runs from 12 to 60%, so both of its ends are beyond what was measured.
+Nitrous oxide and the tissues' coefficients do not move. This is one person's
+blood diluted with saline: between people the haematocrit does not predict
+solubility (Esper 2015; Hu, Zhou and Liu 2001), and replacing red cells with
+the person's own plasma moved isoflurane's the other way (Lerman, Gregory and
+Eger 1984).
 
 **MAC falls.** Liu, Hu and Liu measured isoflurane MAC in children at 37, 34
 and 31 °C. Their regression, MAC = 0.0784 T − 1.203, falls by 4.6% of the
@@ -476,8 +504,8 @@ a minute ventilation of 6 L/min, at 30 minutes and haemoglobin 15 g/dL:
 |---|---|---|---|---|
 | 0% | 659 mmHg | 285 mmHg | 98 mmHg | 98% |
 | 3% | 609 mmHg | 240 mmHg | 91 mmHg | 97% |
-| 5% | 573 mmHg | 210 mmHg | 86 mmHg | 97% |
-| 10% | 478 mmHg | 147 mmHg | 77 mmHg | 95% |
+| 5% | 574 mmHg | 210 mmHg | 86 mmHg | 97% |
+| 10% | 479 mmHg | 147 mmHg | 77 mmHg | 95% |
 | 15% | 373 mmHg | 109 mmHg | 70 mmHg | 94% |
 | 20% | 259 mmHg | 88 mmHg | 64 mmHg | 92% |
 | 30% | 102 mmHg | 66 mmHg | 54 mmHg | 88% |
@@ -492,9 +520,9 @@ end-tidal, by a tenth at the first moment, when the venous blood holds none,
 and by less as the tissues fill; during washout it is above. The brain follows
 the arterial blood, so it rises a little more slowly than without the shunt,
 and end-tidal a little faster, less being taken up. With 2% sevoflurane as
-above on oxygen, the brain reads 1.50% at 10 minutes and 1.71% at 30, where
-without the shunt it would read 1.55% and 1.74%; desflurane 6%, 5.15% and
-5.46% against 5.30% and 5.57%. GasMan has no shunt (see [Differences from
+above on oxygen, the brain reads 1.51% at 10 minutes and 1.68% at 30, where
+without the shunt it would read 1.55% and 1.72%; desflurane 6%, 5.11% and
+5.36% against 5.23% and 5.45%. GasMan has no shunt (see [Differences from
 GasMan](help:models/gas-differences)).
 
 A physiology event records the slider, so a shunt that changes during a case
@@ -523,9 +551,9 @@ arterial partial pressure starts at about half of normal. For a highly soluble
 agent doubling the ventilation doubles the delivery and makes up for it, and
 the arterial rise is barely delayed. Eger and Severinghaus predicted this with
 an analogue model, and Stoelting and Longnecker confirmed it in dogs and
-people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 72% of
-normal for nitrous oxide at 2 minutes and 78% for isoflurane, 92% and 87% at
-an hour, while end-tidal reads a little above normal. The Visualizer draws the
+people. In stanpumpR (fresh gas and ventilation 6 L/min), arterial is 75% of
+what it is with a tracheal tube for nitrous oxide at 2 minutes and 81% for
+isoflurane, 93% and 89% at an hour, while end-tidal reads a little above it. The Visualizer draws the
 arterial bar below the end-tidal one.
 
 **Hypoxaemia.** Doubling the ventilation of one lung nearly makes up for the
@@ -569,7 +597,7 @@ table above:
 | 40% | 66 mmHg | 93% | 47 mmHg | 82% |
 | 30% | 102 mmHg | 98% | 54 mmHg | 88% |
 | 20% | 259 mmHg | 100% | 64 mmHg | 92% |
-| 10% | 478 mmHg | 100% | 77 mmHg | 95% |
+| 10% | 479 mmHg | 100% | 77 mmHg | 95% |
 | 0% | 659 mmHg | 100% | 98 mmHg | 98% |
 
 On oxygen the PaO2 climbs steeply below a shunt of about 30%, as the
@@ -584,8 +612,9 @@ shown with the Shunt fraction slider. The oxygen the shunted half fails to carry
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
 the SaO2 is 68% at 7 g/dL and 87% at 17 g/dL, on air 48% and 77%. A physiology
-event records it, so a transfusion or a bleed can be followed. It changes the
-arterial oxygen only, and at a shunt of 0% nothing the plot shows.
+event records it, so a transfusion or a bleed can be followed. It also sets
+the haematocrit, which moves each volatile agent's blood:gas coefficient
+(*Haematocrit changes solubility too*, above), at any shunt.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
@@ -824,6 +853,10 @@ and gas on induction with inhalation anesthetics. *Anesthesiology*
 Eger EI II, Shafer SL. The evolution of pharmacokinetics. Chapter 8 of Eger's
 scientific autobiography, manuscript, 2017.
 
+Esper T, Wehner M, Meinecke CD, Rueffert H. Blood/gas partition coefficients
+for isoflurane, sevoflurane, and desflurane in a clinically relevant patient
+population. *Anesth Analg* 2015;120:45-50. doi:10.1213/ANE.0000000000000516
+
 Gong J, Cho M, Gupta R, Synold TW, Frankel P, Ruel C, Fakih M, Chung V, Lim D,
 Chao J. A pilot study of vinorelbine safety and pharmacokinetics in patients
 with varying degrees of liver dysfunction. *Oncologist* 2019;24:1137-1145.
@@ -840,6 +873,10 @@ Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
 *Br J Clin Pharmacol* 2005;60:176-82. doi:10.1111/j.1365-2125.2005.02393.x
 
+Hu P, Zhou JX, Liu J. Blood solubilities of volatile anesthetics in cardiac
+patients. *J Cardiothorac Vasc Anesth* 2001;15:560-2.
+doi:10.1053/jcan.2001.26531
+
 James MF, Manson ED, Dennett JE. Nitrous oxide analgesia and altitude.
 *Anaesthesia* 1982;37:285-8. doi:10.1111/j.1365-2044.1982.tb01100.x
 
@@ -850,6 +887,9 @@ Kitzen JJ, Puozzo C, de Jonge MJ, Brandely M, Verweij J. Mild to moderate
 liver dysfunction does not require dose reduction of oral or intravenous
 vinorelbine: results of a pharmacokinetic study. *Eur J Cancer*
 2010;46:266-9. doi:10.1016/j.ejca.2009.10.031
+
+Lerman J, Gregory GA, Eger EI II. Hematocrit and the solubility of volatile
+anesthetics in blood. *Anesth Analg* 1984;63:911-4.
 
 Levine BD, Giller CA, Lane LD, Buckey JC, Blomqvist CG. Cerebral versus
 systemic hemodynamics during graded orthostatic stress in humans.

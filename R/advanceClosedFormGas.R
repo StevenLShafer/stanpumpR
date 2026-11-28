@@ -1158,7 +1158,7 @@ advanceClosedFormGas <- function(
 
   # The partition coefficients and MAC at the body's temperature
   # (gasPropertiesAt(); 37 C unless the temperature slider has set one).
-  props <- gasPropertiesAt(body$temperature)
+  props <- gasPropertiesOf(body)
 
   # Split the dose table by setting.  Rows for a setting must be time-ordered
   # for settingAt() to pick the last one in force.
@@ -1294,7 +1294,7 @@ advanceClosedFormGas <- function(
       k <- findInterval(t0, bodySteps$time)
       if (k != bodyIndex) {
         newBody <- bodySteps$body[[k]]
-        newProps <- gasPropertiesAt(newBody$temperature)
+        newProps <- gasPropertiesOf(newBody)
         state <- gasStateAcrossBodies(state, props, newProps,
                                       gasMachineLitres(body) / gasMachineLitres(newBody))
         from <- body
@@ -1529,7 +1529,7 @@ gasMacSum <- function(state, column, bodyRow, bodies, age)
   for (k in unique(bodyRow))
   {
     rows <- which(bodyRow == k)
-    pk <- gasPropertiesAt(bodies[[k]]$temperature)
+    pk <- gasPropertiesOf(bodies[[k]])
     for (g in intersect(pk$gas[pk$potent], names(state)))
       total[rows] <- total[rows] +
         state[[g]][rows, column] / macForAge(pk$MAC40[pk$gas == g], age)
