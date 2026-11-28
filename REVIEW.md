@@ -12,7 +12,10 @@ private paper archive, not in this repository; this file is unrelated to it.)
 Review by commenting. Do not push commits, open fix pull requests or change the branch under
 review, and do not approve or request changes: nothing here lets a reviewer approve or merge
 (Steven L. Shafer's rule for every automated reviewer, as for CodeRabbit). The rule behind it is
-that **only Claude writes code** in this repository.
+that **no automated reviewer writes code here**. That is a constraint on the reviewers, and not a
+claim that Claude is the only author: `README.md` names the two people who can change the code
+directly, Shafer and Dean Attali, and says "Dean still programs himself. I only use Claude Code."
+Dean Attali is an author of the package.
 
 So Auto-Fix must be off -- and it is set in TWO places: the organisation default
 (Settings > Devin > Pull requests) and each session owner's OWN personal setting, which
