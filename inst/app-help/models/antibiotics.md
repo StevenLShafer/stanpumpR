@@ -31,6 +31,8 @@ MBCs are measured in protein-free broth, so they are free-drug values. Cefazolin
 
 **Linezolid** is the one antibiotic whose band is not an MBC band. The label calls it bacteriostatic against staphylococci and enterococci, whose MBCs are 32 mg/L and more (MRSA) and 1,000-2,000 mg/L (enterococci), so it has no principal pathogen it kills at attainable levels. Its band is instead the trough range of the ESICM/ESCMID position paper on antimicrobial monitoring, 2-7 mg/L total drug, drawn against the whole curve; its MIC line is *S. aureus* at 2 mg/L. See [linezolid](help:drugs/linezolid).
 
+**Teicoplanin** is the second. Its MBCs against *S. aureus* are too often those of tolerant isolates to place a band: Biedenbach and colleagues (2007) found an MBC/MIC ratio of 32 or more in a share of staphylococci, and Maple and colleagues (1989) an MBC90 above 32 mg/L at 22 hours. Its band is the same position paper's trough, at least 15-30 mg/L total drug, and its MIC line is free teicoplanin at 2 mg/L, the top of the EUCAST *S. aureus* distribution, placed on the total curve at 20 mg/L through its binding of 90% or more. See [teicoplanin](help:drugs/teicoplanin).
+
 ### How much to trust it
 
 Less than the MIC line. The MIC is the measurement breakpoints are set on; the MBC is a research measurement, and most of these numbers are not modern:
