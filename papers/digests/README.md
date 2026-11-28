@@ -128,3 +128,14 @@ For each location: what the code/help/test says, what the paper says, and a verd
 (**matches** / **discrepancy** / **cannot verify**). Check unit conversions, per-kg vs absolute values,
 minutes vs hours, ke0 vs t½ke0 vs tPeak, and transcription. Discrepancies are reported, never fixed here.
 ````
+
+## A two-stage source
+
+If the paper fitted each subject separately and then averaged the parameters, **say so in the
+card**, in the Model section and in `open_questions` if a model might be built from it. The
+printed means may describe no subject: averaging is worst for whichever parameter is most
+skewed across subjects, and the rest can look healthy while that one is badly wrong. Record
+whether individual parameters are printed per subject (which makes a refit possible) and
+whether any real concentration-time data appear anywhere, including in a figure. de Groot 1994
+is the worked case: `DOI_10.1007_bf03257449.md`, section *What this paper actually supports*.
+The procedure is *A two-stage source* in `docs/adding-a-drug.md`.
