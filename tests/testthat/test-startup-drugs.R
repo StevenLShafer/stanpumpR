@@ -46,7 +46,7 @@ test_that("the menu lists the categories in order, each sorted by name", {
                      "gabapentin", "ibuprofen", "ketorolac", "meloxicam", "naproxen",
                      "pregabalin", "suzetrigine"))
   expect_identical(choices[["Hypnotics and sedatives"]],
-                   c("alprazolam", "clonazepam", "dexmedetomidine", "diazepam", "diphenhydramine",
+                   c("alprazolam", "ciprofol", "clonazepam", "dexmedetomidine", "diazepam", "diphenhydramine",
                      "esketamine", "etomidate",
                      "ketamine", "lorazepam", "midazolam", "propofol",
                      "remimazolam", "temazepam", "zolpidem"))

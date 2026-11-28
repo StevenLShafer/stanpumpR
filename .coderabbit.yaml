@@ -1,0 +1,46 @@
+# CodeRabbit configuration for stanpumpR.
+#
+# This file exists for ONE reason: to keep the paper digest cards out of
+# CodeRabbit's review, so its budget is spent on code.  Everything else is left
+# at CodeRabbit's defaults deliberately -- do not add settings here without a
+# reason written down, because a setting recorded nowhere is a setting nobody
+# can audit later.
+#
+# WHY (Steven L. Shafer, 2026-11-26).  CodeRabbit began refusing reviews:
+#
+#   "Your organization has reached its usage spending cap ... 86 included PR
+#    review attempts over the past 7 days set your current allowance at 1
+#    review per hour."
+#
+# A large share of those attempts are digest pull requests.  `_build/digest_run.py`
+# runs unattended, two papers at a time, and opens a pull request per batch; on
+# 2026-11-26 alone that was five of them, and an overnight chain had produced
+# nineteen the night before.  Each contains only `papers/digests/*.md` -- prose
+# evidence cards about published papers, with no R, no JavaScript and nothing
+# that runs.  They were consuming the allowance that PRs touching the PK
+# engines need, and by that evening CodeRabbit was skipping code reviews
+# outright (PR #978 merged with CodeRabbit "skipping", PR #985 with the quota
+# notice above).
+#
+# WHAT IS GIVEN UP.  Nobody reviews the cards' prose.  That is a real cost and
+# it is accepted knowingly: across this project CodeRabbit's catches on cards
+# have been small (a two-word over-quotation on the Kazama card), while its
+# catches on code have been substantial -- twenty findings on PR #730, three
+# more in its second pass over the fixes for them.  The cards are not
+# unreviewed in any case: `digest_run.py` checks that each card's YAML parses,
+# `test-digest-cards.R` holds them to the card format, and a human or a session
+# reads the `open_questions` of every batch before it is merged.
+#
+# THE RULE THE CARDS STILL HAVE TO MEET, since CodeRabbit will no longer catch
+# a breach of it: a card may quote a paper at most once and never beyond 15
+# words (`papers/README.md`).  That limit protects the PAPERS -- the archive's
+# PDFs are copyrighted, and the cards are publishable only because they hold
+# facts and paraphrase.  Whoever writes or merges a card now owns that check.
+#
+# If the quota stops being the binding constraint, the honest thing is to
+# delete this file rather than let an unexplained exclusion persist.
+
+reviews:
+  path_filters:
+    # Paper evidence cards: see the note above.  Everything else is reviewed.
+    - "!papers/digests/**"

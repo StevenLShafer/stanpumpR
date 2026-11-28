@@ -258,7 +258,7 @@ test_that("Opioid sensitivity moves transduction, not physical occupancy", {
   # buprenorphine's physical occupancy is binding only (true K_D fixed): invariant
   expect_equal(occ(rS), occ(r0), tolerance = 1e-9)
   expect_equal(occ(rL), occ(r0), tolerance = 1e-9)
-  # more sensitive -> more analgesia and more respiratory depression
+  # more sensitive -> more analgesia and more ventilatory depression
   expect_gt(ana(rS), ana(r0)); expect_gt(ana(r0), ana(rL))
   expect_gt(res(rS), res(r0)); expect_gt(res(r0), res(rL))
   # a full agonist's occupancy rises with sensitivity (C50 = 4*MEAC*3^theta)

@@ -137,6 +137,9 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 # the CKD-EPI 2021 eGFR, as a power, on clearance
                 # (Vuong 2025, R/drugs_fluconazole.R)
                 "fluconazole",
+                # the CKD-EPI 2021 eGFR de-indexed by BSA, a power, on clearance
+                # (Kim 2024); the child's own creatinine, exponential (Zhang 2020)
+                "teicoplanin", "teicoplaninKim", "teicoplaninZhang",
                 # Cockcroft-Gault on the Janmahasatian lean body weight, in
                 # proportion on CL/F (Duong 2013, R/drugs_metforminER.R)
                 "metforminER",

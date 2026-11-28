@@ -28,8 +28,8 @@ additions on top of that:
 3. **A rotation solver** (§4.3): find the dose of a new opioid, route and
    frequency that reproduces a stable patient's current exposure. Because
    kinetics are linear, this needs no iteration.
-4. **A respiratory scale** (§4.4): a second, separate normalisation, R(t),
-   against a respiratory-depression potency. Safety reporting uses R(t), not U.
+4. **A ventilatory scale** (§4.4): a second, separate normalisation, R(t),
+   against a ventilatory-depression potency. Safety reporting uses R(t), not U.
 
 The proposal is aimed at **within-patient** use (rotation, tapering, comparing
 regimens) rather than population thresholds, for the reasons in §6.
@@ -81,11 +81,11 @@ U(t) be the total opioid level from `totalOpioidMEAC()`. Over a window
 | Metric | Definition | Reads as |
 |---|---|---|
 | **Mean U** (`Ubar`) | (1/T) ∫ U dt | The exposure analogue of MME/day |
-| **Peak U** | max U | Peak effect; relevant to sedation and respiratory risk |
+| **Peak U** | max U | Peak effect; relevant to sedation and ventilatory risk |
 | **Trough U** | min U | Breakthrough pain risk |
 | **Peak:trough ratio** | Peak / trough | How "spiky" the regimen is |
 | **Time above 1 MEAC** | fraction of T with U ≥ 1 | Time with adequate analgesia |
-| **Time above threshold** | fraction of T with R ≥ R_crit (§4.4) | Respiratory exposure |
+| **Time above threshold** | fraction of T with R ≥ R_crit (§4.4) | Ventilatory exposure |
 
 **Steady state.** For linear kinetics, the mean concentration at steady state
 is F × (dose rate) / CL whatever the ke0 or dosing interval, so `Ubar` can be
@@ -291,11 +291,11 @@ dose table.
 resulting Ubar and trough shown after rounding. A tablet-strength list per
 drug would be a new CSV or a new column.
 
-### 4.4 A separate respiratory scale, R(t)
+### 4.4 A separate ventilatory scale, R(t)
 
-MEAC is an analgesic potency. Respiratory depression has its own potency, and
+MEAC is an analgesic potency. Ventilatory depression has its own potency, and
 the ratio of the two is not the same across opioids (it is the premise of
-oliceridine, whose library MEAC is Dahan's analgesic potency, 27.9 ng/mL, while its typical concentration, 27.4 ng/mL, is his respiratory potency).
+oliceridine, whose library MEAC is Dahan's analgesic potency, 27.9 ng/mL, while its typical concentration, 27.4 ng/mL, is his ventilatory potency).
 Using U for safety makes both mistakes at once.
 
 Proposal:
@@ -398,7 +398,7 @@ engine (`docs/architecture.md#time-units`).
    triggering a review of the MEAC.
 5. **Outcome validation (research, not software).** Using prescription data
    simulated with typical covariates, does `Ubar`, peak U or time above an R
-   threshold predict overdose or respiratory events better than MME? This is
+   threshold predict overdose or ventilatory events better than MME? This is
    what would justify using the scale outside stanpumpR.
 
 ---

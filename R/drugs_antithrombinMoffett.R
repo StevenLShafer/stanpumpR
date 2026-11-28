@@ -99,8 +99,9 @@
 # PREGNANCY: no pregnancy-related change in the plasma-derived concentrate's
 # clearance or volume has been quantified against a non-pregnant comparison
 # (Weiner 1990, PMID 2353344, abstract: half-life 29.4 h in 5 healthy pregnant
-# women; DeJongh 2014 found larger CL and Vss at delivery for the recombinant
-# product); nothing is applied (inst/extdata/pregnancyRegistry.csv).
+# women; DeJongh 2014 found CL and Vss about twice as large at delivery as in
+# non-pregnant patients with the same hereditary deficiency having surgery,
+# both given the recombinant product); nothing is applied (inst/extdata/pregnancyRegistry.csv).
 #
 # References
 # ----------
