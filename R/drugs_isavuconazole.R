@@ -91,8 +91,14 @@ ISAVUCONAZOLE_COHORT <- list(groups = list(
   list(weight = 77.8, height = 175, age = 43, men = 140, women = 49),
   list(weight = 67.0, height = 168.4, age = 54, men = 132, women = 100)))
 
-ISAVUCONAZOLE_PULSE_FRACTION <- NULL
-ISAVUCONAZOLE_PULSE_DELAY    <- NULL   # minutes
+# Eight fractions, fitted MINIMAX (data-raw/isavuconazolePulses.R, 2026-11-28):
+# 0.332% of the peak over the curve and 0.0018% at the peak at the reference
+# patient, about 63% and 18% of the limits.  Six cannot reach the limits (1.05
+# of them at best) and seven only with 19% of headroom.
+ISAVUCONAZOLE_PULSE_FRACTION <- c(0.048147, 0.105336, 0.150194, 0.166266,
+                                  0.173367, 0.168459, 0.132640, 0.055591)
+ISAVUCONAZOLE_PULSE_DELAY    <- c(35.4567, 50.4314, 60.9067, 69.5224,
+                                  76.7964, 84.7895, 93.9334, 107.6103)   # minutes
 
 #' Isavuconazole pharmacokinetics (intravenous and oral)
 #'

@@ -53,22 +53,22 @@ weibullExact <- function(set, dose, tmax) {
 }
 
 test_that("the oral pulses reproduce the Weibull input to the documented standard", {
-  delays <- ISAVUCONAZOLE_PULSE_DELAY
   expect_equal(sum(ISAVUCONAZOLE_PULSE_FRACTION), 1, tolerance = 1e-6)
   for (p in list(list(70, 170, 35, "male"), list(67, 168.4, 54, "female"),
                  list(110, 180, 60, "male"))) {
     set <- do.call(isavuconazole, p)$PK$default
     ex <- weibullExact(set, 372, 24 * 60)
-    peak <- max(ex$C)
-    # the error is largest where a pulse starts, so evaluate there too
-    times <- sort(unique(c(seq(0, 24 * 60, by = 1), delays, delays + 0.5, delays + 1)))
     dt <- data.frame(Drug = "isavuconazole", Time = 0, Dose = 372, Units = "mg PO")
     w <- simulateDrugsWithCovariates(dt, events, p[[1]], p[[2]], p[[3]], p[[4]],
                                      24 * 60, FALSE)$isavuconazole$wide
-    sim <- approx(w$Time, w$Plasma, times)$y
-    ref <- approx(ex$t, ex$C, times)$y
-    expect_lt(max(abs(sim - ref)) / peak, 0.0053)
-    expect_lt(abs(max(w$Plasma) / peak - 1), 0.0001 * 2)
+    # The exact system read at the engine's own points, as hydrochlorothiazide's
+    # test does, so both peaks are sampled alike; the engine's time line has a
+    # point at every pulse, where the approximation kinks and the error peaks.
+    expect_true(all(ISAVUCONAZOLE_PULSE_DELAY %in% w$Time))
+    ref <- approx(ex$t, ex$C, w$Time)$y
+    peak <- max(ref)
+    expect_lt(max(abs(w$Plasma - ref)) / peak, 0.0053)
+    expect_lt(abs(max(w$Plasma) - peak) / peak, 0.0001)
   }
 })
 
