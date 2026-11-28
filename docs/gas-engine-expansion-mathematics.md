@@ -136,7 +136,7 @@ With an ideal lung the arterial to end-tidal difference is only the shunt's, `s 
     pH(37) = 6.1 + log10( HCO3 / (0.0307 × PaCO2) )       PaCO2 = P*_a; HCO3 the slider, 20 to 32, default 24 mEq/L
     pH(T)  = pH(37) + 0.0147 (37 - T)                     Rosenthal 1948; shown only with the pH-stat box
 
-Bicarbonate 24 at 40 mmHg gives 7.39; 20 gives 7.31 and 32 gives 7.52. The slider holds the bicarbonate fixed, so this is not a buffer line: an acute rise in PaCO₂ in a patient raises bicarbonate a little, and the model's pH falls slightly more than the patient's. The constants 6.1 and 0.0307 mmol/L/mmHg are the standard clinical ones and have not yet been read in a source here (Severinghaus 1966 tabulates both against temperature; to confirm on its PDF).
+Bicarbonate 24 at 40 mmHg gives 7.39; 20 gives 7.31 and 32 gives 7.52. The slider holds the bicarbonate fixed, so this is not a buffer line: an acute rise in PaCO₂ in a patient raises bicarbonate a little, and the model's pH falls slightly more than the patient's. The constants are read in Dash's papers: pK 6.1 at plasma pH 7.4 (Dash 2016, Table 1, on the page image) and the solubility of CO₂ in plasma 3.07e-5 M/mmHg at 37 °C, 0.0307 mmol/L/mmHg (Dash and Bassingthwaighte 2010, equation 10b, PubMed Central text; from Austin 1963).
 
 ## 8. Oxygen
 
@@ -149,11 +149,11 @@ Unchanged in form, a gas-phase state with a sink, now `kappa(T) VO2(T)`, the ins
     S    = (PO2 / P50)^n / (1 + (PO2 / P50)^n)            eq 6
     n    = 2.82 - 1.20 × 10^(-PO2 / 29.25)                eq 11
     P50  = 26.8 × (P50_pH / 26.8) (P50_CO2 / 26.8) (P50_T / 26.8)       eq 10, DPG at its standard value
-    P50_pH  = 26.8 - 25.535 x + 10.646 x^2 - 1.764 x^3,   x = pH - 7.4  eq 9a
+    P50_pH  = 26.8 - 25.535 x + 10.646 x^2 - 1.764 x^3,   x = pH_rbc - 7.24 = 0.795 (pH - 7.4)   eq 9a
     P50_CO2 = 26.8 + 0.1273 (PCO2 - 40) + 1.083e-4 (PCO2 - 40)^2        eq 9b
     P50_T   = 26.8 + 1.435 (T - 37) + 0.04163 (T - 37)^2 + 6.86e-4 (T - 37)^3   eq 9d
 
-Equations 9a to 9d, 10 and 11 were confirmed on the page image (printed pages 101 and 102). P50 is 26.8 mmHg at 37 °C, 20.6 at 32 °C and 16.8 at 28 °C. The curve is evaluated in vivo: at body temperature, with the in-vivo `pH(T)` and in-vivo PCO₂. **[for decision 7]** Equation 9a does not say on its page whether `pH` is the plasma's (standard 7.4) or the red cell's (standard 7.24, `pH_rbc = 0.795 pH + 1.357`). Taken as plasma it gives a Bohr coefficient of about -0.40 at pH 7.2, Severinghaus's fixed-acid value. To be settled from Dash and Bassingthwaighte 2010 or the authors' published code before it is coded.
+Equations 9a to 9d, 10 and 11 were confirmed on the page image (printed pages 101 and 102). P50 is 26.8 mmHg at 37 °C, 20.6 at 32 °C and 16.8 at 28 °C. The curve is evaluated in vivo: at body temperature, with the in-vivo `pH(T)` and in-vivo PCO₂. **Item 7, settled on the sources (2026-11-28)**: the pH in equation 9a is the red cell's, `pH_rbc = 0.795 pH + 1.357`, standard 7.24. Dash 2016 fits and plots P50 against `pH_rbc` throughout (Figures 2, 3 and 6, the last over 5.8 to 8.2), and states that its pH term is the 2010 paper's times 1/0.833; Dash and Bassingthwaighte 2010 (PMID 20162361, equation 11, read in the PubMed Central text) writes that term as -21.279 (pH_rbc - 7.24), and 21.279 / 25.535 is 0.833. In plasma terms the fixed-acid Bohr coefficient is then -0.33, and with CO₂ as the acid, the CO₂ term added, about -0.5, beside Severinghaus's -0.40 and -0.48.
 
 ### 8.3 Content
 
@@ -213,7 +213,7 @@ The starting state is the steady state of the settings at time 0 with the patien
 4. With Esper's blood:gas coefficients the tissue:gas coefficients stay as they are. Recommended: yes, as was decided for hematocrit.
 5. CO₂ stores: Farhi and Rahn's compartments on the engine's groups, scaled by the engine's volumes; production shared 164:40 between vessel-rich and muscle; no store and no production in fat and bone; the blood curve linear. Recommended: yes.
 6. End-tidal CO₂ is the alveolar value less an alveolar dead space of 10% of the alveolar tidal volume, to reproduce Nunn and Hill's 4.6 mmHg; end-tidal oxygen and agent stay alveolar for now. Recommended: yes, and the alternative is an ideal lung with a 0.6 mmHg difference.
-7. Dash's pH term: plasma or red-cell pH. To be settled from the 2010 paper or the authors' code; no decision needed unless they disagree.
+7. Dash's pH term: settled on the sources, the red cell's pH (section 8.2).
 8. Oxygen capacity stays 1.34 mL/g with Dash's saturation and Dash's dissolved coefficient. Recommended: yes.
 
-Still to read before coding: Buck 1981 (or another vapour-pressure source); Severinghaus 1966 for the Henderson-Hasselbalch constants; Dash and Bassingthwaighte 2010 for item 7; Fenn, Rahn and Otis's equations 2 and 17.
+Still to read before coding: Buck 1981 (or another vapour-pressure source); Fenn, Rahn and Otis's equations 2 and 17. Dash and Bassingthwaighte 2010 was read in the PubMed Central text only, which lacks its appendices and Table 1; its PDF is not in hand.
