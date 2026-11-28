@@ -77,42 +77,56 @@ objective <- function(p, n) {
   max(e[["curve"]] / 0.0053, e[["peak"]] / 0.0001)
 }
 
-# A smooth stand-in for the worst point (a p-norm), minimised first by BFGS,
-# then the true minimax objective polished by Nelder-Mead; repeated from the
-# quantiles of the Weibull input and from random perturbations of the best.
-smooth <- function(p, n, pw = 40) {
-  x <- unpack(p, n)
-  grid <- sort(unique(c(seq(0, 12, by = 0.02), seq(12, TMAX, by = 0.25),
-                        unlist(lapply(x$delay, function(d) d + c(0, 0.005, 0.01, 0.02))), tPeak)))
+# The plasma curve is LINEAR in the fractions once the delays are fixed, so
+# only the delays are searched (Nelder-Mead, on log increments); for each set
+# of delays the minimax fractions are solved by Lawson's iteratively
+# reweighted least squares, with the fractions summing to 1 and the peak
+# carried as one more row weighted by the ratio of the two limits.
+lawson <- function(delay, iters = 200) {
+  grid <- sort(unique(c(seq(0, 12, by = 0.01), seq(12, TMAX, by = 0.1),
+                        unlist(lapply(delay, function(d) d + c(0, 0.0025, 0.005, 0.01, 0.02))))))
   grid <- grid[grid <= TMAX]
-  pc <- pulseCurve(grid, x$fraction, x$delay)
-  e <- c((pc - exactAt(grid)) / peak / 0.0053, (max(pc) / peak - 1) / 0.0001)
-  if (!all(is.finite(e))) return(1e6)
-  m <- max(abs(e)); m * mean((abs(e) / m)^pw)^(1 / pw)
+  M <- sapply(delay, function(d) oralUnit(grid - d)) / peak / 0.0053
+  y <- exactAt(grid) / peak / 0.0053
+  M <- rbind(M, sapply(delay, function(d) oralUnit(tPeak - d)) / peak / 0.0001)
+  y <- c(y, 1 / 0.0001)
+  n <- length(delay)
+  # f_n = 1 - sum(f_1..f_{n-1})
+  A <- M[, -n, drop = FALSE] - M[, n]; b <- y - M[, n]
+  w <- rep(1, nrow(A))
+  for (k in seq_len(iters)) {
+    g <- stats::lm.wfit(A, b, w)$coefficients
+    g[is.na(g)] <- 0
+    r <- abs(b - A %*% g)
+    w <- w * as.vector(r); w <- w / sum(w)
+    if (any(!is.finite(w))) break
+  }
+  f <- c(g, 1 - sum(g))
+  list(fraction = f, delay = delay)
 }
 
-fitPulses <- function(n, restarts = as.integer(Sys.getenv("RESTARTS", "12"))) {
+score <- function(q, n) {
+  delay <- cumsum(exp(q))
+  if (any(delay > 10)) return(1e6)
+  x <- lawson(delay, iters = 60)
+  if (any(x$fraction < 0)) return(1e3 + sum(pmax(-x$fraction, 0)))
+  e <- errors(x)
+  max(e[["curve"]] / 0.0053, e[["peak"]] / 0.0001)
+}
+
+fitPulses <- function(n, restarts = as.integer(Sys.getenv("RESTARTS", "6"))) {
   set.seed(n)
-  wbInt <- function(t) KAMAX * (t - stats::integrate(function(u) exp(-(RA * u)^GAM), 0, t)$value)
-  q <- sapply(seq(0.5, n - 0.5) / n, function(pq)
-    stats::uniroot(function(t) 1 - exp(-wbInt(t)) - pq, c(1e-6, 20))$root)
-  start <- c(rep(0, n), log(pmax(diff(c(0, q)) - c(0.3, rep(0, n - 1)), 0.02)))
+  # start: delays spread over the Weibull's upstroke, 0.5 to 1.9 h
+  start <- log(diff(c(0, seq(0.55, 1.9, length.out = n))))
   best <- list(value = Inf, par = start)
   for (it in seq_len(restarts)) {
-    p0 <- if (it == 1) start else best$par + stats::rnorm(2 * n, sd = 0.3)
-    lo <- c(rep(-8, n), rep(log(1e-3), n)); hi <- c(rep(8, n), rep(log(3), n))
-    p0 <- pmin(pmax(p0, lo), hi)
-    o <- stats::optim(p0, objective, n = n, method = "Nelder-Mead",
-                      control = list(maxit = 20000, reltol = 1e-14))
-    o <- tryCatch(stats::optim(pmin(pmax(o$par, lo), hi), smooth, n = n, method = "L-BFGS-B",
-                               lower = lo, upper = hi, control = list(maxit = 2000, factr = 10)),
-                  error = function(e) o)
-    o <- stats::optim(o$par, objective, n = n, method = "Nelder-Mead",
-                      control = list(maxit = 40000, reltol = 1e-14))
-    if (is.finite(o$value) && o$value < best$value) best <- o
+    p0 <- if (it == 1) start else best$par + stats::rnorm(n, sd = 0.25)
+    o <- stats::optim(p0, score, n = n, method = "Nelder-Mead",
+                      control = list(maxit = 3000, reltol = 1e-10))
+    if (o$value < best$value) best <- o
     cat(sprintf("  restart %d: %.4f (best %.4f)\n", it, o$value, best$value))
   }
-  x <- unpack(best$par, n)
+  x <- lawson(cumsum(exp(best$par)))
   list(n = n, fraction = x$fraction, delay = x$delay, errors = errors(x), score = best$value)
 }
 
