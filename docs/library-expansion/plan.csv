@@ -67,7 +67,7 @@ Biologics (surgery),tenecteplase,tenecteplase,1,planned,
 Biologics (surgery),emicizumab,emicizumab,1,planned,
 Biologics (surgery),tenecteplase,tenecteplase,1,in_progress,"Tang 2023 (PMID 36278839, 103 patients with acute MI, TIMI 10B) on branch claude/tenecteplase: two compartments, allometric, Cockcroft-Gault term on CL."
 Biologics (surgery),recombinant factor VIIa,marzeptacogalfa,1,planned,"nlmixr2lib holds a variant (marzeptacog alfa) only: eptacog alfa needs a PubMed search."
-Biologics (surgery),idarucizumab,,1,planned,"Dabigatran reversal; not in nlmixr2lib: PubMed search."
+Biologics (surgery),idarucizumab,,1,done,"Dabigatran reversal; not in nlmixr2lib. Built 2026-11-28 as R/drugs_idarucizumab.R, DERIVED from Glund 2017 (PMID 27317414, non-compartmental group means): two compartments, CL 4.07 + 0.391 x Cockcroft-Gault CrCl, a line fitted by stanpumpR (Shafer's choice of 2026-11-28). Checked against Glund 2019 (PMID 31050868, RE-VERSE AD patients, non-compartmental; its population model is unpublished): AUC 0-24 h within 16% in every renal category. Shafer kept the line, 2026-11-28."
 Biologics (surgery),andexanet alfa,,1,planned,"Factor Xa inhibitor reversal; not in nlmixr2lib: PubMed search."
 Biologics (surgery),prothrombin complex concentrate,,1,planned,"Not in nlmixr2lib: PubMed search."
 Biologics (surgery),alteplase,,1,planned,"Not in nlmixr2lib: PubMed search."
