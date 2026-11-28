@@ -144,7 +144,7 @@ test_that("1: what a closed circuit vents on emergence is only its surplus", {
   # then it is short and vents nothing.  The nitrous oxide lost is the
   # surplus at its alveolar tension, max(0, Q - VCO2 - u) F_alv: 31 mL
   # (18 mL since 2026-11-28, the oxygen consumed being 1.21 times the volume
-  # in the lungs: gasStpdFactor()).
+  # in the lungs: gasStpdFactor(); 15 mL with the shunt under anesthesia).
   # Before, all of -u was vented, and 115 mL was lost.
   DT <- cr730Rows(list(0, "nitrousOxide", 4), list(0, "oxygen", 2), list(0, "ventilation", 4.6),
                   list(60, "nitrousOxide", 0), list(60, "oxygen", 6), list(61, "oxygen", 0))
@@ -164,7 +164,8 @@ test_that("1: what a closed circuit vents on emergence is only its surplus", {
   }
   n2o <- cr730Amount(sim, "nitrousOxide")
   lost <- n2o[closed[1]] - n2o[closed[length(closed)]]
-  expect_gt(vented, 0.015)
+  # (15 mL with the 10% shunt under anesthesia, 2026-11-28)
+  expect_gt(vented, 0.012)
   expect_equal(lost, vented, tolerance = 5e-3)
 })
 

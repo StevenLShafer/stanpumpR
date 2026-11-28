@@ -38,9 +38,11 @@ test_that("E-01: an event outside the Visualizer's window does not refuse the wi
 test_that("E-01: a tube in force only after the window sends no arterial values", {
   run <- viewerGasRun(viewerGasCase(physiologyEventRows(120, "endobronchial=1"),
                                     maximum = 60), 0, 60)
-  expect_null(run$arterial)
-  expect_null(run$saturation)
-  expect_null(run$paO2)
+  # (Nothing arterial was sent at all until 2026-11-28, there being no shunt
+  # without the tube: now the window's own, the 10% shunt under anesthesia)
+  expect_true(all(run$arterial > 0.9 * run$p$lungs - 1e-12))
+  expect_gt(min(run$saturation[run$t > 300]), 99)
+  expect_length(run$paO2, length(run$t))
   # In the window, it does
   inside <- viewerGasRun(viewerGasCase(physiologyEventRows(30, "endobronchial=1")), 0, 60)
   expect_false(is.null(inside$arterial))

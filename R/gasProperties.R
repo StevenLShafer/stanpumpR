@@ -51,7 +51,8 @@
 #'     compartments (nitrous oxide, the volatiles, nitrogen); FALSE for oxygen,
 #'     which is modelled in the gas phase only with a metabolic sink -- it binds
 #'     haemoglobin nonlinearly and has no meaningful partition coefficient.}
-#'   \item{lambda_blood}{blood:gas partition coefficient}
+#'   \item{lambda_blood}{blood:gas partition coefficient: Esper 2015's for the
+#'     volatile agents, GasMan's with \code{gasMans = TRUE}}
 #'   \item{tg_brain, tg_muscle, tg_fat}{tissue:GAS partition coefficients, as
 #'     gasman.ini gives them (VRG, MUS, FAT).  These are what the equations
 #'     need; they are NOT tissue:blood and must not be multiplied by
@@ -68,21 +69,30 @@
 #' which is how Weber et al. tabulate GasMan's parameters, and is why the VRG
 #' tension is reported to the user as "brain".
 #'
+#' @param gasMans TRUE for GasMan's blood:gas coefficients of the volatile
+#'   agents (\code{GASMAN_BLOOD_GAS}), which the comparisons with GasMan use
 #' @returns a data frame of gas properties
 #' @export
-getGasProperties <- function()
+getGasProperties <- function(gasMans = FALSE)
 {
+  bloodGas <- if (isTRUE(gasMans)) GASMAN_BLOOD_GAS else GAS_BLOOD_GAS
+
   data.frame(
     gas     = c("nitrousOxide", "sevoflurane", "isoflurane", "desflurane",
                 "nitrogen", "oxygen"),
     soluble = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
 
-    # Blood:gas ("Lambda" in gasman.ini)
-    lambda_blood = c(0.47, 0.65, 1.3, 0.42, 0.014, NA),
+    # Blood:gas: Esper 2015's for the volatile agents (GAS_BLOOD_GAS), or
+    # GasMan's ("Lambda" in gasman.ini) for the comparison with GasMan;
+    # nitrous oxide's and nitrogen's are GasMan's either way
+    lambda_blood = c(0.47, bloodGas[["sevoflurane"]], bloodGas[["isoflurane"]],
+                     bloodGas[["desflurane"]], 0.014, NA),
 
     # Tissue:GAS ("VRG" / "MUS" / "FAT" in gasman.ini).  Note these are
-    # tissue:gas, NOT tissue:blood: desflurane's VRG of 0.54 is its blood:gas
-    # 0.42 times a brain:blood of about 1.3.  An earlier version of this file
+    # tissue:gas, NOT tissue:blood: desflurane's VRG of 0.54 is GasMan's
+    # blood:gas 0.42 times a brain:blood of about 1.3.  They are properties
+    # of the tissues and did not move when the blood:gas coefficients became
+    # Esper's, so each tissue:blood ratio fell (GAS_BLOOD_GAS).  An earlier version of this file
     # stored tissue:blood and multiplied, which was one conversion too many.
     tg_brain  = c(0.42, 1.1, 2.1, 0.54, 0.010, NA),
     tg_muscle = c(0.54, 2.4, 4.5, 0.97, 0.014, NA),
@@ -127,6 +137,64 @@ getGasProperties <- function()
   )
 }
 
+
+#' Blood:gas partition coefficients of the volatile agents at 37 C
+#'
+#' Esper T, Wehner M, Meinecke CD, Rueffert H.  Blood/gas partition
+#' coefficients for isoflurane, sevoflurane, and desflurane in a clinically
+#' relevant patient population.  Anesth Analg 2015;120:45-50 (PMID 25393590),
+#' read in full 2026-11-27: 120 adult patients, haematocrit 0.41 (SD 0.04),
+#' isoflurane 1.45 (0.12), sevoflurane 0.74 (0.06), desflurane 0.57 (0.04).
+#' Steven L. Shafer, 2026-11-28: "Baseline blood:gas - Use esper.  We will
+#' document that as a change in the letter to Jim Philip."  Until then they
+#' were GasMan's (\code{GASMAN_BLOOD_GAS}).  Esper measured no nitrous oxide,
+#' which keeps GasMan's 0.47.  The tissue:gas coefficients are properties of
+#' the tissues and are unchanged, so each tissue:blood ratio falls by the
+#' ratio of the old to the new blood:gas coefficient (isoflurane's
+#' brain:blood from 1.62 to 1.45); the other reading, holding tissue:blood,
+#' would raise every tissue's capacity by 10 to 36%
+#' (docs/gas-engine-expansion.md).
+#' @keywords internal
+GAS_BLOOD_GAS <- c(sevoflurane = 0.74, isoflurane = 1.45, desflurane = 0.57)
+
+#' GasMan's blood:gas partition coefficients, superseded
+#'
+#' "Lambda" in gasman.ini, the engine's until 2026-11-28.  Kept for the
+#' comparison with GasMan: a run with \code{volumeConversion = FALSE} or the
+#' semi-closed circuit takes them (\code{gasPropertiesOf()}).
+#' @keywords internal
+GASMAN_BLOOD_GAS <- c(sevoflurane = 0.65, isoflurane = 1.3, desflurane = 0.42)
+
+#' Slope of ln(blood:gas) on haematocrit, per percentage point
+#'
+#' Zhou JX, Liu Y, Liu J.  Chin Med J 2002;115:1014-9 (PMID 12150733),
+#' abstract and Table 1, read on the page images: blood diluted with saline
+#' to haematocrits of 20 to 40%.  Steven L. Shafer, 2026-11-27: "Hematocrit
+#' changes solubility.  Use Zhou's 2002 coefficients."  Applied about
+#' \code{GAS_HAEMATOCRIT_REFERENCE} across the whole Haemoglobin slider (12 to
+#' 60%), so both ends are extrapolated.  Tissue:gas coefficients, nitrous
+#' oxide and nitrogen are unchanged.  Between people haematocrit does not
+#' predict solubility (Esper 2015; Hu 2001), and replacing red cells with the
+#' person's own plasma moved isoflurane's the other way (Lerman 1984): this
+#' is one person's blood diluted with saline.
+#' @keywords internal
+GAS_HAEMATOCRIT_SOLUBILITY_SLOPE <- c(desflurane = 0.0094, sevoflurane = 0.0092,
+                                      isoflurane = 0.0154)
+
+#' The haematocrit, per cent, at which the blood:gas coefficients are stated:
+#' the default haemoglobin of 15 g/dL times 3
+#' @keywords internal
+GAS_HAEMATOCRIT_REFERENCE <- 45
+
+#' Haematocrit, per cent, from haemoglobin, g/dL: three times it, the one
+#' slider moving both (Shafer, 2026-11-26)
+#' @param haemoglobin g/dL, or NULL for the default
+#' @keywords internal
+gasHaematocrit <- function(haemoglobin = NULL)
+{
+  if (is.null(haemoglobin)) return(GAS_HAEMATOCRIT_REFERENCE)
+  3 * haemoglobin
+}
 
 #' GasMan's MAC at 40, superseded
 #'

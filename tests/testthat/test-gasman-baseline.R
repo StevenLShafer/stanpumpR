@@ -53,7 +53,7 @@ test_that("GasMan's volumes and blood flow ratios are used as published", {
 
   # Circuit and alveolus are gas phase, tissues carry tissue:gas, venous
   # carries blood:gas -- exactly as GasAnes.cpp sets m_fSolubility
-  props <- getGasProperties()
+  props <- getGasProperties(gasMans = TRUE)
   s <- gasManSolubility(props[props$gas == "sevoflurane", ])
   expect_equal(unname(s[["CKT"]]), 1)
   expect_equal(unname(s[["ALV"]]), 1)

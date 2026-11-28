@@ -5,10 +5,12 @@
 \title{A shunt fraction, checked: NULL is the default, otherwise a number from 0
 to ENDOBRONCHIAL_SHUNT_FRACTION}
 \usage{
-checkShunt(x)
+checkShunt(x, endobronchial = FALSE)
 }
 \arguments{
 \item{x}{the fraction of cardiac output, or NULL}
+
+\item{endobronchial}{TRUE for an endobronchial tube, which sets the default}
 }
 \description{
 A shunt fraction, checked: NULL is the default, otherwise a number from 0

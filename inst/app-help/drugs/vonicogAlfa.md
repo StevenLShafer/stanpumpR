@@ -19,7 +19,7 @@ Factor VIII is drawn on a panel of its own, [factor VIII (with VWF)](help:drugs/
 
 dF/dt = kout × F0 − kout × (1 − Imax × VWF/(IC50 + VWF)) × F,
 
-with kout 15.9 /h, Imax 0.998, IC50 0.0658 IU/dL and F0 0.5 IU/dL, the factor VIII a patient with no von Willebrand factor at all would have. In type 3 disease (0.5 IU/dL of VWF:RCo) that gives a factor VIII of 4.2 IU/dL before any dose; after 50 IU/kg it rises to about 98 IU/dL at 28 hours (the label: a peak "approximately 24 hours post-infusion"). Given every 72 hours, factor VIII stays above 40 IU/dL throughout, as the source's own simulation found.
+with kout 15.9 /h, Imax 0.998, IC50 0.0658 IU/dL and F0 0.5 IU/dL, the factor VIII a patient with no von Willebrand factor at all would have. In type 3 disease (0.5 IU/dL of VWF:RCo) that gives a factor VIII of 4.2 IU/dL before any dose; after 50 IU/kg it rises to about 98 IU/dL at 28 hours (the label: a peak "approximately 24 hours post-infusion"). Given every 72 hours, factor VIII is below 40 IU/dL for about the first five hours (it rises from the patient's own 4.2), and from then on its troughs stay above 40 IU/dL: 41.4 before the second dose and 45.2 at steady state, as the source's own simulation found. The label's advice to give recombinant factor VIII with the first dose when factor VIII is below 40 IU/dL is about those first hours.
 
 Because factor VIII depends on the VWF:RCo through a saturable function, the two do not rise in proportion: the factor VIII curve is computed from the VWF:RCo curve, not scaled from it.
 
@@ -44,4 +44,4 @@ The band is the label's VWF:RCo peak target around surgery: 50 to 60 IU/dL for m
 
 - **Recombinant factor VIII** given with Vonvendi, which the label advises when factor VIII is below 40 IU/dL or unknown, is not added to the factor VIII panel. The source fitted factor VIII from Vonvendi alone, and infused factor VIII is cleared by the same process von Willebrand factor slows, which an added curve would not carry. [Factor VIII](help:drugs/factorVIII) can be dosed as a drug of its own, but its curve is drawn without the von Willebrand factor.
 - The patient's own von Willebrand factor is held constant.
-- **Humate-P** and the other plasma-derived von Willebrand factor/factor VIII concentrates, which Bauer also modelled, are not yet in the library.
+- [Humate-P](help:drugs/humateP), the plasma-derived concentrate Bauer also modelled, is a drug of its own; the two given together are refused, since the factor VIII panel cannot add them. Other plasma-derived concentrates are not in the library.

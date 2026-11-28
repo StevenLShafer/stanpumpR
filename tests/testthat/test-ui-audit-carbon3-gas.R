@@ -181,6 +181,7 @@ carbon3Brute <- function(gasDose, weight, t, gas, threshold, horizon = 12) {
   d <- rbind(d, data.frame(Time = t, Drug = c(flows, vap), Dose = c(now, rep(0, length(vap))),
                            stringsAsFactors = FALSE))
   b <- advanceClosedFormGas(d, weight = weight, age = 40, maximum = t + horizon,
+                            body = gasShuntBody(weight),
                             resolution = round((t + horizon) * 50) + 1)
   y <- if (gas == "MAC") b$results$Y[b$results$Drug == "MAC"] else b$state[[gas]][, 3]
   time <- b$timeLine

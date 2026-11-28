@@ -36,7 +36,9 @@ test_that("the gas run carries it: the oxygen panel's second line and the hover"
   DT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
                    Dose = c(2, 6, 0, 6))
   tube <- simulateGases(DT, 70, 40, maximum = 60, endobronchial = TRUE)
-  plain <- simulateGases(DT, 70, 40, maximum = 60)
+  # No shunt at all: since 2026-11-28 the default without the tube is the
+  # 10% shunt under anesthesia (test-gas-shunt.R)
+  plain <- simulateGases(DT, 70, 40, maximum = 60, shunt = 0)
   a <- gasArterialOxygen(tube)
   i <- which.min(abs(a$Time - 30))
   # (50.6 and 85.5 until 2026-11-24, when the alveolar tension was read at
@@ -62,11 +64,14 @@ test_that("an endobronchial physiology event steps the arterial oxygen", {
                    Dose = c(2, 6, 0, 6))
   s <- physiologyEventNormal()
   s[["endobronchial"]] <- 1
+  s[["shunt"]] <- gasShuntDefault(TRUE)
   ev <- data.frame(Time = 20)
   for (f in PHYSIOLOGY_EVENT_FIELDS) ev[[f]] <- s[[f]]
   sim <- simulateGases(DT, 70, 40, maximum = 60, physiologyEvents = ev)
   a <- gasArterialOxygen(sim)
-  expect_gt(a$PaO2[which.min(abs(a$Time - 19))], 600)
+  # Before the tube, the 10% shunt under anesthesia (above 600 mmHg with no
+  # shunt, until 2026-11-28)
+  expect_equal(a$PaO2[which.min(abs(a$Time - 19))], 478, tolerance = 0.01)
   expect_lt(a$PaO2[which.min(abs(a$Time - 30))], 60)
 })
 
@@ -95,6 +100,7 @@ test_that("the gas run carries the haemoglobin, and a physiology event records i
   expect_error(simulateGases(DT, 70, 40, maximum = 60, haemoglobin = 2), "haemoglobin")
   s <- physiologyEventNormal()
   s[["endobronchial"]] <- 1
+  s[["shunt"]] <- gasShuntDefault(TRUE)
   s[["haemoglobin"]] <- 8
   expect_match(physiologyEventEncode(s), "haemoglobin=8")
   expect_equal(physiologyEventDecode(physiologyEventEncode(s))[["haemoglobin"]], 8)
@@ -126,7 +132,7 @@ test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine
   expect_equal(s, c(74.1, 62.1, 26.7), tolerance = 0.002)
 })
 
-test_that("the Visualizer carries the arterial saturation only where a tube shunts", {
+test_that("the Visualizer carries the arterial saturation only where blood is shunted", {
   DT <- data.frame(Drug = c("sevoflurane", "oxygen", "air", "ventilation"), Time = 0,
                    Dose = c(2, 6, 0, 6))
   tube <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60, endobronchial = TRUE),
@@ -135,6 +141,11 @@ test_that("the Visualizer carries the arterial saturation only where a tube shun
   expect_length(run$saturation, length(run$t))
   expect_equal(run$saturation[length(run$t)], 85.5, tolerance = 0.01)
   expect_length(run$paO2, length(run$t))
-  plain <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60), DT, maximum = 60, age = 40)
+  # With the shunt under anesthesia too, which every run from the app has
+  usual <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60), DT, maximum = 60, age = 40)
+  expect_equal(utils::tail(viewerGasRun(usual$sevoflurane, 0, 60)$saturation, 1), 100,
+               tolerance = 0.001)
+  plain <- gasDrugEntries(simulateGases(DT, 70, 40, maximum = 60, shunt = 0), DT,
+                          maximum = 60, age = 40)
   expect_null(viewerGasRun(plain$sevoflurane, 0, 60)$saturation)
 })

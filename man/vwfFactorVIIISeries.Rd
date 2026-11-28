@@ -4,7 +4,7 @@
 \alias{vwfFactorVIIISeries}
 \title{Factor VIII activity driven by VWF:RCo (Bauer 2023)}
 \usage{
-vwfFactorVIIISeries(time, vwf, response)
+vwfFactorVIIISeries(time, vwf, response, input = NULL)
 }
 \arguments{
 \item{time}{minutes, increasing}
@@ -14,6 +14,10 @@ vwfFactorVIIISeries(time, vwf, response)
 \item{response}{the drug's \code{factorVIIIResponse} block: \code{kout}
 (per minute), \code{imax}, \code{ic50} (IU/dL), \code{baseline} (F0,
 IU/dL) and \code{vwfBaseline} (the patient's own VWF:RCo, IU/dL)}
+
+\item{input}{infused factor VIII, or NULL for none: a list of
+\code{bolusTime}, \code{bolus} (IU/dL each) and \code{rateTime},
+\code{rate} (IU/dL per minute from that time until the next)}
 }
 \value{
 factor VIII activity at \code{time}, IU/dL

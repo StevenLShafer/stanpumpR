@@ -346,7 +346,7 @@ advanceGasManBaseline <- function(gasDose, weight = 70, maximum = 60,
   opts <- list(circuit = circuit, uptakeEffect = uptakeEffect,
                recirculation = recirculation)
 
-  props <- getGasProperties()
+  props <- getGasProperties(gasMans = TRUE)
   agents <- props$gas[props$soluble]          # oxygen excluded: not a GasMan agent
 
   sol <- lapply(agents, function(g) gasManSolubility(props[props$gas == g, ]))

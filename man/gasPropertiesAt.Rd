@@ -2,22 +2,29 @@
 % Please edit documentation in R/physiology.R
 \name{gasPropertiesAt}
 \alias{gasPropertiesAt}
-\title{The gas properties at a body temperature}
+\title{The gas properties at a body temperature and haematocrit}
 \usage{
-gasPropertiesAt(temperature = NULL)
+gasPropertiesAt(temperature = NULL, haemoglobin = NULL, gasMans = FALSE)
 }
 \arguments{
 \item{temperature}{body temperature, C, or NULL for 37}
+
+\item{haemoglobin}{g/dL, or NULL for the default 15 (haematocrit 45\%)}
+
+\item{gasMans}{TRUE for GasMan's blood:gas coefficients}
 }
 \value{
 a data frame as \code{getGasProperties()}
 }
 \description{
-\code{getGasProperties()} with each volatile agent's partition coefficients
-(blood:gas and every tissue:gas) multiplied by
-\code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-\code{gasMacTemperatureFactor()} (Liu 2001); nitrous oxide's blood:gas,
-brain and muscle coefficients by Allott 1973's aqueous coefficient, its
-fat:gas by the oil one, and its MAC by its own factor (Antognini 1994).
-Nitrogen and oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+\code{getGasProperties()} with each volatile agent's blood:gas coefficient
+multiplied by \code{exp(-slope (T - 37))} (Zhou 2002) and by
+\code{exp(c (Hct - 45))} (Zhou 2002, \code{GAS_HAEMATOCRIT_SOLUBILITY_SLOPE}),
+each tissue:gas coefficient by its own tissue's temperature slope (Zhou
+and Liu 2001, \code{GAS_TISSUE_TEMPERATURE_SLOPE}; the vessel-rich group
+the brain's), and its MAC by \code{gasMacTemperatureFactor()} (Liu 2001);
+nitrous oxide's blood:gas, brain and muscle coefficients by Allott 1973's
+aqueous coefficient, its fat:gas by the oil one, and its MAC by its own
+factor (Antognini 1994).  Nitrogen and oxygen are unchanged.  At 37 C and
+the reference haematocrit the table is returned as it is.
 }

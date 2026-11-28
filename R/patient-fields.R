@@ -80,7 +80,11 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
   named <- vapply(seq_along(readers), function(i) {
     drug <- readers[i]
     if (drug %in% names(notes)) sprintf("%s (%s)", drug, notes[[drug]])
-    else if (!is.na(products[i])) sprintf("%s (given as %s)", drug, products[i])
+    else if (!is.na(products[i]))
+      # a component that is also dosed in its own right (imipenem, as
+      # PRIMAXIN) is "also given as" its product
+      sprintf(if (isTRUE(drugDefaults$Category[match(drug, drugDefaults$Drug)] != ""))
+                "%s (also given as %s)" else "%s (given as %s)", drug, products[i])
     else drug
   }, character(1))
   sprintf("Read by %s; no other drug is affected.", patientFieldList(named))

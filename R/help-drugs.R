@@ -1456,7 +1456,16 @@ helpGasPageHTML <- function(gas, row) {
              helpFormatNumber(gasmanMAC), "%. MAC enters no uptake, so the comparison with GasMan is unchanged.") else ""
     propsHTML <- paste0(
       helpH2("Physical properties"),
-      "<p>These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
+      "<p>",
+      # The volatile agents' blood:gas coefficients are Esper 2015's since
+      # 2026-11-28 (GAS_BLOOD_GAS); everything else in the table is GasMan's
+      if (gas %in% names(GAS_BLOOD_GAS))
+        paste0("The tissue:gas coefficients are GasMan\u00ae's, carried unchanged. The blood:gas coefficient is ",
+               "Esper's (2015), measured in 120 adult patients and adopted on 28 November 2026; GasMan's was ",
+               helpFormatNumber(GASMAN_BLOOD_GAS[[gas]]),
+               ", which the engine still takes when it is run as GasMan is, for the comparison with GasMan; see ")
+      else
+        "These are GasMan\u00ae's values, carried unchanged so that the engine can be checked against GasMan; see ",
       helpPageLink("models/gas-engine"), ".", htmltools::htmlEscape(macNote), "</p>",
       helpTableHTML(tab)
     )
