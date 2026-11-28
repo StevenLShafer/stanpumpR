@@ -8,7 +8,7 @@ Clicking the ceftazidime panel opens the dose dialog for Avycaz, because Avycaz 
 
 ### The regimen
 
-The label gives every dose every 8 hours as a 2-hour infusion:
+With normal renal function the label gives every dose every 8 hours as a 2-hour infusion:
 
 | Patient | Dose |
 |---|---|
@@ -19,7 +19,18 @@ The label gives every dose every 8 hours as a 2-hour infusion:
 | Infants over 28 days to under 3 months | 37.5 mg/kg |
 | Neonates up to 28 days, gestational age 31 weeks or more | 25 mg/kg |
 
-For complicated intra-abdominal infection it is given with metronidazole. To enter a 2-hour infusion of 2.5 g, enter `1.25 g/hr` at its start and `0 g/hr` two hours later, and repeat every 8 hours. The label lowers the dose when the adult creatinine clearance is 50 mL/min or less and in children with renal impairment.
+The 28-day cutoff is postnatal age for a term infant and corrected age for a preterm one (postnatal age less the weeks born before 40 weeks' gestation), so a preterm infant stays on 25 mg/kg longer.
+
+For complicated intra-abdominal infection it is given with metronidazole. To enter a 2-hour infusion of 2.5 g, enter `1.25 g/hr` at its start and `0 g/hr` two hours later, and repeat every 8 hours. In renal impairment the label lowers the dose and lengthens the interval (all doses still over 2 hours):
+
+| Adult creatinine clearance (Cockcroft-Gault), or child's eGFR (bedside Schwartz) from 2 years | Adults | Children 2 years and older |
+|---|---|---|
+| 31 to 50 mL/min (per 1.73 m² in children) | 1.25 g every 8 hours | 31.25 mg/kg, up to 1.25 g, every 8 hours |
+| 16 to 30 | 0.94 g every 12 hours | 23.75 mg/kg, up to 0.94 g, every 12 hours |
+| 6 to 15 | 0.94 g every 24 hours | 23.75 mg/kg, up to 0.94 g, every 24 hours |
+| 5 or less | 0.94 g every 48 hours | 23.75 mg/kg, up to 0.94 g, every 48 hours |
+
+Both ceftazidime and avibactam are removed by hemodialysis, so on dialysis days the dose is given after it. The label gives no regimen for children younger than 2 years with renal impairment.
 
 ### Set the infection
 
