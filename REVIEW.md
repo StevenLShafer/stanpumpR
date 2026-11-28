@@ -31,11 +31,24 @@ Do not review, and do not comment on, anything under `papers/digests/`.
 
 These are prose evidence cards about published papers, opened in batches by the unattended
 digest pipeline (`_build/digest_run.py`). They contain no R, no JavaScript and nothing that runs,
-and the digest pipeline, `test-digest-cards.R` and a human reading each batch's
-`open_questions` already check them. The reason is the one in `.coderabbit.yaml`: reviewer
+and the digest pipeline and a human reading each batch's `open_questions` already
+check them -- but see the limit below. The reason is the one in `.coderabbit.yaml`: reviewer
 budget is spent on code. A pull request that changes only files under `papers/digests/`
 needs no review at all. A pull request that also changes anything else is reviewed for
 the rest of its files as usual.
+
+**What does and does not check a card.** `digest_run.py` checks that each card's YAML
+parses as it writes it, and `papers/_build/digest_prep.py` holds a card to the card
+format -- but digest_prep.py belongs to the paper archive's pipeline, not to CI. It
+runs when somebody runs `update.bat`, and it reports to `digests/STATUS.md` in the
+archive, outside this repository. **So no check on a pull request looks at a card's
+format, and a malformed card merges green.** That is not hypothetical: fifteen cards
+reached master with the opening `---` fence missing its newline, so they carried no
+parseable frontmatter at all, and the only thing that noticed was digest_prep.py, days
+later (2026-11-28). An earlier version of this file named a `test-digest-cards.R` as
+the format check; no such test has ever existed here. If the cards are to stay out of
+review, that gap is the thing to close, and closing it is a test in CI rather than a
+reviewer.
 
 **Silence on GitHub does not show this is working.** A digests-only pull request with no
 comment on it is equally consistent with the exclusion being honoured and with a review
