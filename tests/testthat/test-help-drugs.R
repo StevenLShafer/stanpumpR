@@ -135,6 +135,8 @@ plasmaOnly <- c(
     # tecovirimat (Leeds 2013), maraviroc (Chan 2008), quinine and its
     # candidates (Kloprogge 2014, Le Jouan 2005), 2026-11-28: plasma only
     "tecovirimat", "maraviroc", "quinine", "quinineKloprogge", "quinineLeJouan",
+    # hydroxychloroquine (Carmichael 2003, 2026-11-28): whole blood, plasma only
+    "hydroxychloroquine",
     # Coartem's components (Ding 2026, 2026-11-24): plasma only
     "artemether", "dihydroartemisinin", "lumefantrine",
     # ceftolozane, drawn for Zerbaxa (Zhang 2021, 2026-11-25): plasma only
