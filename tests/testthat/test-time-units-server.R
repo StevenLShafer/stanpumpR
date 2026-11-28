@@ -124,11 +124,19 @@ test_that("a change of unit converts the table, keeps the minutes and starts a f
     expect_match(notified(sent, "timeConverted")$message$html, "converted to hours")
     # minutes and hours share their range: 1 hour is kept, in the hours
     # slider's 15-minute steps
-    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 60)
-    expect_equal(as.numeric(lastSent(sent, "maximum")$step), 15)
-    echo(session, sent)
+    toMaximum <- Filter(function(m) identical(m$id, "maximum"), sent$inputs)
+    ranged <- Filter(function(m) !is.null(m$message$step), toMaximum)
+    unitChange <- ranged[[length(ranged)]]$message
+    expect_equal(as.numeric(unitChange$value), 60)
+    expect_equal(as.numeric(unitChange$step), 15)
     expect_equal(plotInfo()$plotMaximum, 120)   # lengthened past the dose at 90
     expect_equal(plotInfo()$steps, 15)
+    # ... and the slider is then moved to the length drawn (2026-11-28), from
+    # which the plot ends at the same place
+    expect_equal(as.numeric(lastSent(sent, "maximum")$value), 120)
+    echo(session, sent)
+    expect_equal(as.numeric(input$maximum), 120)
+    expect_equal(plotInfo()$plotMaximum, 120)
 
     # and back: every string as it was
     session$setInputs(timeUnits = "minutes")

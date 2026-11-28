@@ -103,6 +103,17 @@ $(document).on('click', '.physiology-continue', function(e) {
 $(document).on('shiny:connected', function() {
   Shiny.addCustomMessageHandler('physiology_show', function(message) {
     showPhysiologyControls();
+    // ... and the sidebar's Physiology section is opened, so that a link or
+    // a scenario with physiology away from normal shows it (Steven L. Shafer,
+    // 2026-11-28).  The section's own shown event tells the sliders.
+    var section = $('#physiology-controls').closest('.accordion-collapse');
+    if (section.length && !section.hasClass('show') && window.bootstrap && bootstrap.Collapse) {
+      section.one('shown.bs.collapse', function() {
+        $('#physiology-controls').trigger('shown');
+        $(window).trigger('resize');
+      });
+      bootstrap.Collapse.getOrCreateInstance(section[0]).show();
+    }
   });
 });
 
