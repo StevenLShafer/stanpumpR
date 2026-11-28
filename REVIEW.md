@@ -40,10 +40,25 @@ the rest of its files as usual.
 **Silence on GitHub does not show this is working.** A digests-only pull request with no
 comment on it is equally consistent with the exclusion being honoured and with a review
 having run, cost its budget, and found nothing worth saying -- and budget is the whole point
-of the exclusion, so the absence of a comment is not the thing to measure. Check the
-reviewer's own activity or usage for that pull request instead. (Devin raised this about
-itself while reviewing 1016, which merged before the point could be applied. CodeRabbit
-reports a skip explicitly, posting "Review skipped -- path filters", so for CodeRabbit the
-comment itself is the evidence; Devin posts nothing either way.)
+of the exclusion, so the absence of a comment is not the thing to measure. Devin raised this
+about itself while reviewing 1016, which merged before the point could be applied, and then
+raised it again on the fix (1025): saying "check the activity or usage" names no record that
+tells a skip from a silent review. The two reviewers differ in exactly that, so the record
+to look at is different for each.
+
+**CodeRabbit says which it did, in the thread.** On a digests-only pull request it posts
+"Review skipped -- Review was skipped due to path filters" and counts the files it ignored
+(14, on pull request 1015). When it is refused for budget rather than path it says that
+instead, posting its usage-cap warning -- which is itself evidence that it was ASKED, as it
+was on 1024 and 1025. So for CodeRabbit the comment is the record, and no silence needs
+interpreting.
+
+**Devin posts nothing either way, so its record is per pull request and off GitHub:**
+`https://app.devin.ai/review/<owner>/<repo>/pull/<number>`, the address the badge in every
+Devin comment links to. It needs an account, so nothing in this repository can read it and a
+person has to look. The test is a COMPARISON, not a single page: open that record for a
+digests-only pull request beside one for a pull request that changes code. If the
+digests-only one shows a review run, the path exclusion is not reaching Devin and the budget
+this section exists to save is being spent anyway.
 
 Everything else is reviewed.
