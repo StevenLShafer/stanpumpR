@@ -125,7 +125,11 @@ test_that("rows waiting on a paper name it; rows with no model say why", {
   expect_true(all(!is.na(waiting$to_obtain) & nzchar(waiting$to_obtain)))
   expect_true(all(grepl("PMID|doi|PMC|NDA", waiting$to_obtain)))
   fromAbstract <- registry[registry$readiness == "implemented" & registry$evidence_read != "full_text", ]
-  expect_setequal(fromAbstract$stanpumpr_drug, "zonisamide")
+  # Nothing now: zonisamide was the last implemented row resting on less than a full text, and
+  # Murata 2015 has since been read in full (papers/digests/PMID_26094993.md), so its
+  # evidence_read became full_text on 2026-11-27.  A new entry here means an implemented model
+  # has been built on an abstract or a label, which is what this pin exists to catch.
+  expect_length(fromAbstract$stanpumpr_drug, 0L)
   none <- registry[registry$readiness %in% c("no_suitable_model", "needs_engine",
                                              "complete_not_implemented"), ]
   expect_true(all(nchar(none$blocking_issue) > 60))
