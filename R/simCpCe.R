@@ -798,14 +798,17 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     }
     if (isTRUE(PK$doseDependent))
     {
-      # Parameters that depend on the size of each injection (the Tham human
-      # insulins: CL/F and regular insulin's ka): each dose size is its own
-      # linear system, simulated with the PK for that size (doseSizePK(),
+      # Parameters that depend on the size of each injection or tablet (the
+      # Tham human insulins: CL/F and regular insulin's ka; maraviroc: ka and
+      # the fraction absorbed, Chan 2008): each dose size is its own linear
+      # system, simulated with the PK for that size (doseSizePK(),
       # R/getDrugPK.R) on the doses of that size, the others given as zero
       # so that every run is on the same time line, and the runs are added.
-      sc <- dose$RA | dose$RAslow
+      # A dose is a subcutaneous injection or a plain oral dose; a scheduled
+      # dose has already been expanded into its repeats, each its own row.
+      sc <- dose$RA | dose$RAslow | dose$PO
       if (any(!sc & dose$Dose != 0))
-        stop("A dose-dependent model takes subcutaneous injections only: ",
+        stop("A dose-dependent model takes subcutaneous injections or oral doses only: ",
              paste(unique(dose$Units[!sc & dose$Dose != 0]), collapse = ", "))
       size <- round(doseInDosingUnits(dose$Dose, PK, mg_Conv), 9)
       parts <- list()
