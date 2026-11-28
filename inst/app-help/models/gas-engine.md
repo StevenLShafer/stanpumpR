@@ -78,7 +78,14 @@ The alveolar tension of gas i, written here as a fraction, changes with ventilat
 V_alv dF_alv/dt = s (VA + U) F_circuit - VA F_alv - uptake_i - P F_alv
 ```
 
-with s = 1 except in the closed circuit above. U F_circuit and P F_alv are the **concentration and second gas effect**: gas taken up in bulk shrinks the alveolar volume, so make-up gas is drawn in from the circuit, concentrating what remains; when gas comes back out of the blood, as on emergence, alveolar gas is pushed out instead. In the closed circuit the first term is Q F_fresh + (VA + R) F_alv, so the equation becomes V_alv dF_alv/dt = Q F_fresh − uptake_i − (P − R) F_alv. The total uptake is the sum of every soluble gas's uptake (nitrogen included) plus the oxygen consumed less the carbon dioxide that replaces it, VO2 × (1 − 0.8). Uptake of each gas is cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. Mixed venous tension is the flow-weighted mean of the tissue tensions.
+with s = 1 except in the closed circuit above. U F_circuit and P F_alv are the **concentration and second gas effect**: gas taken up in bulk shrinks the alveolar volume, so make-up gas is drawn in from the circuit, concentrating what remains; when gas comes back out of the blood, as on emergence, alveolar gas is pushed out instead. In the closed circuit the first term is Q F_fresh + (VA + R) F_alv, so the equation becomes V_alv dF_alv/dt = Q F_fresh − uptake_i − (P − R) F_alv. The total uptake is the sum of every soluble gas's uptake (nitrogen included) plus the oxygen consumed less the carbon dioxide that replaces it, VO2 × (1 − 0.8). Uptake of each gas is the unshunted cardiac output times the blood:gas coefficient times the alveolar-to-mixed-venous tension difference; each tissue takes up at its share of cardiac output times the arterial-to-tissue difference divided by its capacity. A share s of the cardiac output, the **shunt**, passes no ventilated alveoli and reaches the arteries as mixed venous blood, unchanged, so for every gas
+
+```
+uptake_i  = lambda_blood (1 - s) Qco (F_alv - F_venous)
+F_arterial = (1 - s) F_alv + s F_venous
+```
+
+(this s is the shunt, not the circuit's share above). It is 10 per cent under anesthesia and 50 per cent with an endobronchial tube, set by the Shunt fraction slider (see [Physiology](help:models/physiology), *Shunt under anesthesia*); GasMan has none, and the comparisons with GasMan run at s = 0. Mixed venous tension is the flow-weighted mean of the tissue tensions.
 
 ## Integration
 

@@ -1698,6 +1698,7 @@ gasNotGasMansBody <- function(body)
   if (!is.null(body$temperature) && body$temperature != 37) out <- c(out, "body temperature")
   if (!is.null(body$altitude) && body$altitude != ALTITUDE_DEFAULT) out <- c(out, "altitude")
   if (isTRUE(body$endobronchial)) out <- c(out, "endobronchial intubation")
+  else if (gasShunt(body) > 0) out <- c(out, "a shunt")
   if (!is.null(body$V_vrgRest) || (!is.null(body$cardiac) && body$cardiac != 1))
     out <- c(out, "the cardiac-output slider")
   if (!is.null(body$haemoglobin) && body$haemoglobin != ARTERIAL_OXYGEN_HAEMOGLOBIN)
@@ -1714,6 +1715,10 @@ gasNotGasMansBody <- function(body)
 #' @param events physiologyEventsFrom()'s data frame, at least one row
 #' @param base the patient's body before physiology (getGasBody()), by
 #'   default GasMan's linear scaling of \code{weight}
+#' @param anesthesiaShunt the shunt of a state without the tube whose shunt
+#'   is the default: 10%, or 0 in GasMan's mode (Devin's review of PR 1022:
+#'   with events the zero-shunt default reached only the body the events
+#'   replace)
 #' @returns list(time, body): normal physiology from 0 and each event's from
 #'   its time.  If any body has cardiac output off normal, every body splits
 #'   the vessel-rich group (gasBodyPhysiology(split = TRUE)), so the states
@@ -1726,7 +1731,8 @@ gasNotGasMansBody <- function(body)
 #'   was 30 C throughout as one whose temperature changed (Gemini's
 #'   gas-engine audit of 2026-11-23, C-07).
 #' @keywords internal
-gasBodySteps <- function(weight, events, base = getGasBody(weight))
+gasBodySteps <- function(weight, events, base = getGasBody(weight),
+                         anesthesiaShunt = GAS_SHUNT_ANESTHESIA)
 {
   states <- physiologyEventStates(events)
   split <- any(vapply(states, function(x) x[["cardiac"]] != 1, TRUE))
@@ -1734,7 +1740,11 @@ gasBodySteps <- function(weight, events, base = getGasBody(weight))
     body <- gasBodyPhysiology(base, x[["cardiac"]], split = split)
     if (x[["temperature"]] != 37) body$temperature <- unname(x[["temperature"]])
     if (x[["altitude"]] != ALTITUDE_DEFAULT) body$altitude <- unname(x[["altitude"]])
-    body <- gasBodyEndobronchial(body, x[["endobronchial"]] == 1, x[["shunt"]])
+    tube <- x[["endobronchial"]] == 1
+    # Without the tube a state at the default shunt takes the run's own:
+    # none in GasMan's mode (simulateGases())
+    shunt <- if (!tube && x[["shunt"]] == GAS_SHUNT_ANESTHESIA) anesthesiaShunt else x[["shunt"]]
+    body <- gasBodyEndobronchial(body, tube, shunt)
     if (x[["haemoglobin"]] != ARTERIAL_OXYGEN_HAEMOGLOBIN)
       body$haemoglobin <- unname(x[["haemoglobin"]])
     body
@@ -1790,9 +1800,11 @@ gasBodySteps <- function(weight, events, base = getGasBody(weight))
 #'   arterial oxygen read off the run (\code{gasArterialOxygen()},
 #'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
 #'   does not read it
-#' @param shunt NULL (0.5), or the share of cardiac output through the
-#'   unventilated lung with an endobronchial tube, 0 to 0.5
-#'   (R/endobronchial.R); ignored without the tube
+#' @param shunt the share of cardiac output that passes no ventilated
+#'   alveoli, 0 to 0.5, for every gas (R/endobronchial.R).  NULL is the
+#'   default: 0.1, the shunt under anesthesia, without an endobronchial tube
+#'   and 0.5 with one; 0 with the semi-closed circuit or
+#'   \code{volumeConversion = FALSE}, GasMan having no shunt
 #' @param height,sex the patient's height (cm) and sex, which with \code{age}
 #'   scale the compartments by body composition (getGasBody()); NULL for
 #'   GasMan's linear scaling in weight
@@ -1843,7 +1855,12 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   if (temperature != 37) body$temperature <- temperature
   altitude <- checkAltitude(altitude)
   if (altitude != ALTITUDE_DEFAULT) body$altitude <- altitude
-  body <- gasBodyEndobronchial(body, endobronchial, checkShunt(shunt))
+  # The shunt (R/endobronchial.R): 10% under anesthesia and 50% with an
+  # endobronchial tube unless one is given; none in GasMan's mode, GasMan
+  # having no shunt
+  gasMans <- is.null(shunt) && (circuit == "semi-closed" || !isTRUE(volumeConversion))
+  if (gasMans) shunt <- 0
+  body <- gasBodyEndobronchial(body, endobronchial, shunt)
   # The haemoglobin of the arterial oxygen (R/arterialOxygen.R); the engine
   # itself does not read it
   haemoglobin <- checkHaemoglobin(haemoglobin)
@@ -1852,7 +1869,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
   # its time; the other physiology arguments are not used
   # (R/physiologyEvents.R)
   bodySteps <- if (is.data.frame(physiologyEvents) && nrow(physiologyEvents) > 0)
-    gasBodySteps(weight, physiologyEvents, base)
+    gasBodySteps(weight, physiologyEvents, base,
+                 anesthesiaShunt = if (gasMans) 0 else GAS_SHUNT_ANESTHESIA)
 
   sim <- advanceClosedFormGas(
     gasDose,

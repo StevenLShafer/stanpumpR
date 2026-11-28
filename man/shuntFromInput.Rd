@@ -5,10 +5,12 @@
 \title{The Shunt fraction slider, read: its percent as a fraction, the default
 when unreadable (a link is untrusted), held to the slider's range}
 \usage{
-shuntFromInput(value)
+shuntFromInput(value, endobronchial = FALSE)
 }
 \arguments{
 \item{value}{\code{input$physiology_shunt}, percent}
+
+\item{endobronchial}{TRUE for an endobronchial tube, which sets the default}
 }
 \description{
 The Shunt fraction slider, read: its percent as a fraction, the default

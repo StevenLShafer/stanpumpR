@@ -202,11 +202,15 @@ function physiologyLine(ph) {
     mult('Liver', ph.liver); mult('Kidney', ph.renal); mult('Cardiac output', ph.cardiac); mult('GI', ph.gi);
     if (ph.temperature != null) items.push(['Temperature', `${ph.temperature} °C`, ph.temperature !== 37]);
     if (ph.altitude != null) items.push(['Altitude', ph.altitude > 0 ? `${ph.altitude} m (${ph.pressure} Torr)` : 'sea level', ph.altitude > 0]);
-    // The shunt fraction (2026-11-25), percent, said only where the slider
-    // has lowered it from its 50%
-    if (ph.endobronchial != null) items.push(['Intubation', ph.endobronchial
-        ? 'endobronchial' + (ph.shunt != null && ph.shunt !== 50 ? `, shunt ${ph.shunt}%` : '')
-        : 'tracheal', ph.endobronchial]);
+    // The shunt fraction, percent, said only away from its state's default:
+    // 50% with an endobronchial tube, 10% under anesthesia without one
+    // (2026-11-28; a run made before then carries none without a tube)
+    if (ph.endobronchial != null) {
+        const usual = ph.endobronchial ? 50 : 10;
+        const off = ph.shunt != null && ph.shunt !== usual;
+        items.push(['Intubation', (ph.endobronchial ? 'endobronchial' : 'tracheal') +
+            (off ? `, shunt ${ph.shunt}%` : ''), ph.endobronchial || off]);
+    }
     return items.map(([k, v, off]) => `<span class="${off ? 'off' : ''}">${escapeHtml(k)} ${escapeHtml(v)}</span>`).join(' · ');
 }
 
@@ -216,7 +220,9 @@ function physiologyLine(ph) {
 function physiologyOff(ph) {
     if (!ph) return false;
     return ['liver', 'renal', 'cardiac', 'gi'].some(k => ph[k] != null && Math.abs(ph[k] - 1) >= 1e-9) ||
-        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true;
+        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true ||
+        // a shunt away from the 10% under anesthesia (2026-11-28)
+        (ph.endobronchial === false && ph.shunt != null && ph.shunt !== 10);
 }
 
 // The drug's liquid colour, from the run.

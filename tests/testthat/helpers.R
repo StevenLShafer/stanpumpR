@@ -179,3 +179,9 @@ shinyUploadDirName <- function() {
 # 2026-11-28 and as GasMan takes them: for tests of the circuit's algebra,
 # whose numbers are in the engine's own litres (gasFreshGasExpansion()).
 gasAsStated <- function(...) advanceClosedFormGas(..., volumeConversion = FALSE)
+
+# The body simulateGases() gives a patient of this weight with nothing else
+# said: GasMan's scaling with the 10% shunt under anesthesia (2026-11-28,
+# R/endobronchial.R).  For a reference run of advanceClosedFormGas(), which
+# handed no body runs GasMan's, without a shunt.
+gasShuntBody <- function(weight = 70) gasBodyEndobronchial(getGasBody(weight))

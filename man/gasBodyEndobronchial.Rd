@@ -2,13 +2,9 @@
 % Please edit documentation in R/endobronchial.R
 \name{gasBodyEndobronchial}
 \alias{gasBodyEndobronchial}
-\title{The gas body with one lung intubated}
+\title{The gas body with its shunt, and with one lung intubated}
 \usage{
-gasBodyEndobronchial(
-  body,
-  endobronchial = FALSE,
-  shunt = ENDOBRONCHIAL_SHUNT_FRACTION
-)
+gasBodyEndobronchial(body, endobronchial = FALSE, shunt = NULL)
 }
 \arguments{
 \item{body}{output of \code{getGasBody()}, possibly through
@@ -16,14 +12,15 @@ gasBodyEndobronchial(
 
 \item{endobronchial}{TRUE for an endobronchial tube}
 
-\item{shunt}{the share of cardiac output through the unventilated lung,
-0 to ENDOBRONCHIAL_SHUNT_FRACTION (the default)}
+\item{shunt}{the share of cardiac output that passes no ventilated
+alveoli, 0 to ENDOBRONCHIAL_SHUNT_FRACTION; NULL for the default, 10\%
+under anesthesia and 50\% with the tube (gasShuntDefault())}
 }
 \value{
-the body, with \code{shunt} set and the alveolar volume that of
+the body, with \code{shunt} set, and the alveolar volume that of
 the ventilated lung when \code{endobronchial} is TRUE
 }
 \description{
-The gas body with one lung intubated
+The gas body with its shunt, and with one lung intubated
 }
 \keyword{internal}

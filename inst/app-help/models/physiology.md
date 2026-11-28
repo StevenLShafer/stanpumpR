@@ -2,9 +2,10 @@ The **Physiology** panel in the left-hand column asks *what if*: what if hepatic
 function were half of normal, the kidneys shut down, or cardiac output fell
 by two thirds? It has four sliders of organ function, a fifth for body
 temperature (see *Body temperature* below), and, while an inhaled anesthetic
-is in the dose table, a slider for altitude and a box for endobronchial
-intubation, which act on the inhaled anesthetics only (see *Altitude* and
-*Endobronchial intubation* below). The Visualizer shows the settings under
+is in the dose table, sliders for altitude, the shunt fraction and the
+haemoglobin, and a box for endobronchial intubation, which act on the inhaled
+anesthetics and the arterial oxygen only (see *Altitude*, *Shunt under
+anesthesia* and *Endobronchial intubation* below). The Visualizer shows the settings under
 its title. Each of the four is a multiple of
 normal function, on a log scale from a tenth (0.1) to ten times (10). All four
 start at 1, which is normal and changes nothing. **Reset to normal** puts them
@@ -285,9 +286,10 @@ more slowly, and the brain ends lower.
 
 Other effects the same chapter
 describes are not modelled yet. These are flow shifted to muscle (exercise,
-excitement) or to fat, the ventilation-perfusion mismatch of the normal
-anaesthetised lung, and children's larger vessel-rich group. One-lung
-ventilation is: see *Endobronchial intubation*, below. Ventilation itself is a
+excitement) or to fat, and children's larger vessel-rich group. The
+ventilation-perfusion mismatch of the normal anaesthetised lung is modelled as
+a shunt (*Shunt under anesthesia*, below), and so is one-lung ventilation
+(*Endobronchial intubation*). Ventilation itself is a
 dose-table row.
 
 ## Body temperature and the inhaled anesthetics
@@ -434,6 +436,70 @@ over the pressure, and much less at low flows. Acclimatisation (a larger haemogl
 hypoxic drive to breathe) is not modelled, and cardiac output and ventilation
 keep their own controls. The intravenous drugs do not respond.
 
+## Shunt under anesthesia
+
+The **Shunt fraction** slider, shown while an inhaled anesthetic is in the
+dose table, sets the share of the cardiac output that passes no ventilated
+alveoli. That blood reaches the arteries as it left the tissues, mixed venous:
+it takes up no oxygen and no anesthetic, and gives none off. Steven Shafer put
+the physics so (27 November 2026): if the anesthetic is entering from the
+pulmonary arteries, it flows through the lungs unaffected; if it is entering
+from the trachea, it never reaches the shunt fraction. So only the
+unshunted blood takes gas up from the alveoli, and arterial blood is the
+mixture of the two streams. For an anesthetic, which blood carries in
+proportion to its partial pressure, the arterial partial pressure is
+(1 − shunt) of the alveolar plus the shunt's share of the mixed venous. Oxygen
+is carried mostly on haemoglobin, so it is the oxygen contents that mix, and
+the arterial partial pressure is read back from the mixture's content
+(*Oxygen*, below).
+
+The slider starts at **10%, the shunt under anesthesia**: the venous admixture
+of an anaesthetised, ventilated patient with normal lungs. Atelectasis appears
+in almost nine of ten anaesthetised patients, and by the inert gas technique it
+gives a true shunt of about 6% of the cardiac output (Hedenstierna 2002);
+measured by the oxygen method, which also counts blood from poorly ventilated
+regions, it was 12 to 13% with both lungs ventilated in patients about to have
+lung surgery (Beck 2001). The engine has one shunt to stand for both, and the
+10% lies between them: it is an interpolation, not a measurement. Awake, with
+healthy lungs, the venous admixture on air is about 3% (Said and Banerjee
+1963); the same authors measured shunts on oxygen of 7.4% in emphysema, 8.3%
+in diffuse pulmonary fibrosis and 9.1% in marked obesity, which may help in
+setting the slider for such a patient. The engine assumes anesthesia and
+controlled ventilation from time 0, so nothing in it starts at 3%.
+
+**Oxygen.** The arterial oxygen is computed from the alveolar oxygen as
+described under *Endobronchial intubation*, below. For a 70 kg patient at a
+cardiac output of 5 L/min, breathing 2% sevoflurane in 6 L/min of fresh gas at
+a minute ventilation of 6 L/min, at 30 minutes and haemoglobin 15 g/dL:
+
+| Shunt fraction | PaO2 on oxygen | PaO2 on oxygen 2 L/min, air 4 L/min | PaO2 on air | SaO2 on air |
+|---|---|---|---|---|
+| 0% | 659 mmHg | 285 mmHg | 98 mmHg | 98% |
+| 3% | 609 mmHg | 240 mmHg | 91 mmHg | 97% |
+| 5% | 573 mmHg | 210 mmHg | 86 mmHg | 97% |
+| 10% | 478 mmHg | 147 mmHg | 77 mmHg | 95% |
+| 15% | 373 mmHg | 109 mmHg | 70 mmHg | 94% |
+| 20% | 259 mmHg | 88 mmHg | 64 mmHg | 92% |
+| 30% | 102 mmHg | 66 mmHg | 54 mmHg | 88% |
+
+At 0% the arterial oxygen is the alveolar. Anaemia matters little at 10% (on
+air the SaO2 is 93% at 7 g/dL and 96% at 17), and altitude a great deal: on
+air the SaO2 is 95% at sea level, 84% at 3000 m and 48% at 5000 m, at the
+ventilation set (the model does not hyperventilate as an awake person does).
+
+**The anesthetics.** During uptake the arterial partial pressure is below
+end-tidal, by a tenth at the first moment, when the venous blood holds none,
+and by less as the tissues fill; during washout it is above. The brain follows
+the arterial blood, so it rises a little more slowly than without the shunt,
+and end-tidal a little faster, less being taken up. With 2% sevoflurane as
+above on oxygen, the brain reads 1.50% at 10 minutes and 1.71% at 30, where
+without the shunt it would read 1.55% and 1.74%; desflurane 6%, 5.15% and
+5.46% against 5.30% and 5.57%. GasMan has no shunt (see [Differences from
+GasMan](help:models/gas-differences)).
+
+A physiology event records the slider, so a shunt that changes during a case
+can be followed.
+
 ## Endobronchial intubation
 
 The **Endobronchial intubation** box, shown with Altitude while an inhaled
@@ -446,7 +512,9 @@ pressure, a right-to-left shunt, so end-tidal and arterial partial pressures
 diverge. stanpumpR starts from the chapter's idealisation: half the cardiac
 output passes the unventilated lung, and the ventilated lung holds half the
 alveolar gas. (The half is the chapter's, kept on Shafer's decision of
-2026-11-19; the **Shunt fraction** slider, below, lowers it.)
+2026-11-19. Ticking the box moves the **Shunt fraction** slider from 10% to
+50%, and unticking it moves the slider back to 10%; the slider lowers the
+half, below.)
 
 How much the arterial rise is delayed depends on solubility. For a poorly
 soluble agent the end-tidal tension approaches the inspired whatever the blood
@@ -488,9 +556,9 @@ Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
 3 L/min gives 61%, at 12 L/min 75%).
 
-**Shunt fraction.** Ticking the box shows a **Shunt fraction** slider, 0 to
-50% of cardiac output, starting at 50%, its maximum (Steven Shafer, 25
-November 2026). In practice hypoxic pulmonary vasoconstriction diverts blood
+**Shunt fraction.** Ticking the box moves the **Shunt fraction** slider to
+50% of cardiac output, its maximum (Steven Shafer, 25 November 2026; one
+slider for both shunts, 27 November 2026). In practice hypoxic pulmonary vasoconstriction diverts blood
 from the unventilated lung, so the shunt is less than half; the slider stands
 in for it. Lower it and watch the oxygenation improve. At 30 minutes, as in the
 table above:
@@ -511,13 +579,13 @@ At 0% the unventilated lung takes no blood, and only the ventilated lung's
 smaller alveolar volume remains of the tube. A physiology event records the
 slider with the box.
 
-**Haemoglobin.** Ticking the box also shows a **Haemoglobin** slider (4 to 20 g/dL,
-15 by default). The oxygen the shunted half fails to carry is the same number
+**Haemoglobin.** The **Haemoglobin** slider (4 to 20 g/dL, 15 by default) is
+shown with the Shunt fraction slider. The oxygen the shunted half fails to carry is the same number
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
 the SaO2 is 68% at 7 g/dL and 87% at 17 g/dL, on air 48% and 77%. A physiology
-event records it, so a transfusion or a bleed can be followed. Without a shunt
-it changes nothing the plot shows.
+event records it, so a transfusion or a bleed can be followed. It changes the
+arterial oxygen only, and at a shunt of 0% nothing the plot shows.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
@@ -736,6 +804,11 @@ Bartošová T, Šíma M, Prskavec T, et al. Deep hypothermia reduces the predict
 propofol model: population pharmacokinetic modelling in cardiac surgery.
 *Biomed Pharmacother* 2026;200:119523. doi:10.1016/j.biopha.2026.119523
 
+Beck DH, Doepfmer UR, Sinemus C, Bloch A, Schenk MR, Kox WJ. Effects of
+sevoflurane and propofol on pulmonary shunt fraction during one-lung
+ventilation for thoracic surgery. *Br J Anaesth* 2001;86:38-43.
+doi:10.1093/bja/86.1.38
+
 Castle-Kirszbaum M, Parkin WG, Goldschlager T, Lewis PM. Cardiac output and
 cerebral blood flow: a systematic review of cardio-cerebral coupling.
 *J Neurosurg Anesthesiol* 2022;34:352-63. doi:10.1097/ANA.0000000000000768
@@ -759,6 +832,9 @@ doi:10.1634/theoncologist.2018-0336
 Hande KR, Wolff SN, Greco FA, Hainsworth JD, Reed G, Johnson DH. Etoposide
 kinetics in patients with obstructive jaundice. *J Clin Oncol*
 1990;8:1101-7. doi:10.1200/JCO.1990.8.6.1101
+
+Hedenstierna G. Airway closure, atelectasis and gas exchange during
+anaesthesia. *Minerva Anestesiol* 2002;68:332-6.
 
 Hiraoka H, Yamamoto K, Miyoshi S, et al. Kidneys contribute to the
 extrahepatic clearance of propofol in humans, but not lungs and brain.
@@ -794,6 +870,10 @@ on middle cerebral artery mean blood velocity at rest and during exercise.
 O'Reilly S, Rowinsky E, Slichenmyer W, et al. Phase I and pharmacologic
 studies of topotecan in patients with impaired hepatic function. *J Natl
 Cancer Inst* 1996;88:817-24. doi:10.1093/jnci/88.12.817
+
+Said SI, Banerjee CM. Venous admixture to the pulmonary circulation in human
+subjects breathing 100 per cent oxygen. *J Clin Invest* 1963;42:507-15.
+doi:10.1172/JCI104739
 
 Stoelting RK, Longnecker DE. Effect of right-to-left shunt on rate of
 increase in arterial anesthetic concentration. *Anesthesiology*
