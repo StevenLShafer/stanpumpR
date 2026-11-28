@@ -3,7 +3,7 @@
 Imipenem is always given with cilastatin, which blocks its breakdown in the kidney. Cilastatin has no antibacterial effect and is not drawn. Both US products state their doses in milligrams of imipenem:
 
 - **PRIMAXIN** (imipenem and cilastatin): "500 mg" is 500 mg of imipenem with 500 mg of cilastatin. Adults with a creatinine clearance of 90 mL/min or more receive 500 mg every 6 hours, 1000 mg every 8 hours, or 1000 mg every 6 hours. Children from 3 months receive 15 to 25 mg/kg every 6 hours. The label reduces the dose below 90 mL/min.
-- **RECARBRIO** (imipenem, cilastatin and relebactam): 1.25 g is 500 mg of imipenem, 500 mg of cilastatin and 250 mg of relebactam, every 6 hours over 30 minutes. Enter a RECARBRIO dose as the imipenem it contains: 1.25 g is `500 mg`, and the pediatric 37.5 mg/kg is `15 mg/kg`. Relebactam is a beta-lactamase inhibitor and is not drawn.
+- **RECARBRIO** (imipenem, cilastatin and relebactam): 1.25 g is 500 mg of imipenem, 500 mg of cilastatin and 250 mg of relebactam, every 6 hours over 30 minutes. Choose [RECARBRIO](help:drugs/RECARBRIO) in the dose table and enter it as ordered, in grams of the product (`1.25 g`, or the pediatric `37.5 mg/kg`); stanpumpR draws the imipenem it contains, 0.4 of each dose. Relebactam is a beta-lactamase inhibitor and is not drawn.
 
 To enter a 30-minute infusion of 500 mg, enter `1000 mg/hr` at its start and `0 mg/hr` half an hour later, and repeat every 6 hours.
 

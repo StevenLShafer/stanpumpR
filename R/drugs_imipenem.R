@@ -22,10 +22,10 @@
 # equivalent) and 500 mg cilastatin" per vial, and RECARBRIO "1.25 grams
 # (imipenem 500 mg, cilastatin 500 mg, relebactam 250 mg)", its pediatric
 # 37.5 mg/kg providing "15 mg/kg imipenem".  So the drug is imipenem, dosed in
-# mg of imipenem as PRIMAXIN is ordered; a RECARBRIO dose is entered as the
-# imipenem it carries (1.25 g = 500 mg).  Whether RECARBRIO should also be
-# offered as a combination product dosed in its own grams is a [decision] for
-# Shafer (docs/library-expansion/plan.csv, row imipenem).  The source's doses
+# mg of imipenem as PRIMAXIN is ordered.  RECARBRIO is also a combination
+# product of its own, dosed in its own grams and drawing imipenem at 0.4 of
+# them (R/combination-products.R; Shafer's decision of 2026-11-28, "Go with
+# your recommendations").  The source's doses
 # are of imipenem, so no salt conversion is made.
 #
 # THE SOURCE
@@ -66,9 +66,8 @@
 #
 # THE INFECTION (R/infection.R)
 # =============================
-# The Patient Profile's categories map onto the source's as follows
-# [decision for Shafer, put to him 2026-11-25; docs/library-expansion/
-# plan.csv, row imipenem]:
+# The Patient Profile's categories map onto the source's as follows (put to
+# Shafer 2026-11-25, accepted by him 2026-11-28):
 #     none, cUTI, cIAI     the reference
 #     pneumonia            CL x 0.62, V1 x 0.61
 #     pneumoniaVentilated  CL x 0.62, V1 x 0.61 x 1.23

@@ -72,6 +72,17 @@ COMBINATION_PRODUCTS <- list(
     # "30 mg/kg ... Provides 20 mg/kg ceftolozane and 10 mg/kg tazobactam".
     # Tazobactam is not drawn.
     shares = c(ceftolozane = 2 / 3)
+  ),
+  RECARBRIO = list(
+    # RECARBRIO label (NDA 212819, DailyMed 2026-10-23), section 2: "1.25
+    # grams (imipenem 500 mg, cilastatin 500 mg, relebactam 250 mg)"; the
+    # pediatric "37.5 mg/kg ... Provides 15 mg/kg imipenem".  Cilastatin
+    # (which only protects imipenem from renal dehydropeptidase) and
+    # relebactam (a beta-lactamase inhibitor) are not drawn.  Imipenem is
+    # also a drug of its own (PRIMAXIN, dosed in mg of imipenem); a product
+    # was added on Shafer's decision of 2026-11-28 so that RECARBRIO is
+    # entered as ordered.
+    shares = c(imipenem = 0.4)
   )
 )
 

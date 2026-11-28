@@ -96,3 +96,30 @@ test_that("imipenem offers the PRIMAXIN units, and the MIC line is free imipenem
   expect_null(antibioticMbcBand("imipenem"))
   expect_true("imipenem" %in% antibioticNoBands()$Drug)
 })
+
+test_that("RECARBRIO is simulated as 0.4 of its weight of imipenem (Shafer, 2026-11-28)", {
+  starts <- seq(0, 7 * 360, 360)
+  dt <- data.frame(Drug = "RECARBRIO", Time = c(rbind(starts, starts + 30)),
+                   Dose = c(rbind(2.5, 0)), Units = "g/hr")
+  direct <- dt
+  direct$Drug <- "imipenem"
+  direct$Dose <- direct$Dose * 0.4
+  a <- simulateDrugsWithCovariates(dt, events, 75, 170, 50, "male", 8 * 360, FALSE)
+  b <- simulateDrugsWithCovariates(direct, events, 75, 170, 50, "male", 8 * 360, FALSE)
+  expect_identical(names(a), "imipenem")
+  expect_equal(a$imipenem$wide, b$imipenem$wide)
+  dd <- getDrugDefaultsGlobal()
+  units <- unlist(dd$Units[dd$Drug == "RECARBRIO"])
+  expect_true(all(c("g", "g qid", "mg/kg", "mg/kg qid", "g/hr", "mg/kg/hr") %in% units))
+  expect_true(all(combinationUnitOk("RECARBRIO", units)))
+  expect_false(combinationUnitOk("RECARBRIO", "Plasma target"))
+  expect_identical(combinationComponents("RECARBRIO"), "imipenem")
+  # the label's pediatric "37.5 mg/kg ... Provides 15 mg/kg imipenem"
+  x <- expandCombinationProducts(data.frame(Drug = "RECARBRIO", Time = 0, Dose = 37.5,
+                                            Units = "mg/kg qid"))
+  expect_equal(x$Dose, 15)
+  expect_identical(combinationProductOf("imipenem", data.frame(Drug = "RECARBRIO")), "RECARBRIO")
+  # imipenem held in its own right stays imipenem
+  expect_identical(combinationProductOf("imipenem", data.frame(Drug = c("RECARBRIO", "imipenem"))),
+                   "imipenem")
+})

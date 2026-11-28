@@ -81,7 +81,7 @@ test_that("the field is shown and its tip names its readers only while a reader 
   expect_true(relevantFields("imipenem")[["infection"]])
   expect_false(relevantFields(c("propofol", "fentanyl"))[["infection"]])
   expect_match(patientFieldTooltip("infection"),
-               "Read by ceftolozane (given as Zerbaxa) and imipenem; no other drug is affected.", fixed = TRUE)
+               "Read by ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.", fixed = TRUE)
   expect_true("infection" %in% RELEVANT_FIELDS)
 
   withInfectionReader()
@@ -89,7 +89,7 @@ test_that("the field is shown and its tip names its readers only while a reader 
   expect_true(relevantFields("cefepime")[["infection"]])
   expect_true(relevantFields(c("propofol", "cefepime"))[["infection"]])
   tip <- patientFieldTooltip("infection")
-  expect_match(tip, "Read by cefepime, ceftolozane (given as Zerbaxa) and imipenem; no other drug is affected.",
+  expect_match(tip, "Read by cefepime, ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.",
                fixed = TRUE)
   # and the Cautions page's generated table
   table <- helpFieldReadersTableMarkdown()
