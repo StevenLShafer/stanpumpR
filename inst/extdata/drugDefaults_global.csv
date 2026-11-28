@@ -54,6 +54,8 @@ M6SUZ,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
 salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
 caspofungin,mcg,,mg/hr,mg/hr,"mg/hr,mg/m2/hr",#1565C0,0,0,0,0,0,IV,Other
+caspofunginWurthwein,mcg,,mg/hr,mg/hr,"mg/hr,mg/m2/hr",#0D47A1,0,0,0,0,0,IV,
+caspofunginXu,mcg,,mg/hr,mg/hr,"mg/hr,mg/m2/hr",#1E88E5,0,0,0,0,0,IV,
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#2E8B57,0.5,8,4,0,2,IV,Antibiotics
 clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#3CB371,3.1,9.9,3.1,0,5.2,IV,Antibiotics
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#66CDAA,2.4,9.4,9.4,0,4.7,IV,Antibiotics
