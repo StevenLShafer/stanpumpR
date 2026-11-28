@@ -71,7 +71,7 @@
 # EFFECT SITE
 # ===========
 # From Yassen 2007, who fitted a naloxone ke0 of 0.106 /min (Table IV; t1/2
-# 6.5 min) in the reversal of buprenorphine-induced respiratory depression,
+# 6.5 min) in the reversal of buprenorphine-induced ventilatory depression,
 # with their own two-compartment naloxone disposition (V1 12.1, V2 102 L;
 # CL 3.45, Q 4.74 L/min; Table III).  That ke0 belongs to that disposition,
 # not to Dowling's, so it is carried as the time to peak it gives there

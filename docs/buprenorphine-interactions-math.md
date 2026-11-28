@@ -208,7 +208,7 @@ the reduction is invoked.**
 
 ### Ventilation stays linear; the operational form is for analgesia
 With `n = 1`, ventilation is Olofsen's own linear transducer, whose ceiling is **exactly `α_B`**
-(0.81 naive, 0.48 chronic) at full buprenorphine occupancy — correct, and the respiratory-sparing
+(0.81 naive, 0.48 chronic) at full buprenorphine occupancy — correct, and the ventilatory-sparing
 plateau. *(The first pass erred here: it tried to express ventilation through the sigmoid and mis-stated
 the plateau as `α_B`; with a single operational reserve the sigmoid ceiling is `α_B/(1+α_B) ≈ 0.45`,
 not `α_B`. Keeping ventilation linear removes the error.)* The operational form carries the **analgesia**
@@ -238,7 +238,7 @@ that the operational structure is right and that buprenorphine's *true* affinity
 population-independent number. **But**: the ventilation fit does not force this split (above), and
 Nasser is plasma whole-brain PET vs effect-site ventilation, so it is an **order-of-magnitude sanity
 check, not a tight validation — do not present them as agreeing closely.** The **drawn** curves use
-Olofsen's fitted `k_on,B`/`k_off,B` and `α_B` directly (respiratory) plus the clinical analgesia reserve
+Olofsen's fitted `k_on,B`/`k_off,B` and `α_B` directly (ventilatory) plus the clinical analgesia reserve
 (analgesia); the deconvolution informs interpretation, it is not substituted into the model.
 
 ---
@@ -342,20 +342,20 @@ by (P4).
 ## 8. Presentation (per decision #1; full design in the spec §4)
 
 Two validated potency scales, bridged only by `ρ_bup`:
-- **Occupancy competition + respiratory panel** run on the **binding** scale (Olofsen's ventilatory
+- **Occupancy competition + ventilatory panel** run on the **binding** scale (Olofsen's ventilatory
   `C50,F`; buprenorphine's binding constants) — the only physically consistent choice, since an
   analgesic MEAC cannot enter a binding denominator.
 - **`% MEAC` and opioid–MAC panels** keep the **analgesic MEAC** scale `U`, unchanged, gaining the
   **available-drive line `Ũ = (1 − ρ_bup)·U`** (blockade, from the occupancy-derived `ρ_bup`) when
   buprenorphine is present.
 - Panels: a stacked **receptor-occupancy** graph (ρ_bup / full agonists / antagonist / free), the two
-  **effect curves** (analgesia; respiratory depression with its ceiling), the **`Ũ`** line, and a
+  **effect curves** (analgesia; ventilatory depression with its ceiling), the **`Ũ`** line, and a
   **precipitated-withdrawal marker** (a sharp fall in net activation when buprenorphine is introduced on
   a full-agonist background). Offered only while a partial agonist or antagonist is drawn.
 
 ## 9. Shafer's design decisions (2026-11-19)
 
-1. **Dual C50 scale.** The respiratory panel uses Olofsen's ventilatory `C50`; `% MEAC` and the
+1. **Dual C50 scale.** The ventilatory panel uses Olofsen's ventilatory `C50`; `% MEAC` and the
    opioid–MAC interaction keep the analgesic MEAC.
 2. **Tolerance Grid B.** `θ = ln M / ln 3 = (0, 0.369, 0.631, 1)`, anchored to `OPIOID_TOLERANCE_FACTORS`
    `(1, 1.5, 2, 3)`.
