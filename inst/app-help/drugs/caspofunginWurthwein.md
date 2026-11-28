@@ -15,6 +15,10 @@ With **Adjust weight to fat-free mass** ticked, the weight term is read at the p
 
 This is one of [two caspofungin models](help:drugs/caspofungin). stanpumpR uses it for adults.
 
+### Target concentrations
+
+No band is drawn. Würthwein reports exposure as the daily AUC, peak and trough at each dose, and sets no target range; the CANCIDAS label gives none either. Exposure to caspofungin is judged by the ratio of the daily AUC to the organism's MIC, not by a concentration range.
+
 ### Checks
 
 Table 3's steady-state AUCs, 170, 243, 365 and 487 mg·h/L at 70 to 200 mg daily, are each dose divided by 0.411 L/h, and the model reproduces them.
