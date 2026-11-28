@@ -360,6 +360,9 @@ macitentan,ng,,,mg PO,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Pulmonary hypertensi
 aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
 liothyronine,ng,mcg,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO,mcg",#3E7C87,0,0,0,0,0,IV,Other
+quinine,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,Other
+quinineKloprogge,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,
+quinineLeJouan,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,
 tafenoquine,ng,,,mg PO,"mg PO,mg PO qd",#7B5EA7,0,0,0,0,0,IV,Other
 maraviroc,ng,,,mg PO bid,"mg PO,mg PO bid",#00897B,0,0,0,0,0,IV,Other
 tecovirimat,ng,,,mg PO bid,"mg PO,mg PO bid,mg PO tid",#5D4037,0,0,0,0,0,IV,Other

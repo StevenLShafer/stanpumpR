@@ -105,6 +105,15 @@ MODEL_GROUPS <- list(
     ageMin = c(30, 0.7), ageMax = c(79, 21.9),
     weightMin = c(46, NA), weightMax = c(105, NA),
     n = c(35, 39), year = c(2004, 2003)),
+  # Quinine (2026-11-28, Shafer: "Build it, say so"): both sources are
+  # malaria patients; Kloprogge's 22 women were all pregnant.  Le Jouan
+  # prints its children's weight as a mean (13.6 +/- 3.8 kg), not a range.
+  quinine = data.frame(
+    model = c("quinineKloprogge", "quinineLeJouan"),
+    source = c("Kloprogge 2014", "Le Jouan 2005"),
+    ageMin = c(18, 0.55), ageMax = c(37, 6.7),
+    weightMin = c(44, NA), weightMax = c(71, NA),
+    n = c(22, 30), year = c(2014, 2005)),
   # Pulmonary arterial hypertension (2026-11-18, Shafer: "Use Miura's model
   # for children").  Miura 2026's models are given the range of the
   # source's CHILDREN, not its whole cohort, so that they are chosen for
@@ -403,6 +412,17 @@ paclitaxel <- modelGroup("paclitaxel")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 temozolomide <- modelGroup("temozolomide")
+
+#' Quinine, oral: the model chosen for the patient
+#'
+#' Kloprogge 2014 (22 pregnant women with malaria, 18-37 years) or Le Jouan
+#' 2005 (30 children with malaria, 0.55-6.7 years), chosen by
+#' \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams quinineKloprogge
+#' @inheritParams quinineLeJouan
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+quinine <- modelGroup("quinine")
 
 #' Sildenafil: the model chosen for the patient
 #'
