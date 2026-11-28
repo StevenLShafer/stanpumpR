@@ -428,7 +428,8 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
     y <- sim$state[[g]]
     for (iv in unique(interval))
     {
-      s <- gasSettingsAt(bySetting, changes[iv], deadSpace, gasPressureRatio(body))
+      s <- gasSettingsAt(bySetting, changes[iv], deadSpace, gasPressureRatio(body),
+                         gasFreshGasExpansion(body))
       # Agent inflow off, no coupling.  "open" is the no-rebreathing limit:
       # the patient inspires fresh gas only, whatever the flow.
       #
@@ -439,7 +440,7 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
       uO2 <- 0; cE <- 0
       if (rebreathing && oxygenUptake) {
         # Ambient volumes at the body's altitude (R/altitude.R)
-        VO2 <- body$VO2 / gasPressureRatio(body)
+        VO2 <- gasOxygenUptake(body) / gasPressureRatio(body)
         uO2 <- VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
         if (s$MV > 0) cE <- min(GAS_RESPIRATORY_QUOTIENT * VO2 / s$MV,
                                 GAS_MAX_EXHALED_CO2)
@@ -871,7 +872,8 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     rows <- which(washout$interval[idx] == iv & is.na(out))
     if (length(rows) == 0) next
     t0 <- washout$changes[iv]
-    s  <- gasSettingsAt(washout$bySetting, t0, washout$deadSpace, ratio)
+    s  <- gasSettingsAt(washout$bySetting, t0, washout$deadSpace, ratio,
+                        gasFreshGasExpansion(body))
 
     # Fresh gas once `off` is off.  The carrier flows that remain keep their
     # proportions (the total is turned up, not the mixture changed), the
@@ -921,7 +923,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
     # that replaces it; a constant, added to the uptake of the other gases.
     uOxygen <- if (isTRUE(washout$oxygenUptake))
-      body$VO2 / ratio * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
+      gasOxygenUptake(body) / ratio * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
 
     # The fastest rate of the uptake coupling.  Its derivative is the make-up
     # (or displaced) gas, a gas's tension times the summed uptake per alveolar

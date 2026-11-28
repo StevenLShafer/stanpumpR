@@ -736,13 +736,19 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   # Partial pressures at the body's altitude (R/altitude.R), so the vapour
   # delivered is in sea-level millilitres, as the amounts are
   settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
-                                                      gasPressureRatio(bodyAt(k))))
-  flow <- vapply(settings, function(s) s$Q, numeric(1))
+                                                      gasPressureRatio(bodyAt(k)),
+                                                      gasFreshGasExpansion(bodyAt(k))))
+  # Fresh gas in the lungs' litres, as the engine takes it and as the amounts
+  # are counted (gasFreshGasExpansion()); `flow` is what the flowmeters read,
+  # for the settings shown
+  expansion <- vapply(knots, function(k) gasFreshGasExpansion(bodyAt(k)), numeric(1))
+  flowInLungs <- vapply(settings, function(s) s$Q, numeric(1))
+  flow <- flowInLungs / expansion
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))
   va <- vapply(settings, function(s) s$VA, numeric(1))
   # mL of vapour a minute: L/min x % / 100 x 1000 mL/L.
-  rate <- 10 * flow * fresh
+  rate <- 10 * flowInLungs * fresh
   i <- findInterval(times + 1e-9, knots)
   deliveredAtKnot <- c(0, cumsum(rate[-length(knots)] * diff(knots)))
   delivered <- deliveredAtKnot[i] + rate[i] * (times - knots[i])
@@ -781,7 +787,13 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
                     else vapply(times, function(t) bodyAt(t)$Q_cardiac, 0),
     fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i], alveolarVentilation = va[i],
     delivered = delivered,
-    greenhouse = gasGreenhouse(g),
+    # kg per litre of vapour as the amounts count it: gasGreenhouse()'s is
+    # per litre at the flowmeters, 20 C, so it is divided by the expansion
+    greenhouse = local({
+      gh <- gasGreenhouse(g)
+      if (!is.null(gh)) gh$kgPerLitre <- gh$kgPerLitre / expansion[1]
+      gh
+    }),
     source = "stanpumpR")
 }
 

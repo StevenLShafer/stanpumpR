@@ -33,6 +33,20 @@ The partition coefficients are GasMan's. The MACs at 40 are Mapleson's (*Br J An
 
 Fresh gas composition follows from the flowmeter and vaporizer settings; the vapour dilutes the carrier gases. Air is split into 20.93 per cent oxygen and 78.07 per cent nitrogen; its remaining 1 per cent, mostly argon, is not carried.
 
+### Three volumes, three conditions
+
+The engine counts gas in the lungs, at body temperature and saturated with water vapour. Its three volumes are stated in three different conditions, and each is converted before it is used (Steven Shafer, 28 November 2026: "Convert both, assuming 20 degrees C at the flowmeter"):
+
+| Volume | Stated at | Litres in the lungs per litre stated |
+|---|---|---|
+| Ventilation | body temperature, saturated | 1.000 |
+| Fresh gas, at the flowmeters | 20 °C, dry | 1.128 |
+| Oxygen consumed, carbon dioxide produced | 0 °C, dry, 760 mmHg (STPD) | 1.210 |
+
+A litre of dry gas leaving a flowmeter at 20 °C warms to 37 °C, which expands it by 310/293, 5.8 per cent, and takes up water vapour at 47 mmHg, which expands it by 760/713, 6.6 per cent: 12.8 per cent together. So rebreathing stops when the flowmeters read about 89 per cent of the minute ventilation, not 100, because that much gas fills the breath once it is warm and wet. Oxygen consumption, 3.5 mL/kg/min, is an STPD volume by convention, and is 21 per cent larger in the lungs. In a closed circuit, 0.25 L/min of oxygen on the flowmeter is 0.233 L/min STPD, 5 per cent short of the 0.245 L/min a 70 kg patient consumes.
+
+Until that date all three were taken litre for litre. The closed circuit's arithmetic came out even, and the alveolar oxygen read about 9 mmHg high on room air (107 mmHg where the alveolar gas equation gives 99, at an alveolar ventilation of 4 L/min), because the oxygen consumed was subtracted as too small a volume. In the equations below, Q is the fresh gas flow in the lungs' litres, 1.128 times the flowmeters' reading at 37 °C and sea level (more at altitude, where the same water vapour is a larger share of the pressure; less in a cold patient, whose lungs warm it less).
+
 The circuit is the ideal circle system. With fresh gas flow Q, minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
 
 ```

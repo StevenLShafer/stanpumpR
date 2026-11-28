@@ -320,9 +320,12 @@ test_that("a temperature step carries the agent in each tissue across, and MAC s
   # The alveoli keep their partial pressure; a cooled tissue holds the same
   # agent at a lower one.  The ideal circuit holds no gas: its entry, the
   # inspired gas, follows the uptake of the new body (CodeRabbit on PR #864),
-  # here by two parts in a million
+  # here by two parts in a million, and since 2026-11-28 by two parts in a
+  # thousand: a litre of fresh gas warms to 32 C, not 37, so it is 1.6% less
+  # gas in the lungs, and the oxygen consumed is as much less a volume
+  # (gasFreshGasExpansion(), gasStpdFactor())
   expect_equal(after[2], before[2])
-  expect_equal(after[1], before[1], tolerance = 1e-5)
+  expect_equal(after[1], before[1], tolerance = 3e-3)
   expect_true(all(after[3:6] < before[3:6]))
   # MAC is lower at 32 C, so the summed MAC steps up at the same alveolar
   mac <- st$results[st$results$Drug == "MAC", ]

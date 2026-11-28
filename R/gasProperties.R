@@ -298,9 +298,12 @@ getGasBody <- function(weight = 70, circuitVolume = 8, height = NULL, age = NULL
     f_muscle   = 0.18,
     f_fat      = 0.06,
 
-    # Oxygen consumption, L/min.  3.5 mL/kg/min -> 245 mL/min at 70 kg.
+    # Oxygen consumption, L/min STPD.  3.5 mL/kg/min -> 245 mL/min at 70 kg.
     # This is a constant volume sink in the gas phase and exists whether or not
-    # nitrous oxide is present.
+    # nitrous oxide is present.  It is an STPD volume, as oxygen consumption
+    # is by convention; the gas balance takes gasOxygenUptake(body), the same
+    # oxygen at body temperature in the engine's unit of pressure, and the
+    # arterial oxygen content (mL O2/dL, also STPD) takes this value.
     VO2        = 0.0035 * weight
   )
   if (is.null(composition)) return(body)
@@ -399,6 +402,95 @@ GAS_DEAD_SPACE_FRACTION <- 0.3
 #
 # NOT YET CONFIRMED BY SHAFER (Claude Code, Claude Fable 5.1, 2026-10-05).
 GAS_RESPIRATORY_QUOTIENT <- 0.8
+
+
+#' One litre STPD in the gas engine's unit of volume
+#'
+#' Oxygen consumption and carbon dioxide production are STPD volumes by
+#' convention (0 C, 760 mmHg, dry).  The engine counts gas in the alveoli at
+#' body temperature, and its unit of tension, 1\% of a sea-level atmosphere, is
+#' \code{GAS_ALVEOLAR_TORR / 100} = 7.13 mmHg, the dry share of that
+#' atmosphere.  One litre STPD is therefore
+#' \code{(760 / 713) (273.15 + T) / 273.15} litres there: 1.2103 at 37 C.  Its
+#' counterpart in mmHg and mL is the textbooks' 0.863 in
+#' \code{PACO2 = 0.863 VCO2 / VA}: 760 x 310.15 / 273.15 / 1000.
+#'
+#' Until 2026-11-28 the engine subtracted \code{body$VO2} from the alveolar
+#' gas unconverted, so its oxygen sink was 1/1.21 of the oxygen consumed: on
+#' room air at 70 kg and 4 L/min of alveolar ventilation the alveolar oxygen
+#' read 107 mmHg where the alveolar gas equation gives 99.  Found
+#' while the mathematics of the gas engine expansion was drafted
+#' (docs/gas-engine-expansion-mathematics.md, section 1); Steven L. Shafer,
+#' 2026-11-28: "Yes to all eight."  GasMan carries no oxygen, so no comparison
+#' with it moves.
+#'
+#' @param temperature body temperature, C; NULL is 37
+#' @returns litres in the engine's unit per litre STPD
+#' @keywords internal
+gasStpdFactor <- function(temperature = NULL)
+{
+  if (is.null(temperature)) temperature <- 37
+  (SEA_LEVEL_PRESSURE / GAS_ALVEOLAR_TORR) * (273.15 + temperature) / 273.15
+}
+
+#' Temperature of the gas at the flowmeters, C
+#'
+#' Steven L. Shafer, 2026-11-28: "Convert both, assuming 20 degrees C at the
+#' flowmeter."  Room temperature, at which flowmeters are calibrated; the
+#' vapour's molar volume in R/gasGreenhouse.R is taken at the same 20 C.
+#' @keywords internal
+GAS_FLOWMETER_TEMPERATURE <- 20
+
+#' Litres in the lungs per litre of fresh gas at the flowmeters
+#'
+#' The three volumes of the gas engine arrive in three conditions.  The
+#' ventilation is a volume at body temperature, saturated (BTPS).  The fresh
+#' gas is read at the flowmeters dry and at room temperature
+#' (\code{GAS_FLOWMETER_TEMPERATURE}): on its way to the alveoli it warms to
+#' body temperature, (273.15 + T) / 293.15, 5.8\% at 37 C, and takes up water
+#' vapour, P_B / (P_B - 47), 6.6\% at sea level, so a litre on the flowmeter
+#' is 1.128 litres in the lungs.  Oxygen consumption is an STPD volume
+#' (\code{gasStpdFactor()}, 1.210).  Until 2026-11-28 all three were taken
+#' litre for litre, which kept the closed circuit's arithmetic (0.25 L/min of
+#' oxygen against 0.245 L/min consumed) and put the alveolar oxygen about 9
+#' mmHg high.  Found while piece 1 of the gas engine expansion was built:
+#' converting the oxygen consumption alone left 0.25 L/min of oxygen 18\%
+#' short of 0.245 L/min STPD.  Shafer, 2026-11-28: "Convert both, assuming 20
+#' degrees C at the flowmeter.  That is correct.  Interestingly, I've never
+#' even thought about it before."  With both, 0.25 L/min of oxygen at 20 C is
+#' 0.233 L/min STPD, 5\% short of 0.245: the physics.
+#'
+#' The partial pressures of the humidified fresh gas are
+#' \code{gasHumidityRatio()}'s business; this is the volume.  A body with
+#' \code{volumesAsStated} TRUE takes every volume litre for litre, as GasMan
+#' does (\code{advanceClosedFormGas(volumeConversion = FALSE)}, and always
+#' with the semi-closed circuit).
+#'
+#' @param body the gas body
+#' @returns the factor on every fresh gas flow; 1.1277 at 37 C and sea level
+#' @keywords internal
+gasFreshGasExpansion <- function(body)
+{
+  if (isTRUE(body$volumesAsStated)) return(1)
+  temperature <- if (is.null(body$temperature)) 37 else body$temperature
+  (SEA_LEVEL_PRESSURE / GAS_ALVEOLAR_TORR) / gasHumidityRatio(body) *
+    (273.15 + temperature) / (273.15 + GAS_FLOWMETER_TEMPERATURE)
+}
+
+#' Oxygen consumption as the gas engine's balance takes it
+#'
+#' \code{body$VO2} (L/min STPD) at body temperature, in the engine's unit of
+#' volume (\code{gasStpdFactor()}).  A sea-level volume: at altitude the
+#' ambient volume is this over \code{gasPressureRatio(body)}.
+#'
+#' @param body the gas body (\code{getGasBody()}, \code{simulateGases()}'s)
+#' @returns L/min
+#' @keywords internal
+gasOxygenUptake <- function(body)
+{
+  if (isTRUE(body$volumesAsStated)) return(body$VO2)
+  body$VO2 * gasStpdFactor(body$temperature)
+}
 
 # The most of the exhaled gas that is taken to be carbon dioxide.  The carbon
 # dioxide fraction is VCO2 / MV, which is a few percent at any ventilation a

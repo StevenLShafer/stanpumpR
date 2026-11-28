@@ -159,12 +159,16 @@
 #     haemoglobin nonlinearly, so it has no partition coefficient and no tissue
 #     compartment.  A constant sink VO2 (L/min) removes volume from the
 #     alveolar gas.  This sink exists whether or not nitrous oxide is present.
+#     VO2 here is gasOxygenUptake(body): the body's oxygen consumption, an
+#     STPD volume, at body temperature in the engine's unit of pressure,
+#     1.21 times it at 37 C (gasStpdFactor(), 2026-11-28; until then the
+#     STPD volume was subtracted unconverted).
 #
 #         V_circ dF_circ/dt = Q (F_fgf - F_circ) + VA (F_alv - F_circ)
 #         V_alv  dF_alv/dt  = VA (F_circ - F_alv) - 100 VO2
 #
 #     At steady state this gives F_alv,O2 = F_circ,O2 - 100 VO2 / VA, about
-#     14-15% on room air at 4 L/min -- the correct alveolar oxygen tension falls
+#     14% on room air at 4 L/min -- the correct alveolar oxygen tension falls
 #     out of the mass balance rather than being asserted.
 #
 # (4a) OXYGEN AND THE GAS VOLUME (2026-10-05; `oxygenUptake`, on by default).
@@ -747,7 +751,7 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
     A <- matrix(0, 2, 2)
     A[2, 2] <- -VA / Va + fromCircuit * bl$alveolar + pushedOut
     b <- c(0, fromCircuit * bl$fresh * Ffgf * gasHumidityRatio(body) -
-             100 * body$VO2 / Va)
+             100 * gasOxygenUptake(body) / Va)
     return(list(A = A, b = b, fresh = bl$fresh, alveolar = bl$alveolar))
   }
 
@@ -759,7 +763,7 @@ gasSystemOxygen <- function(body, Q, VA, Ffgf,
 
   # Metabolic consumption is a constant volume sink, so it enters b, not A.
   # The factor of 100 converts L/min of oxygen into percent of alveolar volume.
-  b <- c(Q * Ffgf / Vc, -100 * body$VO2 / Va)
+  b <- c(Q * Ffgf / Vc, -100 * gasOxygenUptake(body) / Va)
 
   list(A = A, b = b, fresh = NULL, alveolar = NULL)
 }
@@ -849,12 +853,15 @@ settingAt <- function(doseRows, t)
 #'   gas at \code{ratio} times its fraction, a variable-bypass vaporizer at its
 #'   dial, and the desflurane vaporizer, which delivers volume percent, at
 #'   \code{ratio} times its dial.
+#' @param expansion litres in the lungs per litre at the flowmeters
+#'   (\code{gasFreshGasExpansion()}); the total flow is returned times it, the
+#'   fractions being unchanged
 #' @returns a list with total fresh gas flow \code{Q}, minute ventilation
 #'   \code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
 #'   pressures
 #' @keywords internal
 gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
-                          ratio = 1)
+                          ratio = 1, expansion = 1)
 {
   Q_air  <- settingAt(split[["air"]],          t)
   Q_O2   <- settingAt(split[["oxygen"]],       t)
@@ -904,7 +911,7 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
   }
   for (g in volatiles) Ffgf[[g]] <- F_vap[[g]]
 
-  list(Q = Q, VA = VA, MV = MV, Ffgf = Ffgf)
+  list(Q = Q * expansion, VA = VA, MV = MV, Ffgf = Ffgf)
 }
 
 
@@ -1076,6 +1083,11 @@ gasSubSteps <- function(len, dtNominal, graded = TRUE,
 #'   correction at altitude (R/altitude.R), so at 7000 m its end-tidal tension
 #'   settles about 10% above the ideal circuit's (Gemini's gas-engine audit of
 #'   2026-11-23, A-04).  See the file header.
+#' @param volumeConversion TRUE (the default) expands the fresh gas from the
+#'   flowmeters' conditions to the lungs' and converts the oxygen consumed
+#'   from STPD (\code{gasFreshGasExpansion()}, \code{gasStpdFactor()}); FALSE
+#'   takes every volume litre for litre, as GasMan does and as this engine did
+#'   until 2026-11-28.  The semi-closed circuit is always FALSE.
 #' @param bodySteps NULL, or \code{gasBodySteps()}'s list of bodies and the
 #'   times from which each is in force (physiology events): the body, its gas
 #'   properties, pressure, humidity and cardiac output are switched at each,
@@ -1118,7 +1130,8 @@ advanceClosedFormGas <- function(
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   oxygenUptake = TRUE,
-  bodySteps = NULL
+  bodySteps = NULL,
+  volumeConversion = TRUE
 )
 {
   circuit <- match.arg(circuit)
@@ -1133,6 +1146,14 @@ advanceClosedFormGas <- function(
   # the oxygen volume model is not applied to it rather than applied wrongly.
   if (circuit == "semi-closed") oxygenUptake <- FALSE
   if (is.null(body)) body <- getGasBody(weight)
+  # Volumes litre for litre, as GasMan takes them: the fresh gas not expanded
+  # to body conditions, the oxygen consumed not converted from STPD
+  # (gasFreshGasExpansion()).  Always so for GasMan's own circuit.
+  if (!isTRUE(volumeConversion) || circuit == "semi-closed") {
+    body$volumesAsStated <- TRUE
+    if (!is.null(bodySteps))
+      bodySteps$body <- lapply(bodySteps$body, function(b) { b$volumesAsStated <- TRUE; b })
+  }
   Qco <- if (is.null(cardiacOutput)) body$Q_cardiac else cardiacOutput
 
   # The partition coefficients and MAC at the body's temperature
@@ -1256,7 +1277,7 @@ advanceClosedFormGas <- function(
     # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
     # ambient volume, and the carbon dioxide 1/r the share of the exhaled
     # gas (R/altitude.R).
-    VO2  <- if (consuming) body$VO2 / ratio else 0
+    VO2  <- if (consuming) gasOxygenUptake(body) / ratio else 0
     VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
     u <- u + VO2 - VCO2
     buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
@@ -1295,7 +1316,7 @@ advanceClosedFormGas <- function(
         stepProp <- function(st)
           if (uptakeEffect) coupledProp(st, 1) else buildProp(0, dt = 1)
         if (circuit != "semi-closed") {
-          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
+          s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body))
           p0 <- stepProp(state)
           drawn <- vapply(props$gas, function(g) {
             p <- p0[[g]]
@@ -1342,7 +1363,7 @@ advanceClosedFormGas <- function(
     # Settings are read at the START of the interval and held across it, which
     # is what makes the interval linear -- apart from the uptake coupling,
     # which is linearised per sub-step below.
-    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio)
+    s <- gasSettingsAt(bySetting, t0, deadSpace, ratio, gasFreshGasExpansion(body))
 
     # The sub-steps restart short only where something changed: a row that
     # repeats the settings in force carries on where the steps were, inside
@@ -1763,6 +1784,8 @@ gasBodySteps <- function(weight, events, base = getGasBody(weight))
 #' @param height,sex the patient's height (cm) and sex, which with \code{age}
 #'   scale the compartments by body composition (getGasBody()); NULL for
 #'   GasMan's linear scaling in weight
+#' @param volumeConversion as in \code{advanceClosedFormGas()}; FALSE to compare
+#'   with GasMan
 #' @param adjustToFFM FALSE for GasMan's linear scaling whatever is given
 #'   (the Patient Profile's fat-free-mass switch)
 #' @param uptakeEffect,circuit,deadSpace,oxygenUptake passed to
@@ -1782,7 +1805,7 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
                           altitude = NULL, endobronchial = FALSE,
                           physiologyEvents = NULL, haemoglobin = NULL,
                           shunt = NULL, height = NULL, sex = NULL,
-                          adjustToFFM = TRUE)
+                          adjustToFFM = TRUE, volumeConversion = TRUE)
 {
   circuit <- match.arg(circuit)
   if (is.null(doseTable) || nrow(doseTable) == 0) return(NULL)
@@ -1830,7 +1853,8 @@ simulateGases <- function(doseTable, weight = 70, age = 50, maximum = 60,
     circuit       = circuit,
     deadSpace     = deadSpace,
     oxygenUptake  = oxygenUptake,
-    bodySteps     = bodySteps
+    bodySteps     = bodySteps,
+    volumeConversion = volumeConversion
   )
   if (!is.null(bodySteps)) sim$physiologyEvents <- physiologyEvents
   sim

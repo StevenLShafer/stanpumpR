@@ -476,17 +476,17 @@ under its title while the tube is in. For a 70 kg patient at a cardiac output
 of 5 L/min and oxygen use of 0.25 L/min, breathing 2% sevoflurane in 6 L/min of
 fresh gas at a minute ventilation of 6 L/min, half the cardiac output shunted
 gives, at 30 minutes and haemoglobin 15 g/dL (the sevoflurane dilutes the
-oxygen: without it the PaO2 at a 20% shunt is 277 mmHg, not 265):
+oxygen: without it the PaO2 at a 20% shunt is 271 mmHg, not 259):
 
 | Fresh gas (6 L/min) | End-tidal PO2 | PaO2 | SaO2 |
 |---|---|---|---|
-| Oxygen | 666 mmHg | 50 mmHg | 85% |
-| Oxygen 2 L/min, air 4 L/min | 293 mmHg | 44 mmHg | 79% |
-| Air | 107 mmHg | 40 mmHg | 75% |
+| Oxygen | 659 mmHg | 50 mmHg | 85% |
+| Oxygen 2 L/min, air 4 L/min | 285 mmHg | 43 mmHg | 79% |
+| Air | 98 mmHg | 39 mmHg | 74% |
 
 Even with pure oxygen, the PaO2 is about 50 mmHg. That is the shunt's
 signature: more oxygen hardly helps, and neither does more ventilation (air at
-3 L/min gives 69%, at 12 L/min 75%).
+3 L/min gives 61%, at 12 L/min 75%).
 
 **Shunt fraction.** Ticking the box shows a **Shunt fraction** slider, 0 to
 50% of cardiac output, starting at 50%, its maximum (Steven Shafer, 25
@@ -497,12 +497,12 @@ table above:
 
 | Shunt fraction | PaO2 on oxygen | SaO2 on oxygen | PaO2 on air | SaO2 on air |
 |---|---|---|---|---|
-| 50% | 50 mmHg | 85% | 40 mmHg | 75% |
-| 40% | 66 mmHg | 93% | 47 mmHg | 83% |
-| 30% | 103 mmHg | 98% | 55 mmHg | 88% |
-| 20% | 265 mmHg | 100% | 66 mmHg | 93% |
-| 10% | 485 mmHg | 100% | 81 mmHg | 96% |
-| 0% | 666 mmHg | 100% | 107 mmHg | 98% |
+| 50% | 50 mmHg | 85% | 39 mmHg | 74% |
+| 40% | 66 mmHg | 93% | 47 mmHg | 82% |
+| 30% | 102 mmHg | 98% | 54 mmHg | 88% |
+| 20% | 259 mmHg | 100% | 64 mmHg | 92% |
+| 10% | 478 mmHg | 100% | 77 mmHg | 95% |
+| 0% | 659 mmHg | 100% | 98 mmHg | 98% |
 
 On oxygen the PaO2 climbs steeply below a shunt of about 30%, as the
 saturated blood from the ventilated lung comes to outweigh the shunted blood.
@@ -521,8 +521,9 @@ it changes nothing the plot shows.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
-the SaO2 is 75% at sea level, 66% at 3000 m and 43% at 5000 m; on oxygen 85%,
-82% and 80%.
+the SaO2 is 74% at sea level, 62% at 3000 m and 26% at 5000 m; on oxygen 85%,
+81% and 80%. (The ventilation is what was set: the model does not
+hyperventilate at altitude as an awake person does.)
 
 **Not modelled.** Hypoxic pulmonary vasoconstriction as a process: it
 diverts part of the blood from the unventilated lung over minutes, so the shunt
