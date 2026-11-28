@@ -227,7 +227,7 @@ pubmedSources$kind <- ifelse(startsWith(pubmedSources$source_id, "G"),
 # text, the PDF still to confirm (FULL_TEXT_READ); or confirmed on the PDF
 # itself (PARAMETERS_VERIFIED: Briki 2026 and Lindemalm 2005, supplied by
 # Shafer 2026-11-06)
-FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C37a", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
+FULL_TEXT_READ <- c("C15", "N01", "N01b", "N01c", "C28", "C37b", "C45", "C46", "C48", "C41", "C25", "C42", "P06", "C11", "N05", "C01", "P02", "C35", "C03", "C07", "P15", "P08", "C19", "P21", "P25", "C23", "C24", "N11", "C10", "C38a", "N12", "N10", "C09", "P13", "C17", "P05")
 # McCune 2014 (P23): Table 2 transcribed from the PDF by Shafer, the
 # supplement supplied, the Methods read in PubMed Central
 PARAMETERS_VERIFIED <- c(
@@ -239,6 +239,12 @@ PARAMETERS_VERIFIED <- c(
   # 2026-11-25, the same case as C09/C10/N10 above: each card records the PDF read and the
   # model's parameters confirmed on the rendered page images, while the derived `to_obtain`
   # still asked for the PDF.  The arrivals report found them as stale rows.
+  # C37a (Owen 2010, bendamustine) joined on 2026-11-27, the same case again and
+  # found the same way: papers/digests/PMID_20140617.md records the archived PDF
+  # read, with Table 1 and Table 2 -- the parameter tables -- on rendered page
+  # images and verification `matches`, while the derived `to_obtain` still asked
+  # for the PDF that had already been read.
+  "C37a",
   "P16", "C21", "C34",
   "P20", "C12", "P03", "P07", "C14", "C38b", "C40", "C09", "C10", "N10", "C26", "N03", "C27", "C47", "C44", "N13", "C36", "N02", "C43", "P10", "N04", "C02", "P23", "C13", "P12", "P09", "C30", "C20", "C33", "C31", "P24", "C08", "P19", "C29", "C32", "P04", "C22", "C39", "N07", "C04", "C16", "C18", "P17", "P18", "C05", "C06", "N08", "N09")
 pubmedSources$review_depth <- ifelse(
