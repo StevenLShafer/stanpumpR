@@ -491,7 +491,7 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "immunoglobulin",
     "antithrombin",
     "antithrombinAlfa",
-    "vonicogAlfa", "factorVIIIvwf",
+    "vonicogAlfa", "factorVIIIvwf", "humateP",
     "antithrombinIlias",
     "antithrombinMoffett",
     "thrombomodulinAlfa",

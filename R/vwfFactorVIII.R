@@ -26,8 +26,17 @@
 # metabolite-only drug factorVIIIvwf, which foldMetabolites() draws as its own
 # panel.  Because it is not linear, two VWF products given to one patient
 # would need ONE integration on their summed VWF, not two added together;
-# Vonvendi is the only VWF product in the library, so that case cannot arise
-# yet (the Humate-P model, which would raise it, is a later pull request).
+# both products draw their factor VIII on the same panel, so a patient given
+# both is refused (simCpCe() has one drug's doses, and the panel would add two
+# integrations; see processdoseTable()).
+#
+# A concentrate that carries factor VIII as well (Humate-P, VWF:RCo/FVIII:C
+# 2.4:1) adds its factor VIII to the same pool: Bauer's model gives the
+# infused factor VIII a volume of its own (FVIII V, 32.9 dL) and clears it by
+# the same VWF-dependent kout as the patient's own (Supplementary Methods), so
+# a bolus raises F by dose/ratio/FVIII V at once and an infusion adds
+# rate/ratio/FVIII V to kin.  The block's `input` carries those, built by
+# simCpCe() from the drug's own dose rows.
 #
 # The integration: the VWF:RCo curve is taken as linear between the
 # simulation's points, and each interval is cut into steps short enough that
@@ -49,9 +58,12 @@
 #' @param response the drug's \code{factorVIIIResponse} block: \code{kout}
 #'   (per minute), \code{imax}, \code{ic50} (IU/dL), \code{baseline} (F0,
 #'   IU/dL) and \code{vwfBaseline} (the patient's own VWF:RCo, IU/dL)
+#' @param input infused factor VIII, or NULL for none: a list of
+#'   \code{bolusTime}, \code{bolus} (IU/dL each) and \code{rateTime},
+#'   \code{rate} (IU/dL per minute from that time until the next)
 #' @returns factor VIII activity at \code{time}, IU/dL
 #' @keywords internal
-vwfFactorVIIISeries <- function(time, vwf, response)
+vwfFactorVIIISeries <- function(time, vwf, response, input = NULL)
 {
   kout <- response$kout
   imax <- response$imax
@@ -65,12 +77,28 @@ vwfFactorVIIISeries <- function(time, vwf, response)
   # Before the first dose the patient is at steady state on their own VWF
   f <- kin / rate(response$vwfBaseline)
   out[1] <- f
+  # A bolus at or before the first time is already in it
+  bolusAt <- function(a, b) {
+    if (is.null(input) || length(input$bolusTime) == 0) return(0)
+    sum(input$bolus[input$bolusTime > a & input$bolusTime <= b])
+  }
+  rateAt <- function(t) {
+    if (is.null(input) || length(input$rateTime) == 0) return(0)
+    # as the engines read the dose table (doseLines()): the rate set is the
+    # one set at the last time at or before t, rows at that time summed
+    j <- which(input$rateTime <= t)
+    if (length(j) == 0) return(0)
+    sum(input$rate[input$rateTime == max(input$rateTime[j])])
+  }
+  f <- f + bolusAt(-Inf, time[1])
+  out[1] <- f
   if (n == 1) return(out)
   for (i in 2:n)
   {
     dt <- time[i] - time[i - 1]
     if (dt > 0)
     {
+      add <- rateAt(time[i - 1])
       v0 <- vwf[i - 1]
       v1 <- vwf[i]
       k0 <- rate(v0)
@@ -89,10 +117,13 @@ vwfFactorVIIISeries <- function(time, vwf, response)
         u <- (s - 0.5) / steps
         v <- if (geometric) response$vwfBaseline + e0 * (e1 / e0)^u else v0 + (v1 - v0) * u
         k <- rate(v)
-        css <- kin / k
+        css <- (kin + add) / k
         f <- css + (f - css) * exp(-k * h)
       }
     }
+    # a bolus lands at the end of its interval, where the VWF:RCo curve
+    # already includes it
+    f <- f + bolusAt(time[i - 1], time[i])
     out[i] <- f
   }
   out
@@ -116,6 +147,16 @@ validateFactorVIIIResponse <- function(x, drug)
       stop(drug, ": factorVIIIResponse$", field, " must be one finite number, not negative")
   }
   if (x$imax >= 1) stop(drug, ": factorVIIIResponse$imax must be below 1")
+  # A concentrate carrying factor VIII: VWF:RCo IU per factor VIII IU, and
+  # the infused factor VIII's volume in litres (both or neither)
+  if (is.null(x$ratio) != is.null(x$volume))
+    stop(drug, ": factorVIIIResponse needs both ratio and volume, or neither")
+  for (field in intersect(c("ratio", "volume"), names(x)))
+  {
+    value <- x[[field]]
+    if (!is.numeric(value) || length(value) != 1 || !is.finite(value) || value <= 0)
+      stop(drug, ": factorVIIIResponse$", field, " must be one positive number")
+  }
   if (x$kout <= 0 || x$ic50 <= 0)
     stop(drug, ": factorVIIIResponse$kout and $ic50 must be positive")
   x

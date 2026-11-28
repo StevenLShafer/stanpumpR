@@ -989,19 +989,36 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
   # The factor VIII a VWF concentrate protects (R/vwfFactorVIII.R), from the
   # VWF:RCo the patient now has, drawn as the drug its block names
   if (!is.null(PK$factorVIIIResponse))
+  {
+    r <- PK$factorVIIIResponse
+    # A concentrate that carries factor VIII (Humate-P) adds it to the pool:
+    # each dose row in 10 IU of VWF:RCo (or 10 IU per minute) is
+    # Dose x 10 / ratio IU of factor VIII into r$volume litres, so
+    # Dose / (ratio x volume) IU/dL
+    input <- NULL
+    if (!is.null(r$ratio))
+    {
+      scale <- 1 / (r$ratio * r$volume)
+      input <- list(bolusTime = dose$Time[dose$Bolus],
+                    bolus     = dose$Dose[dose$Bolus] * scale,
+                    rateTime  = dose$Time[!dose$Bolus],
+                    rate      = dose$Dose[!dose$Bolus] * scale)
+    }
     metaboliteSeries <- data.frame(
       Time = results$Time,
-      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, PK$factorVIIIResponse),
+      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, r, input),
       Ce   = NA_real_
     )
-  if (!is.null(PK$factorVIIIResponse))
-  {
     # Not linear in the VWF:RCo: not to be added to another parent's, and
     # with no states for a time until threshold (foldMetabolites()); its
     # pre-dose level, the steady state on the patient's own VWF:RCo, is what
     # normalisation subtracts, as for a factor concentrate
-    r <- PK$factorVIIIResponse
     attr(metaboliteSeries, "nonlinear") <- TRUE
+    # whether this concentrate was given at all inside the plot: a drug left
+    # at 0 in the dose table (the startup menu's rows) draws only the
+    # patient's own factor VIII and does not count as a second concentrate
+    attr(metaboliteSeries, "exposed") <-
+      any(suppressWarnings(as.numeric(dose$Dose)) > 0, na.rm = TRUE)
     attr(metaboliteSeries, "baseline") <-
       r$baseline / (1 - r$imax * r$vwfBaseline / (r$ic50 + r$vwfBaseline))
   }

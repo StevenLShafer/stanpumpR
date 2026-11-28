@@ -162,7 +162,7 @@ plasmaOnly <- c(
     "immunoglobulin",
     "antithrombin",
     "antithrombinAlfa",
-    "vonicogAlfa", "factorVIIIvwf",
+    "vonicogAlfa", "factorVIIIvwf", "humateP",
     "antithrombinIlias",
     "antithrombinMoffett",
     "thrombomodulinAlfa",
