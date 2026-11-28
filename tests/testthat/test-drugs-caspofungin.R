@@ -147,6 +147,9 @@ test_that("the program chooses Wurthwein for adults and Xu for children", {
   expect_equal(chosen(6, 21), "caspofunginXu")
   expect_equal(chosen(0.5, 7), "caspofunginXu")
   expect_equal(chosen(16, 60), "caspofunginXu")
+  # at 17 years, one year from each range, weight decides
+  expect_equal(chosen(17, 40), "caspofunginXu")
+  expect_equal(chosen(17, 60), "caspofunginWurthwein")
   expect_equal(caspofungin(70, 170, 35, "male")$PK,
                caspofunginWurthwein(70, 170, 35, "male")$PK)
   for (d in c("caspofunginWurthwein", "caspofunginXu")) {

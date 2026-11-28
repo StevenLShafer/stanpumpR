@@ -15,12 +15,9 @@ caspofungin(weight, height, age, sex, adjustToFFM = TRUE)
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{scale by fat-free mass?  Read by Wurthwein's model (its
+weight term at the pharmacokinetic weight, Q and V2 by fat-free mass);
+Xu's body-surface area is from total weight and height either way}
 }
 \value{
 a list in the shape \code{getDrugPK()} expects

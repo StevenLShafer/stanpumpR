@@ -185,8 +185,9 @@ MODEL_GROUPS <- list(
   # its A2-2-only assay (R/drugs_teicoplaninKim.R).
   # Caspofungin (R/drugs_caspofungin*.R; Shafer, 2026-11-28: Xu 2026 for
   # children, Wurthwein 2013 for adults).  Between Xu's 16 and Wurthwein's 18
-  # years the nearer range wins; an adult outside 43-104 kg is still nearer
-  # Wurthwein by age.
+  # years the nearer range wins, and at 17 years (one year from each) weight
+  # decides: below 43 kg Xu, from 43 kg the larger Wurthwein.  An adult
+  # outside 43-104 kg is still nearer Wurthwein by age.
   caspofungin = data.frame(
     model = c("caspofunginWurthwein", "caspofunginXu"),
     source = c("Wurthwein 2013", "Xu 2026"),
@@ -545,6 +546,9 @@ teicoplanin <- modelGroup("teicoplanin")
 #' Wurthwein 2013 (46 adults, 18-74 years, 43-104 kg) or Xu 2026 (29
 #' critically ill children, 0.33-16 years, 4.9-74 kg), chosen by
 #' \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @param adjustToFFM scale by fat-free mass?  Read by Wurthwein's model (its
+#'   weight term at the pharmacokinetic weight, Q and V2 by fat-free mass);
+#'   Xu's body-surface area is from total weight and height either way
 #' @inheritParams caspofunginWurthwein
 #' @inheritParams caspofunginXu
 #' @returns a list in the shape \code{getDrugPK()} expects

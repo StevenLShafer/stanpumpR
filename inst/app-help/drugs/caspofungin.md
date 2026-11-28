@@ -9,7 +9,7 @@ stanpumpR holds 2 published models of caspofungin. You do not choose between the
 
 **The rule.** Among the models whose studied age and weight ranges include the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-**What that means for caspofungin.** Adults get Würthwein's model, including adults older than 74 or outside 43-104 kg, who are nearer to it than to the children's. Children up to 16 get Xu's. A 17-year-old is one year from each range; the tie goes to Würthwein's larger study. Steven Shafer chose this pairing on 28 November 2026.
+**What that means for caspofungin.** Adults get Würthwein's model, including adults older than 74 or outside 43-104 kg, who are nearer to it than to the children's. Children up to 16 get Xu's. A 17-year-old is one year from each range, so weight decides: below 43 kg, Würthwein's lightest patient, Xu's model is nearer; from 43 kg the two are equally near and Würthwein's larger study is chosen. Steven Shafer chose this pairing on 28 November 2026.
 
 ### Doses
 
