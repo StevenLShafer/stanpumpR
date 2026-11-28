@@ -12,6 +12,8 @@ The intravenous pharmacokinetics measured by de Groot and colleagues in 6 nonpre
 
 **The product label reports higher concentrations,** about three times these after injection. After 0.2 mg intramuscularly it gives a peak of 5.9 ng/mL, against 1.7 ng/mL here, and its clearance divided by bioavailability is 14.4 L/h, against 37 L/h here. The label names no assay. A review of older radioimmunoassay studies (Mäntylä and Kanto 1981, [PubMed](https://pubmed.ncbi.nlm.nih.gov/7298246/)) reports a clearance of 7 to 14 L/h, like the label's. An antibody that also reads metabolites would explain the gap, but that has not been shown. This model follows the specific assay and the intravenous data.
 
+**Do not rely on the early peak after intravenous injection.** The paper plots the concentrations of one woman. Against hers, the model is about twice too high 3 to 5 minutes after injection and 1.4 times too high at 10 minutes, close at 20 and 30 minutes, and 25% to 35% too low from 1 hour on. The model's central volume, which sets the early concentrations, comes from the group's average values and is poorly determined. One woman cannot show whether it is wrong for women in general.
+
 The study was small. The women's reported clearance predicts an intravenous area under the curve 14% above the one measured, which the model does not reconcile.
 
 ### Doses

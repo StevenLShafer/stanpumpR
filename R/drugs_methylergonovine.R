@@ -127,11 +127,15 @@
 #     levels from 1 hour on.  A two-compartment fit to her points gives V1 30
 #     to 33 L, CL 18.5 L/h, Vss 53 L and half-lives of 0.11 to 0.13 and 2.1 h
 #     (the figure prints 2.1).
-# So the model's concentrations in the first minutes may be about twice too
-# high.  The men's bias argues for a smaller V1 than the model's and this woman
-# for a larger one; which holds for women is not known.  She is one subject, and
-# her area, about 8 mcg.h/L, is more than six values with mean 6.02 and SD 0.63
-# can include (7.4 at most), so Figure 1 and Table 1 disagree somewhere.
+# So the model's concentrations in the first minutes are uncertain, and against
+# the one woman plotted they are about twice too high.  NO DIRECTION IS CLAIMED
+# for V1.  One subject cannot show where the group's value lies (the men's
+# individual values run from 10.5 to 39.3 L), and V1 depends on the design, on
+# when sampling began (3 minutes here, for her as for the others).  Clearance is
+# the better-determined parameter, though the women's printed values disagree
+# about it too (below).  Her area, about 8 mcg.h/L, is also more than six values
+# with mean 6.02 and SD 0.63 can include (about 7.3 at most), so Figure 1 and
+# Table 1 disagree somewhere.
 #
 # WHAT DISAGREES WITHIN THE SOURCES
 # =================================
