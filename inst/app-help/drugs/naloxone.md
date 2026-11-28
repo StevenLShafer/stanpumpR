@@ -14,7 +14,7 @@ Clearance carries its own lean-body-weight covariate, in either switch position.
 
 ### Effect site
 
-The effect site comes from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted ke0 0.106/min (an equilibration half-time of 6.5 minutes) in the reversal of buprenorphine-induced respiratory depression. They estimated it with their own naloxone disposition, so it is carried as the time to peak effect it gives there, 3.6 minutes after a bolus, and ke0 is solved again for Dowling's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). For the reference man that is 0.095/min. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
+The effect site comes from Yassen and colleagues (*Clin Pharmacokinet* 2007;46:965-980), who fitted ke0 0.106/min (an equilibration half-time of 6.5 minutes) in the reversal of buprenorphine-induced ventilatory depression. They estimated it with their own naloxone disposition, so it is carried as the time to peak effect it gives there, 3.6 minutes after a bolus, and ke0 is solved again for Dowling's disposition (the method of Minto and colleagues, *Anesthesiology* 2003;99:324-333). For the reference man that is 0.095/min. No antagonism model is attached: the row shows naloxone alone, not the opioid it reverses.
 
 ### Typical concentrations
 
@@ -26,4 +26,4 @@ Naloxone's duration is short, and shorter than that of almost every opioid it re
 
 ### Where to be careful
 
-Six men is a small anchor and the model says nothing about how much naloxone is needed, which depends on the opioid's affinity (buprenorphine and the fentanyl analogues need more) and on the degree of respiratory depression. The nasal input understates the first few minutes after a spray, because a single first-order input starts more slowly than the immediate component of the published mixture.
+Six men is a small anchor and the model says nothing about how much naloxone is needed, which depends on the opioid's affinity (buprenorphine and the fentanyl analogues need more) and on the degree of ventilatory depression. The nasal input understates the first few minutes after a spray, because a single first-order input starts more slowly than the immediate component of the published mixture.

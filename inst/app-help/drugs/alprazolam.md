@@ -25,4 +25,4 @@ The shaded band, 5 to 44 ng/mL, is the therapeutic reference range for **serum a
 
 ### Where to be careful
 
-CYP3A4 inhibitors raise alprazolam concentrations substantially; smoking lowers them. In obesity the volume is larger and the half-life about twice as long, with an unchanged clearance (Abernethy and colleagues, *Clin Pharmacokinet* 1984;9:177-183). The hydroxylated metabolites reach less than a tenth of the parent concentration and are not modelled. Alprazolam adds to the sedation and respiratory depression of opioids and other sedatives.
+CYP3A4 inhibitors raise alprazolam concentrations substantially; smoking lowers them. In obesity the volume is larger and the half-life about twice as long, with an unchanged clearance (Abernethy and colleagues, *Clin Pharmacokinet* 1984;9:177-183). The hydroxylated metabolites reach less than a tenth of the parent concentration and are not modelled. Alprazolam adds to the sedation and ventilatory depression of opioids and other sedatives.

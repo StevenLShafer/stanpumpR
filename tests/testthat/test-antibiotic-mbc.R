@@ -152,13 +152,14 @@ test_that("clindamycin's band lies within the label's steady-state levels", {
 
 test_that("linezolid's band is the trough range, approved as an exception (2026-11-13)", {
   tb <- antibioticTroughBands()
-  expect_equal(tb$Drug, "linezolid")
+  expect_equal(tb$Drug, c("linezolid", "teicoplanin"))
   expect_true(antibioticBandIsTrough("linezolid"))
   expect_false(antibioticBandIsTrough("vancomycin"))
   expect_null(antibioticMbcBand("linezolid"))
   dd <- getDrugDefaultsGlobal()
   row <- dd[dd$Drug == "linezolid", ]
-  expect_equal(c(row$Lower, row$Typical, row$Upper), c(tb$Lower, tb$Typical, tb$Upper))
+  lz <- tb[tb$Drug == "linezolid", ]
+  expect_equal(c(row$Lower, row$Typical, row$Upper), c(lz$Lower, lz$Typical, lz$Upper))
   X <- linezolid(70, 170, 40, "male")
   expect_equal(c(X$lowerTypical, X$typical, X$upperTypical), c(2, 4.5, 7))
   html <- helpDrugPageHTML("linezolid")

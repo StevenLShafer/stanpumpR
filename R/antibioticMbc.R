@@ -502,7 +502,9 @@ antibioticMbcTable <- function()
 #' approved by Steven L. Shafer on 2026-11-13 for linezolid, which the Zyvox
 #' label calls bacteriostatic against enterococci and staphylococci (its MBC
 #' against them is 64 to 2048 mg/L: Sandoe 2006, Shah 2024), and whose
-#' bactericidal activity against streptococci is known only from abstracts.
+#' bactericidal activity against streptococci is known only from abstracts;
+#' and teicoplanin (Shafer, 2026-11-27), whose MBCs against staphylococci are
+#' too often those of tolerant isolates to place a band.
 #'
 #' @returns a data frame: Drug, Lower, Typical, Upper (mg/L, total drug),
 #'   Reason and Source
@@ -510,17 +512,28 @@ antibioticMbcTable <- function()
 antibioticTroughBands <- function()
 {
   data.frame(
-    Drug = "linezolid",
-    Lower = 2, Typical = 4.5, Upper = 7,
-    Reason = paste(
+    Drug = c("linezolid", "teicoplanin"),
+    Lower = c(2, 15), Typical = c(4.5, 22.5), Upper = c(7, 30),
+    Reason = c(paste(
       "Linezolid is bacteriostatic against staphylococci and enterococci (Zyvox label, sec. 12.4),",
       "with MBC90s of 32 mg/L or more against MRSA (Shah 2024, Table 1) and 1024-2048 mg/L against",
       "enterococci (Sandoe 2006, Table 2), so it has no principal pathogen it kills at attainable",
       "levels; streptococcal MBCs were found only in abstracts."),
-    Source = paste(
+      paste(
+      "Teicoplanin's MBCs against Staphylococcus aureus cannot place a band: many isolates are",
+      "tolerant, with MBC/MIC ratios of 32 or more (Biedenbach DJ et al., Int J Antimicrob Agents",
+      "2007;30:143-149, 120 isolates, abstract read), and the MBC90 against 75 MRSA was above",
+      "32 mg/L at 22 hours (Maple PA et al., J Antimicrob Chemother 1989;23:517-525, abstract read);",
+      "so its band is the monitoring trough range (Shafer, 2026-11-27).")),
+    Source = c(paste(
       "Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (ESICM/ESCMID position paper),",
       "Table 4: 'Cmin: 2-7 mg/L', a trough 30 min before the next dose, 48 h into therapy;",
       "toxicity (thrombocytopenia) above a trough of 7-10 mg/L."),
+      paste(
+      "Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153 (ESICM/ESCMID position paper),",
+      "Table 4: TDM recommended, 'Cmin >= 15-30 mg/L', one sample 30 min or just before the next dose;",
+      "the text: a Cmin of 10-20 mg/L for uncomplicated infection, 20-30 mg/L advocated for severe",
+      "staphylococcal infection, nephrotoxicity more likely above 60 mg/L.")),
     stringsAsFactors = FALSE
   )
 }
