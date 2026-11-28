@@ -23,6 +23,8 @@
 ^CLAUDE\.md$
 ^GEMINI\.md$
 ^AGENTS\.md$
+^REVIEW\.md$
+^\.coderabbit\.yaml$
 ^\.agents$
 
 ^docs$
