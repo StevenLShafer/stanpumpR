@@ -9,7 +9,8 @@ gasSettingsAt(
   t,
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   ratio = 1,
-  expansion = 1
+  expansion = 1,
+  inspiratory = 0
 )
 }
 \arguments{
@@ -32,11 +33,18 @@ dial, and the desflurane vaporizer, which delivers volume percent, at
 \item{expansion}{litres in the lungs per litre at the flowmeters
 (\code{gasFreshGasExpansion()}); the total flow is returned times it, the
 fractions being unchanged}
+
+\item{inspiratory}{the share of the breath that is inspiration, I / (I + E)
+(\code{gasInspiratoryFraction()}): the fresh gas that enters the circuit
+during inspiration goes to the patient with the ventilator's tidal
+volume, so the delivered minute ventilation is the ventilation row plus
+this share of the fresh gas flow.  0, the default, is no coupling, as in
+GasMan.}
 }
 \value{
-a list with total fresh gas flow \code{Q}, minute ventilation
-\code{MV}, alveolar ventilation \code{VA}, and the fresh-gas partial
-pressures
+a list with total fresh gas flow \code{Q}, the delivered minute
+ventilation \code{MV}, the alveolar ventilation \code{VA} it gives, the
+ventilator's setting \code{MVset}, and the fresh-gas partial pressures
 }
 \description{
 Collects the six dose-table settings and turns the three flowmeter rows plus

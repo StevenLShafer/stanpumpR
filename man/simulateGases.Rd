@@ -24,7 +24,8 @@ simulateGases(
   height = NULL,
   sex = NULL,
   adjustToFFM = TRUE,
-  volumeConversion = TRUE
+  volumeConversion = TRUE,
+  ieRatio = NULL
 )
 }
 \arguments{
@@ -88,6 +89,12 @@ GasMan's linear scaling in weight}
 
 \item{volumeConversion}{as in \code{advanceClosedFormGas()}; FALSE to compare
 with GasMan}
+
+\item{ieRatio}{the I:E ratio as the expiratory part to one of inspiration
+(1, 1.5, 2, 3 or 4; NULL for the default 1:2), one for the whole run:
+the delivered ventilation is the ventilation row plus I / (I + E) of the
+fresh gas flow.  No fresh gas is added with the semi-closed circuit or
+\code{volumeConversion = FALSE}, as in GasMan.}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

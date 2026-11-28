@@ -146,7 +146,9 @@ test_that("each agent is its own decision, and each line is exact for it", {
   # answer, because nitrous oxide on its way out takes sevoflurane with it.
   together <- bruteGas(gasDose, 70, 40, 119, "sevoflurane", 0.21,
                        off = c("sevoflurane", "nitrousOxide"))
-  expect_lt(together, at(w, sevo, 119) - 1)
+  # (more than a minute shorter until 2026-11-28; at the higher ventilation
+  # the washout now runs at, gasWashoutVentilation(), 13.57 against 14.32)
+  expect_lt(together, at(w, sevo, 119) - 0.5)
 })
 
 
@@ -163,7 +165,9 @@ test_that("the sum-of-exponentials shortcut reads long when nitrous oxide is was
 
   n2oShort <- gasRecoveryTime(w, "nitrousOxide", 10, exact = FALSE)
   want <- bruteGas(gasDose, 70, 40, 119, "nitrousOxide", 10, off = "nitrousOxide")
-  expect_gt((at(w, n2oShort, 119) - want) / want, 0.10)
+  # (7.1% long since 2026-11-28, at the higher ventilation the washout runs
+  # at: the ventilation carries more of the washout and the coupling less)
+  expect_gt((at(w, n2oShort, 119) - want) / want, 0.05)
 
   macShort <- macRecoveryTime(w, 40, 0.1, exact = FALSE)
   want <- bruteGas(gasDose, 70, 40, 119, "MAC", 0.1, off = "MAC")
