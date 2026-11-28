@@ -23,12 +23,10 @@ idarucizumab(
 
 \item{sex}{sex as a string}
 
-\item{adjustToFFM}{\code{TRUE} (the default) scales the model to the
-patient's fat-free mass as described in the
-\href{https://github.com/StevenLShafer/stanpumpR/blob/master/docs/weight-adjustment.md}{weight-adjustment guide};
-\code{FALSE} reproduces the published size scaling exactly.  Each drug
-file's header says what the switch changes for that model; for cefazolin
-it also sets the weight the creatinine-clearance estimate uses.}
+\item{adjustToFFM}{\code{TRUE} (default) scales V1, V2, Q and the clearance's
+intercept by fat-free mass anchored at Glund 2017's 46 subjects and uses
+the pharmacokinetic weight in Cockcroft-Gault; \code{FALSE} fixes those
+at the derived values and uses total weight in Cockcroft-Gault}
 
 \item{creatinine}{serum creatinine, mg/dL, or NULL for an assumed normal
 value}

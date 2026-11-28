@@ -155,6 +155,10 @@ IDARUCIZUMAB_GLUND_COHORT <- list(groups = list(
 #' \code{R/drugs_idarucizumab.R}.
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM \code{TRUE} (default) scales V1, V2, Q and the clearance's
+#'   intercept by fat-free mass anchored at Glund 2017's 46 subjects and uses
+#'   the pharmacokinetic weight in Cockcroft-Gault; \code{FALSE} fixes those
+#'   at the derived values and uses total weight in Cockcroft-Gault
 #' @param creatinine serum creatinine, mg/dL, or NULL for an assumed normal
 #'   value
 #' @param pregnant is the patient pregnant?  \code{TRUE}, with the creatinine
