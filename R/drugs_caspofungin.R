@@ -69,8 +69,9 @@
 # Xu's were, in intensive care; Xu itself finds its BSA-normalised clearance
 # above three earlier paediatric models (0.248 against a median 0.208 L/h/m2),
 # so the gap is to the label's studies, not to the other population models.
-# An adult is an extrapolation of a paediatric ICU model.  Whether adults
-# should keep it is a [decision] on the card (papers/digests/PMID_41468548.md).
+# An adult is an extrapolation of a paediatric ICU model, kept for adults on
+# Shafer's decision of 2026-11-28 ("Keep Xu for adults for now"; the card,
+# papers/digests/PMID_41468548.md).
 #
 # References
 # ----------

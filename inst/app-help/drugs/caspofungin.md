@@ -19,7 +19,7 @@ The model agrees with Xu's own estimates of its patients' exposure: their median
 
 The model's patients cleared caspofungin about half as fast as the label's, so the curve runs 1.3 to 2 times higher than the label's patients would. Xu found its BSA-normalised clearance higher than three earlier paediatric models (0.248 against a median of 0.208 L/h/m²). The gap is therefore between the label's studies and the population models, not a misreading of this one.
 
-**Adults.** Xu studied no adults. Because this is the library's only caspofungin model, an adult gets it by the nearest-population rule. For adults it is an extrapolation of a paediatric ICU model, and it predicts about 1.7 times the label's adult exposure. Whether adults should keep this model or get an adult one is a question open for Steven Shafer.
+**Adults.** Xu studied no adults. Because this is the library's only caspofungin model, an adult gets it by the nearest-population rule. For adults it is an extrapolation of a paediatric ICU model, and it predicts about 1.7 times the label's adult exposure. Steven Shafer decided on 28 November 2026 to keep it for adults for now; an adult model may be added later.
 
 ### Target concentrations
 
