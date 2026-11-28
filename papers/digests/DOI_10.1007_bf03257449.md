@@ -138,7 +138,7 @@ is the discriminating statistic here. And minimising MDAPE directly is not the a
 19.1% by writing subject 2 off (his MDAPE 110%) and pays MDPE +11%. No two-compartment model describes
 subject 2 alongside the other five.
 
-### Validation against the only real data in the paper
+### Checked against the only real data in the paper
 Figure 1 carries subject 1's actual concentrations -- 10 filled markers (IV) and 7 open (oral). It was
 digitised by rendering PDF page 4 at scale 10, finding the open circles as enclosed white interiors
 (fill-holes minus the ink, filtered to round components of marker size) and the filled ones by a
@@ -172,7 +172,7 @@ Note that 1995's men ARE these men -- identical demographics and table values --
 are not independent studies of the drug, and a clearance agreeing between them is not a cross-check
 (a mistake this card's author made and the methylergonovine session caught).
 
-### The oral input is zero-order, and the paper's ka is an artifact
+### The oral input: comparing candidate shapes, and why the published ka is not a measurement
 Only F is model-independent in Table IV. The printed tmax values (59, 32, 35, 24, 54 and 40 min) are
 not sampling times (0, 10, 20, 30, 60, 90, 180 min): they are computed from the 1-compartment fit, as
 `tmax = tlag + ln(ka/k)/(ka-k)` confirms to three decimals (subject 1, 0.995 against 0.99; subject 4,
