@@ -306,6 +306,11 @@ lengthenedPlot <- function(requestedMaximum, maxTime, unit, plotMinimum = 0,
 # `plotMaximum` while it shows `shown`: the lengthened end on the slider's
 # step and within its range, or NULL when the slider already shows at least
 # that (the plot was not lengthened, or stopped at the unit's longest length).
+# Where the lengthened end falls between the slider's steps (2.5 days on a
+# slider of whole days) the slider takes the next step, 3 days, and the plot
+# then runs to it: the slider cannot show 2.5, and a plot half a day longer
+# than the lengthening rule asked for is the price of the two agreeing
+# (Devin's review of PR 1036 raised it; kept).
 lengthenedMaximum <- function(plotMaximum, shown, unit) {
   plotMaximum <- asScalarNumeric(plotMaximum)
   shown <- asScalarNumeric(shown)

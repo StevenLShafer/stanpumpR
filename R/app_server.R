@@ -1625,9 +1625,13 @@ app_server <- function(input, output, session) {
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio()), {
+  # (the haemoglobin too, which the simulation uses as restored: Devin's
+  # review of PR 1036)
+  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio(),
+                    haemoglobin()), {
     if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
-        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT)
+        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT ||
+        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN)
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -2093,6 +2097,16 @@ app_server <- function(input, output, session) {
     # browser's report, and the plot, already drawn to this length, would
     # blank until it came
     updateSliderInput(session, "maximum", value = target)
+  })
+  # Any other Max time is the user's (or a scenario's, a link's): the record
+  # of the move is dropped, so that coming back to the number the app once
+  # set is a choice, not the default lengthened (Devin's review of PR 1036)
+  observeEvent(input$maximum, ignoreInit = TRUE, {
+    maximum <- asScalarNumeric(input$maximum)
+    if (!isTRUE(maximumLengthened$to == maximum)) {
+      maximumLengthened$from <- NULL
+      maximumLengthened$to <- NULL
+    }
   })
   # The Max time the user or the defaults set: the slider's, or what it was
   # before the plot's lengthening moved it
