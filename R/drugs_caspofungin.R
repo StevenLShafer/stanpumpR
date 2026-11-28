@@ -93,6 +93,8 @@ CASPOFUNGIN_V_EXP  <- 1
 #' children); see the header of the file.
 #'
 #' @inheritParams cefazolin
+#' @param adjustToFFM not used: the model's own body-surface-area covariate is
+#'   evaluated from total weight and height whichever way the switch is set
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 caspofungin <- function(weight, height, age, sex, adjustToFFM = TRUE)

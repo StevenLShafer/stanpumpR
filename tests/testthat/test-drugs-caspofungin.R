@@ -68,10 +68,12 @@ test_that("the CANCIDAS label's Table 8 is not matched, as the help page says", 
   expect_equal(round(50 / (adult$cl1 * 60)), 147)
 })
 
-test_that("caspofungin offers its label's and practice's units and no band", {
+test_that("caspofungin offers infusion units only, as a total and per m2, and no band", {
+  # The label forbids an intravenous bolus, so no amount unit is offered: a
+  # dose is a rate stopped after an hour (Devin's review of PR #1018).
   dd <- getDrugDefaultsGlobal()
   units <- unlist(dd$Units[dd$Drug == "caspofungin"])
-  expect_true(all(c("mg", "mg/hr", "mg/m2", "mg/m2/hr") %in% units))
+  expect_setequal(units, c("mg/hr", "mg/m2/hr"))
   expect_equal(dd$Upper[dd$Drug == "caspofungin"], 0)
   expect_equal(dd$Category[dd$Drug == "caspofungin"], "Other")
 })

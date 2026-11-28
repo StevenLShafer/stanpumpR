@@ -4,14 +4,13 @@
 # read from the drug file.
 
 events <- data.frame(Time = numeric(0), Event = character(0), Fill = character(0))
-SALT <- 372 / 200
 
-test_that("Desai 2016's Table 5 with the switch off, in sulfate amounts", {
+test_that("Desai 2016's Table 5 with the switch off, in isavuconazole", {
   set <- isavuconazole(90, 160, 70, "female", adjustToFFM = FALSE)$PK$default
-  expect_equal(set$cl1 * 60, 2.36 * SALT)
-  expect_equal(set$v1, 49.1 * SALT)
-  expect_equal(set$cl2 * 60, 26.6 * SALT)
-  expect_equal(set$v2, 390 * SALT)
+  expect_equal(set$cl1 * 60, 2.36)
+  expect_equal(set$v1, 49.1)
+  expect_equal(set$cl2 * 60, 26.6)
+  expect_equal(set$v2, 390)
   expect_equal(set$ka_PO * 60, 1.08)
   expect_equal(set$bioavailability_PO, 1)
   # Vp 390 L gives the terminal half-life the Discussion's 130 h supports (138 h)
@@ -27,8 +26,8 @@ test_that("the switch on anchors at Desai's cohort", {
     list(weight = 77.8, height = 175, age = 43, men = 140, women = 49),
     list(weight = 67.0, height = 168.4, age = 54, men = 132, women = 100))))
   set <- isavuconazole(90, 160, 70, "female")$PK$default
-  expect_equal(set$cl1 * 60, 2.36 * SALT * size$clearance / cohort$clearance)
-  expect_equal(set$v2, 390 * SALT * size$volume / cohort$volume)
+  expect_equal(set$cl1 * 60, 2.36 * size$clearance / cohort$clearance)
+  expect_equal(set$v2, 390 * size$volume / cohort$volume)
 })
 
 # The exact system: dA/dt = -WB(t) A, WB = 1.08 [1 - exp(-(0.72 t)^4.88)] per
@@ -57,8 +56,9 @@ test_that("the oral pulses reproduce the Weibull input to the documented standar
   for (p in list(list(70, 170, 35, "male"), list(67, 168.4, 54, "female"),
                  list(110, 180, 60, "male"))) {
     set <- do.call(isavuconazole, p)$PK$default
-    ex <- weibullExact(set, 372, 24 * 60)
-    dt <- data.frame(Drug = "isavuconazole", Time = 0, Dose = 372, Units = "mg PO")
+    # 372 mg isavuconazonium sulfate, as labelled, is 200 mg isavuconazole
+    ex <- weibullExact(set, 200, 24 * 60)
+    dt <- data.frame(Drug = "isavuconazole", Time = 0, Dose = 372, Units = "mg PO isavuconazonium")
     w <- simulateDrugsWithCovariates(dt, events, p[[1]], p[[2]], p[[3]], p[[4]],
                                      24 * 60, FALSE)$isavuconazole$wide
     # The exact system read at the engine's own points, as hydrochlorothiazide's
@@ -72,18 +72,39 @@ test_that("the oral pulses reproduce the Weibull input to the documented standar
   }
 })
 
-test_that("intravenous doses take no pulses; the AUC after 372 mg is 200 mg / CL", {
-  dt <- data.frame(Drug = "isavuconazole", Time = c(0, 60), Dose = c(372, 0), Units = "mg/hr")
+test_that("a dose naming isavuconazonium is 200/372 of it in isavuconazole, by mouth and by vein", {
+  run <- function(dose, units) {
+    dt <- data.frame(Drug = "isavuconazole", Time = 0, Dose = dose, Units = units)
+    if (grepl("/hr", units))
+      dt <- rbind(dt, data.frame(Drug = "isavuconazole", Time = 60, Dose = 0, Units = units))
+    simulateDrugsWithCovariates(dt, events, 70, 170, 35, "male", 48 * 60, FALSE)$isavuconazole$wide
+  }
+  a <- run(372, "mg PO isavuconazonium"); b <- run(200, "mg PO")
+  expect_equal(approx(a$Time, a$Plasma, b$Time)$y, b$Plasma, tolerance = 1e-10)
+  a <- run(372, "mg/hr isavuconazonium"); b <- run(200, "mg/hr")
+  expect_equal(approx(a$Time, a$Plasma, b$Time)$y, b$Plasma, tolerance = 1e-10)
+  # scheduled: the label's loading regimen, every 8 hours
+  a <- run(372, "mg PO isavuconazonium tid"); b <- run(200, "mg PO tid")
+  expect_equal(approx(a$Time, a$Plasma, b$Time)$y, b$Plasma, tolerance = 1e-10)
+})
+
+test_that("intravenous doses take no pulses; the AUC after 372 mg isavuconazonium is 200 mg / CL", {
+  dt <- data.frame(Drug = "isavuconazole", Time = c(0, 60), Dose = c(372, 0),
+                   Units = "mg/hr isavuconazonium")
   w <- simulateDrugsWithCovariates(dt, events, 70, 170, 35, "male", 60 * 24 * 30, FALSE)$isavuconazole$wide
   set <- isavuconazole(70, 170, 35, "male")$PK$default
   auc <- sum(diff(w$Time) * (head(w$Plasma, -1) + tail(w$Plasma, -1)) / 2) / 60   # mg h/L
-  expect_equal(auc, 200 / (set$cl1 * 60 / SALT), tolerance = 0.03)
+  expect_equal(auc, 200 / (set$cl1 * 60), tolerance = 0.03)
 })
 
-test_that("isavuconazole offers the labelled units and no band", {
+test_that("isavuconazole offers both bases, names the prodrug, and no intravenous bolus", {
   dd <- getDrugDefaultsGlobal()
   units <- unlist(dd$Units[dd$Drug == "isavuconazole"])
-  expect_true(all(c("mg PO", "mg PO qd", "mg PO tid", "mg", "mg/hr") %in% units))
+  expect_true(all(c("mg PO isavuconazonium", "mg PO isavuconazonium qd",
+                    "mg PO isavuconazonium tid", "mg/hr isavuconazonium",
+                    "mg PO", "mg PO qd", "mg PO tid", "mg/hr") %in% units))
+  expect_true(all(units %in% allUnits | units %in% scheduledUnits))
+  expect_false(any(c("mg", "mg isavuconazonium") %in% units))
   expect_equal(dd$Upper[dd$Drug == "isavuconazole"], 0)
   expect_equal(dd$Category[dd$Drug == "isavuconazole"], "Other")
 })

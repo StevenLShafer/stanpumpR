@@ -53,7 +53,7 @@ suzetrigine,ng,,,mg PO,"mg PO,mg PO bid",#7E57C2,0,0,0,0,0,IV,Oral analgesics
 M6SUZ,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 aspirin,mcg,,,mg PO,"mg PO,mg PO qd",#8D6E63,0,0,0,0,0,IV,Other
 salicylate,mcg,,,,,#3949AB,0,0,0,0,0,IV,
-caspofungin,mcg,mg,mg/hr,mg/hr,"mg,mg/hr,mg/m2,mg/m2/hr",#1565C0,0,0,0,0,0,IV,Other
+caspofungin,mcg,,mg/hr,mg/hr,"mg/hr,mg/m2/hr",#1565C0,0,0,0,0,0,IV,Other
 cefazolin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h",#2E8B57,0.5,8,4,0,2,IV,Antibiotics
 clindamycin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg/kg PO,mg qd,mg bid,mg tid,mg qid,mg q4h,mg/kg qd,mg/kg bid,mg/kg tid,mg/kg qid,mg/kg q4h,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#3CB371,3.1,9.9,3.1,0,5.2,IV,Antibiotics
 cefalexin,mcg,,,mg PO,"mg PO,mg/kg PO,mg PO qd,mg PO bid,mg PO tid,mg PO qid,mg PO q4h,mg/kg PO qd,mg/kg PO bid,mg/kg PO tid,mg/kg PO qid,mg/kg PO q4h",#66CDAA,2.4,9.4,9.4,0,4.7,IV,Antibiotics
@@ -312,7 +312,7 @@ sotalol,ng,mg,mg/hr,mg PO,"mg,mg/hr,mg PO,mg PO bid",#455A64,0,0,0,0,0,IV,Other
 voriconazole,mcg,mg/kg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr,mg PO,mg PO bid",#00695C,2,6,4,0,0,IV,Other
 fluconazole,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr,mg PO,mg PO qd,mg/kg PO,mg/kg PO qd",#1B4F72,0,0,0,0,0,IV,Other
 posaconazole,mcg,mg,mg/hr,mg/hr,"mg,mg/kg,mg/hr,mg/kg/hr",#4A235A,0,0,0,0,0,IV,Other
-isavuconazole,mcg,mg,mg/hr,mg PO,"mg PO,mg PO qd,mg PO tid,mg,mg/hr",#6A1B9A,0,0,0,0,0,IV,Other
+isavuconazole,mcg,,mg/hr isavuconazonium,mg PO isavuconazonium,"mg PO isavuconazonium,mg PO isavuconazonium qd,mg PO isavuconazonium tid,mg/hr isavuconazonium,mg PO,mg PO qd,mg PO tid,mg/hr",#6A1B9A,0,0,0,0,0,IV,Other
 clozapine,ng,,,mg PO,"mg PO,mg PO qd,mg PO bid,mg PO tid",#7E57C2,350,600,475,0,0,IV,Antipsychotics
 norclozapine,ng,,,,,#B39DDB,0,0,0,0,0,IV,
 tobramycin,mcg,mg,mg/hr,mg/kg,"mg,mg/kg,mg/hr,mg qd,mg bid,mg tid,mg/kg qd,mg/kg bid,mg/kg tid",#558B2F,0.5,8,4,0,2,IV,Antibiotics

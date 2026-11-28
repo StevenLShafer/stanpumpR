@@ -3,8 +3,8 @@
 # oral absorption discretised into pulses (Desai 2016)
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min, amounts in mg
-# of isavuconazonium sulfate (the product as labelled), concentrations in
-# mcg/mL (= mg/L) of isavuconazole in plasma.  Concentration only.  Drafted by
+# of isavuconazole, concentrations in mcg/mL (= mg/L) of isavuconazole in
+# plasma.  Concentration only.  Drafted by
 # Claude Code, 2026-11-28, on Steven L. Shafer's decisions of that day
 # ("Approximate oral absorption for Isavuconazole"; "Use Vp 390 L, say so");
 # docs/library-expansion/plan.csv, Antifungals.
@@ -65,10 +65,16 @@
 # published values.
 #
 # DOSE BASIS.  Desai's doses are isavuconazole (372 mg isavuconazonium sulfate
-# = 200 mg isavuconazole, the paper's Methods and the label); Cresemba is
-# labelled and prescribed in isavuconazonium sulfate.  Doses are entered as
-# labelled, so every volume and clearance is multiplied by 372/200 to give
-# isavuconazole concentrations from sulfate amounts.
+# = 200 mg isavuconazole, the paper's Methods and the label), and so are the
+# model's amounts.  Cresemba is labelled and prescribed in the US as
+# isavuconazonium sulfate, while the EU label and much of the literature dose
+# isavuconazole: both bases are in common use, 1.86-fold apart, so the unit
+# names the prodrug (isavuconazoniumUnits in R/constants.R), converted by the
+# `doseProducts` block below at 200/372, and a plain mg unit is isavuconazole
+# (docs/adding-a-drug.md; Devin's review of PR #1018, 2026-11-28, which found
+# that a bare "mg PO" read as the prodrug made Desai's own 200 mg dose 46% too
+# small).  No intravenous bolus is offered: the label forbids one, and the
+# infusion is a rate (mg/hr) stopped after an hour.
 #
 # References
 # ----------
@@ -85,8 +91,8 @@ ISAVUCONAZOLE_VP  <- 390      # L, the Discussion's patients (see the header)
 ISAVUCONAZOLE_KAMAX <- 1.08   # 1/h, the Weibull's asymptote
 ISAVUCONAZOLE_WEIBULL_RA  <- 0.72  # 1/h, NOT a rate constant
 ISAVUCONAZOLE_WEIBULL_GAM <- 4.88
-# mg isavuconazonium sulfate per mg isavuconazole
-ISAVUCONAZOLE_SALT <- 372 / 200
+# mg isavuconazole per mg isavuconazonium sulfate
+ISAVUCONAZOLE_PER_ISAVUCONAZONIUM <- 200 / 372
 ISAVUCONAZOLE_COHORT <- list(groups = list(
   list(weight = 77.8, height = 175, age = 43, men = 140, women = 49),
   list(weight = 67.0, height = 168.4, age = 54, men = 132, women = 100)))
@@ -114,8 +120,8 @@ isavuconazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
   size <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
                         legacyVolume = 1, legacyClearance = 1,
                         cohort = do.call(cohortSizeFactors, ISAVUCONAZOLE_COHORT))
-  v  <- size$volume * ISAVUCONAZOLE_SALT
-  cl <- size$clearance * ISAVUCONAZOLE_SALT
+  v  <- size$volume
+  cl <- size$clearance
 
   default <- list(
     v1  = ISAVUCONAZOLE_V1 * v,
@@ -143,8 +149,11 @@ isavuconazole <- function(weight, height, age, sex, adjustToFFM = TRUE)
       "the BMI term not applied), F 1; the oral Weibull input (KAMAX 1.08 /h, RA 0.72 /h, ",
       "shape 4.88) discretised into ", length(ISAVUCONAZOLE_PULSE_FRACTION),
       " lagged fractions absorbed at 1.08 /h. Scaled to fat-free mass about the source's ",
-      "cohort. Doses as isavuconazonium sulfate (372 mg = 200 mg isavuconazole); plasma ",
-      "isavuconazole. https://doi.org/10.1128/AAC.02819-15"),
+      "cohort. Doses in mg isavuconazonium (the sulfate, as labelled; 372 mg = 200 mg ",
+      "isavuconazole) or plain mg of isavuconazole; plasma isavuconazole. ",
+      "https://doi.org/10.1128/AAC.02819-15"),
+    doseProducts = stats::setNames(ISAVUCONAZOLE_PER_ISAVUCONAZONIUM,
+                                   ISAVUCONAZONIUM_PRODUCT),
     oralPulses = stats::setNames(
       list(list(fraction = ISAVUCONAZOLE_PULSE_FRACTION,
                 delay    = ISAVUCONAZOLE_PULSE_DELAY)),

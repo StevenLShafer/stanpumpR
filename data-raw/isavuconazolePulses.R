@@ -126,8 +126,14 @@ fitPulses <- function(n, restarts = as.integer(Sys.getenv("RESTARTS", "6"))) {
     if (o$value < best$value) best <- o
     cat(sprintf("  restart %d: %.4f (best %.4f)\n", it, o$value, best$value))
   }
+  # The final, longer solve is what is shipped, so its score is the one
+  # reported, and it must keep the fractions nonnegative as the search did
+  # (Devin's review of PR #1018, 2026-11-28).
   x <- lawson(cumsum(exp(best$par)))
-  list(n = n, fraction = x$fraction, delay = x$delay, errors = errors(x), score = best$value)
+  if (any(x$fraction < 0)) stop("the final solve gave a negative fraction")
+  e <- errors(x)
+  list(n = n, fraction = x$fraction, delay = x$delay, errors = e,
+       score = max(e[["curve"]] / 0.0053, e[["peak"]] / 0.0001))
 }
 
 args <- commandArgs(TRUE)

@@ -2,7 +2,7 @@
 
 stanpumpR draws caspofungin with Xu and colleagues' model of critically ill children (Xu 2026, *Antimicrob Agents Chemother* 70:e01277-25). They studied 29 children in a paediatric intensive care unit, aged 4 months to 16 years and weighing 4.9 to 74 kg. Four of the children were on ECMO. All were given CANCIDAS as a one-hour infusion each day. The model has two compartments, and every parameter is scaled by body-surface area (Mosteller) about a child of 0.79 m². Clearance and intercompartmental clearance scale with BSA to the power 0.66, and both volumes in proportion to BSA. The paper fixes those exponents for "clearance" and "volume" but does not say whether Q and V2 take them. stanpumpR scales Q as a clearance and V2 as a volume, which is an assumption. Steven Shafer chose this model on 28 November 2026, over Yang 2022's step covariates.
 
-Doses are in mg of caspofungin, as CANCIDAS is labelled: a 50 mg vial holds caspofungin acetate equivalent to 50 mg of caspofungin. Doses may be entered per m² (mg/m², mg/m²/hr), as children are dosed, or as a total (mg, mg/hr), as adults are.
+Doses are in mg of caspofungin, as CANCIDAS is labelled: a 50 mg vial holds caspofungin acetate equivalent to 50 mg of caspofungin. The label forbids an intravenous bolus, so a dose is entered as a rate and stopped after an hour. Children are dosed per m² (for example 50 mg/m²/hr from 0 to 60 minutes) and adults as a total (50 mg/hr from 0 to 60 minutes).
 
 **Not applied.** Xu found ECMO enlarged the central volume (a coefficient of 18.2, in a form the paper does not state, from four children). The Patient Profile has no ECMO field, so the curve is that of a child not on ECMO.
 
