@@ -60,6 +60,16 @@ A false positive costs one paper left in Downloads with a line saying why. A fal
 colleague's unpublished work in a repository and its digest on the internet. The rules are tuned
 accordingly, and anything flagged is reported rather than quietly acted on.
 
+## nlmixr2lib never gets here
+
+The model library **nlmixr2lib** (`docs/nlmixr2lib/README.md`) is off limits to the archive, to the
+Paper Management session and to the whole pipeline (Steven L. Shafer, 2026-11-28). Its package, model files,
+vignettes and any copy or extract of them are never uploaded into `stanpumpRPapers`, filed, queued or
+digested, and they never get a card. It is read only by the repository's cross-check,
+`data-raw/nlmixr2libCrossCheck.R`, outside the archive. A drug or a reference of interest it leads to
+is handled as a new drug or a new manuscript by the usual route: the paper is obtained from its
+publisher under its own PMID, filed, and digested like any other.
+
 ## Reading a card
 
 `digests/README.md` is the authoring guide: the frontmatter contract, the verification

@@ -644,7 +644,7 @@ app_ui <- function() {
                   paste(
                     "With buprenorphine or an opioid antagonist in the table,",
                     "add panels for physical mu-receptor occupancy (competition",
-                    "and blockade), respiratory depression (with buprenorphine's",
+                    "and blockade), ventilatory depression (with buprenorphine's",
                     "ceiling) and analgesia in MEAC-equivalents, and an",
                     "available-drive line on the % MEAC panel."
                   ),

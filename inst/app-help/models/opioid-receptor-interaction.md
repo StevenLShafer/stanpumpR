@@ -1,4 +1,4 @@
-Buprenorphine is the one opioid the ordinary [% MEAC](help:models/meac) scale cannot handle. That scale adds opioids as if each were a full agonist contributing in proportion to its concentration. Buprenorphine is a **partial agonist** that binds the µ-opioid receptor and lets go of it very slowly, and it is that slow release — not its affinity — that makes it behave unlike any other opioid: it blocks other opioids durably, it has a ceiling on respiratory depression, and giving it on top of a full agonist can precipitate withdrawal.
+Buprenorphine is the one opioid the ordinary [% MEAC](help:models/meac) scale cannot handle. That scale adds opioids as if each were a full agonist contributing in proportion to its concentration. Buprenorphine is a **partial agonist** that binds the µ-opioid receptor and lets go of it very slowly, and it is that slow release — not its affinity — that makes it behave unlike any other opioid: it blocks other opioids durably, it has a ceiling on ventilatory depression, and giving it on top of a full agonist can precipitate withdrawal.
 
 With **Graph Options → Buprenorphine / opioid-receptor interaction** ticked — offered only while buprenorphine or an opioid antagonist (naloxone) is in the dose table — stanpumpR adds panels built on receptor occupancy rather than on the additive scale.
 
@@ -15,12 +15,12 @@ The mathematics is given in full, for a reader who wants it, in the typeset note
 ## The panels
 
 - **Receptor occupancy** (%): a line for each opioid's physical occupancy, plus the free-receptor fraction. This is the picture to read first. On a maintenance background buprenorphine holds most of the receptor and an added full agonist reaches only a thin slice (**blockade**); when buprenorphine is stopped, watch its line fall over *hours*, not minutes, as the slow release lets the receptor reopen. Occupancy here is physical receptor occupancy; ventilation and analgesia are separate transductions of it.
-- **Respiratory depression** (%): the share of baseline ventilation lost. Buprenorphine alone plateaus at its **ceiling** (about 0.81 of baseline in an opioid-naive patient, less in a tolerant one), and adding a full agonist on a high buprenorphine background barely moves it — the safety margin that makes buprenorphine respiratory-sparing.
+- **Ventilatory depression** (%): the share of baseline ventilation lost. Buprenorphine alone plateaus at its **ceiling** (about 0.81 of baseline in an opioid-naive patient, less in a tolerant one), and adding a full agonist on a high buprenorphine background barely moves it — the safety margin that makes buprenorphine ventilatory-sparing.
 - **Analgesia** (MEAC-equivalents): the analgesic drive in multiples of one MEAC, so a full agonist at its own MEAC reads 1. Buprenorphine contributes its own partial analgesia here. The **available-drive** line is the full-agonist drive that is actually getting through the blockade — the honest answer to "will my fentanyl work, and how much?"
 
 ## Reading the three clinical situations
 
-- **Opioid use disorder, maintenance.** Buprenorphine occupancy is high and durable; the respiratory curve is flat even if a full agonist is added — the receptors are occupied, so the agonist cannot act. This is the therapeutic blockade.
+- **Opioid use disorder, maintenance.** Buprenorphine occupancy is high and durable; the ventilatory curve is flat even if a full agonist is added — the receptors are occupied, so the agonist cannot act. This is the therapeutic blockade.
 - **Surgery on a maintenance patient.** The occupancy panel shows how little room a full agonist wins, and the available-drive line shows how much analgesic drive gets through. Because buprenorphine's own analgesia is counted, the analgesia panel is not zero at baseline.
 - **Induction / precipitated withdrawal.** Give buprenorphine while a full agonist is on board and its occupancy ratchets up, evicting the agonist from receptors; because buprenorphine is a weaker agonist, the net effect can *fall* — the model shows the dip, and that it depends on *when* buprenorphine is introduced relative to the full agonist.
 
