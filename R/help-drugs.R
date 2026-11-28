@@ -97,7 +97,9 @@ helpParentDrugs <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
     # The closed-form metabolite route, or a transit chain's (enalaprilat,
     # dihydroartemisinin)
     identical(X$metabolite$name, drug) ||
-      identical(X$transitChain$metabolite$name, drug)
+      identical(X$transitChain$metabolite$name, drug) ||
+      # the factor VIII a VWF concentrate protects (R/vwfFactorVIII.R)
+      identical(X$factorVIIIResponse$name, drug)
   }, iv)
 }
 
@@ -579,6 +581,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
           } else if (noEffectSite && !is.na(row$endCe) && row$endCe > 0) {
             sprintf("%s %s, timed on the plasma (no effect site in the model)",
                     helpFormatNumber(row$endCe), concUnits)
+          } else if (isTRUE(modelOut$pkPlaceholder)) {
+            "None: no time until threshold for a curve computed from its parent's model"
           } else if (noEffectSite) {
             "None by default; a threshold set under Drug Thresholds is timed on the plasma"
           } else if (is.na(row$endCe) || row$endCe <= 0) {
@@ -794,7 +798,18 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
 
   # --- Formed from ------------------------------------------------------------
   formedHTML <- ""
-  if (length(parents)) {
+  if (length(parents) && isTRUE(modelOut$pkPlaceholder)) {
+    items <- vapply(parents, function(p) {
+      paste0("<li>", helpPageLink(paste0("drugs/", p)), "</li>")
+    }, character(1))
+    formedHTML <- paste0(
+      helpH2("Formed from"),
+      "<p>This curve is computed from the model of ", if (length(parents) > 1) "these drugs" else "this drug",
+      ", and drawn whenever ", if (length(parents) > 1) "one of them is" else "it is",
+      " given. It has no time until threshold. The equations are on the parent's page.</p>",
+      "<ul>", paste(items, collapse = ""), "</ul>"
+    )
+  } else if (length(parents)) {
     items <- vapply(parents, function(p) {
       paste0("<li>", helpPageLink(paste0("drugs/", p)), "</li>")
     }, character(1))
@@ -1331,6 +1346,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       )
     }
   }
+
+  # A drug whose curve is computed from its parent's model (the factor VIII
+  # a VWF concentrate protects) carries a PK set only because every drug
+  # does; its volumes and half-lives describe nothing that is drawn.
+  if (isTRUE(modelOut$pkPlaceholder))
+    paramsHTML <- paste0(
+      "<p>None: this curve is not a compartmental model. It is computed from the ",
+      "model of the drug that forms it, described in the notes below, and the ",
+      "compartmental parameters the library holds for it are a placeholder that ",
+      "nothing simulates.</p>")
 
   narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
 

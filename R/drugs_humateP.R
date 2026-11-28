@@ -185,6 +185,8 @@ humateP <- function(weight, height, age, sex, adjustToFFM = TRUE,
     typical = 100, upperTypical = 100, lowerTypical = 50,
     reference = reference,
     endogenousActivity = baseline,
+    # Active itself, not a prodrug of the factor VIII drawn with it
+    prodrug = FALSE,
     factorVIIIResponse = list(
       name        = "factorVIIIvwf",
       kout        = VWF_FVIII_KOUT / 60,

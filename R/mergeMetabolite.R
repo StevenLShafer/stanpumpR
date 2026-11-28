@@ -251,7 +251,13 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
       merged <- mergeMetaboliteSeries(merged, drugs[[parent]]$metaboliteSeries, times)
     if (is.null(merged)) next
 
-    if (plotRecovery)
+    # A response that is not linear in its parent (the factor VIII a VWF
+    # concentrate protects, R/vwfFactorVIII.R) has no states to solve a time
+    # until threshold from: it is unavailable, not zero.
+    nonlinear <- vapply(parents, function(p)
+      isTRUE(attr(drugs[[p]]$metaboliteSeries, "nonlinear")), logical(1))
+    if (any(nonlinear)) merged$Recovery <- NA_real_
+    else if (plotRecovery)
     {
       recovery <- foldedRecovery(merged$Time, drugs, target, contributions[[target]])
       if (!is.null(recovery)) merged$Recovery <- recovery
@@ -266,7 +272,11 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
       merged$Time
     )
 
-    X <- finishDrugSeries(merged, drugs[[target]], maximum, plotRecovery)
+    entry <- drugs[[target]]
+    # normalised above its pre-dose level, which only the parent knows
+    base <- attr(drugs[[parents[1]]]$metaboliteSeries, "baseline")
+    if (length(parents) == 1 && !is.null(base)) entry$endogenousActivity <- base
+    X <- finishDrugSeries(merged, entry, maximum, plotRecovery)
     drugs[[target]]$results   <- X$results
     drugs[[target]]$equiSpace <- X$equiSpace
     drugs[[target]]$max       <- X$max

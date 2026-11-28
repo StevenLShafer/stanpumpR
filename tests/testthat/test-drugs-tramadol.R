@@ -347,6 +347,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "artemether", "dihydroartemisinin", "lumefantrine",  # Coartem's components (2026-11-24)
     "mycophenolate",  # concentration only, no ke0 (2026-11-25)
     "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
+    "vonicogAlfa", "factorVIIIvwf", "humateP",  # Vonvendi, Humate-P and the factor VIII it protects (2026-11-28)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",

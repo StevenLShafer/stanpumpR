@@ -12,6 +12,8 @@ with kout 15.9 /h, Imax 0.998, IC50 0.0658 IU/dL and F0 0.5 IU/dL × (haematocri
 
 Factor VIII activity in **IU/dL** (% of normal), the patient's own included: before the first dose the curve is the steady state on the patient's own VWF:RCo, the Patient Profile's **VWF:RCo baseline**. The Patient Profile's **Factor VIII baseline** is not read here; it belongs to the factor VIII concentrates.
 
+There is no time until threshold for this curve: it is not a sum of exponentials, so the countdown is not available.
+
 The band is the Vonvendi label's factor VIII peak target for major surgery, 80 to 100 IU/dL; for minor surgery the target is 40 to 50, and after major surgery the trough is kept above 30 IU/dL.
 
 ### Not modelled
