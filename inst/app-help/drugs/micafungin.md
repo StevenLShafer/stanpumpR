@@ -17,7 +17,7 @@ At 70 kg the two models' clearances are 1.2 L/h (Jullien) and 0.69 L/h (Wasmann)
 
 ### Entering a dose
 
-The label says micafungin is given "by intravenous infusion only" and infused over one hour; faster infusions bring more histamine-mediated reactions. So stanpumpR offers only rates: 100 mg is entered as 100 mg/hr from 0 to 60 minutes, and each day's dose as its own one-hour infusion. A dose per kilogram is entered the same way in mg/kg/hr.
+The label says micafungin is given "by intravenous infusion only" and infused over one hour; faster infusions bring more histamine-mediated reactions. So stanpumpR offers only rates. A rate runs until another row changes it, so 100 mg over an hour is two rows: 100 mg/hr at 0 minutes and 0 mg/hr at 60 minutes. Each day's dose is its own pair of rows. A dose per kilogram is entered the same way in mg/kg/hr.
 
 ### Target concentrations
 
