@@ -37,6 +37,7 @@ stanpumpR does not simulate protein binding. Each antibiotic's curve shows one f
 | Cefepime | *Pseudomonas aeruginosa* | 8 | Total drug | 0.80 | 10 |
 | Ceftolozane | *Pseudomonas aeruginosa* | 4 | Total drug | 0.80 | 5 |
 | Teicoplanin | *S. aureus*, including MRSA | 2 | Total drug | 0.10 | 20 |
+| Ceftazidime | Enterobacterales and *Pseudomonas aeruginosa* | 8 | Total drug | 0.90 | 8.9 |
 | Imipenem | Enterobacterales and *Pseudomonas aeruginosa* | 2 | Total drug | 0.80 | 2.5 |
 
 The shaded band is a second marker on the same footing: free drug at the expected **MBC**, the concentration that kills, of the common pathogens each antibiotic is given against. Linezolid, which only stops staphylococci and enterococci from growing, and teicoplanin, whose MBCs are too often those of tolerant isolates, are the exceptions: each band is a total-drug trough range for monitoring, not an MBC. Colistin has a line and no band: its line sits above the exposure the consensus guideline calls tolerable, which [its page](help:drugs/colistin) explains. See [Antibiotics: the MIC line and the MBC band](help:models/antibiotics).

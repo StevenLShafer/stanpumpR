@@ -73,27 +73,30 @@ test_that("getDrugPK() refuses an unknown infection and passes a known one only 
 })
 
 test_that("the field is shown and its tip names its readers only while a reader is in the table", {
-  # The readers are ceftolozane, drawn for Zerbaxa, and imipenem (both
-  # 2026-11-25): shown while either is in the table, whose components the app
-  # passes (combinationExpandDrugNames()), and the tip names the product
-  expect_identical(patientFieldReaders("infection"), c("ceftolozane", "imipenem"))
+  # The readers are ceftolozane, drawn for Zerbaxa, ceftazidime, drawn for
+  # Avycaz, and imipenem, also drawn for RECARBRIO (2026-11-25): shown while
+  # any of them is in the table, whose components the app passes
+  # (combinationExpandDrugNames()), and the tip names the products
+  expect_identical(patientFieldReaders("infection"), c("ceftazidime", "ceftolozane", "imipenem"))
   expect_true(relevantFields(combinationExpandDrugNames("Zerbaxa"))[["infection"]])
+  expect_true(relevantFields(combinationExpandDrugNames("Avycaz"))[["infection"]])
   expect_true(relevantFields("imipenem")[["infection"]])
+  expect_true(relevantFields(combinationExpandDrugNames("RECARBRIO"))[["infection"]])
   expect_false(relevantFields(c("propofol", "fentanyl"))[["infection"]])
   expect_match(patientFieldTooltip("infection"),
-               "Read by ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.", fixed = TRUE)
+               "Read by ceftazidime (given as Avycaz), ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.", fixed = TRUE)
   expect_true("infection" %in% RELEVANT_FIELDS)
 
   withInfectionReader()
-  expect_identical(patientFieldReaders("infection"), c("cefepime", "ceftolozane", "imipenem"))
+  expect_identical(patientFieldReaders("infection"), c("cefepime", "ceftazidime", "ceftolozane", "imipenem"))
   expect_true(relevantFields("cefepime")[["infection"]])
   expect_true(relevantFields(c("propofol", "cefepime"))[["infection"]])
   tip <- patientFieldTooltip("infection")
-  expect_match(tip, "Read by cefepime, ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.",
+  expect_match(tip, "Read by cefepime, ceftazidime (given as Avycaz), ceftolozane (given as Zerbaxa) and imipenem (also given as RECARBRIO); no other drug is affected.",
                fixed = TRUE)
   # and the Cautions page's generated table
   table <- helpFieldReadersTableMarkdown()
-  expect_match(table, "| Infection | 3 | [cefepime](help:drugs/cefepime), [ceftolozane](help:drugs/ceftolozane), [imipenem](help:drugs/imipenem) |",
+  expect_match(table, "| Infection | 4 | [cefepime](help:drugs/cefepime), [ceftazidime](help:drugs/ceftazidime), [ceftolozane](help:drugs/ceftolozane), [imipenem](help:drugs/imipenem) |",
                fixed = TRUE)
 })
 

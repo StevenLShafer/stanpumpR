@@ -360,7 +360,12 @@ macitentan,ng,,,mg PO,"mg PO,mg PO qd",#5E35B1,0,0,0,0,0,IV,Pulmonary hypertensi
 aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
 liothyronine,ng,mcg,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO,mcg",#3E7C87,0,0,0,0,0,IV,Other
+quinine,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,Other
+quinineKloprogge,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,
+quinineLeJouan,mcg,,,mg PO tid,"mg PO,mg PO tid,mg/kg PO,mg/kg PO tid",#6D4C41,0,0,0,0,0,IV,
 tafenoquine,ng,,,mg PO,"mg PO,mg PO qd",#7B5EA7,0,0,0,0,0,IV,Other
+maraviroc,ng,,,mg PO bid,"mg PO,mg PO bid",#00897B,0,0,0,0,0,IV,Other
+tecovirimat,ng,,,mg PO bid,"mg PO,mg PO bid,mg PO tid",#5D4037,0,0,0,0,0,IV,Other
 Coartem,ng,,,tablet PO,"tablet PO,tablet PO bid",#2E7D32,0,0,0,0,0,IV,Other
 artemether,ng,,,,,#43A047,0,0,0,0,0,IV,
 dihydroartemisinin,ng,,,,,#81C784,0,0,0,0,0,IV,
@@ -377,8 +382,10 @@ emicizumab,mcg,,,mg/kg SC qwk,"mg/kg SC,mg/kg SC qwk,mg/kg SC q2wk,mg/kg SC q4wk
 tenecteplase,mcg,mg,,mg,"mg,mg/kg",#C62828,0,0,0,0,0,IV,Anticoagulants
 Zerbaxa,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#0E6655,0,0,0,0,0,IV,Antibiotics
 ceftolozane,mcg,,,,,#0E6655,0,0,0,0,5,IV,
+Avycaz,mcg,g,g/hr,g,"g,g tid,mg,mg tid,mg/kg,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#6C3483,0,0,0,0,0,IV,Antibiotics
+ceftazidime,mcg,,,,,#6C3483,0,0,0,0,8.9,IV,
 imipenem,mcg,mg,mg/hr,mg,"mg,mg qid,mg q4h,mg tid,mg/kg,mg/kg qid,mg/kg q4h,mg/kg tid,mg/kg bid,g,g qid,g q4h,g tid,mg/hr,mg/kg/hr",#117864,0,0,0,0,2.5,IV,Antibiotics
-RECARBRIO,mcg,g,g/hr,g,"g,g qid,g tid,mg,mg qid,mg tid,mg/kg,mg/kg qid,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#117864,0,0,0,0,0,IV,Antibiotics
+RECARBRIO,mcg,g,g/hr,g,"g,g qid,g q4h,g tid,mg,mg qid,mg q4h,mg tid,mg/kg,mg/kg qid,mg/kg q4h,mg/kg tid,g/hr,mg/hr,mg/kg/hr",#117864,0,0,0,0,0,IV,Antibiotics
 factorVIII,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#1565C0,80,120,100,0,0,IV,Hemostasis and reversal
 nalbuphine,ng,mg,mg/hr,mg,"mg,mg/kg,mg/hr",#2E8BC0,0,0,0,0,0,IV,Opioids
 efmoroctocogAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#0D47A1,80,120,100,0,0,IV,Hemostasis and reversal
@@ -398,3 +405,4 @@ teicoplaninKim,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg/kg qd,mg
 teicoplaninZhang,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#AB47BC,15,30,22.5,0,0,IV,
 ciprofolLiu,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
 ciprofolWang,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
+methylergonovine,ng,mg,,mg IM,"mg,mcg,mg IM,mcg IM,mg IM qid,mg IM q4h",#B0436F,0,0,0,0,0,IV,Other

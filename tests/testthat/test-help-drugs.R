@@ -38,6 +38,7 @@ test_that("every narrative belongs to a drug in the library", {
 # R/drugs_temazepam.R) (2026-10-09).
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
+  "methylergonovine",  # no measured time of peak effect (2026-11-25)
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "vancomycinKidneyTransplant",
   "metronidazole", "gentamicin",
@@ -131,10 +132,15 @@ plasmaOnly <- c(
     "liothyronine",
     # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
     "tafenoquine",
+    # tecovirimat (Leeds 2013), maraviroc (Chan 2008), quinine and its
+    # candidates (Kloprogge 2014, Le Jouan 2005), 2026-11-28: plasma only
+    "tecovirimat", "maraviroc", "quinine", "quinineKloprogge", "quinineLeJouan",
     # Coartem's components (Ding 2026, 2026-11-24): plasma only
     "artemether", "dihydroartemisinin", "lumefantrine",
     # ceftolozane, drawn for Zerbaxa (Zhang 2021, 2026-11-25): plasma only
     "ceftolozane",
+    # ceftazidime, drawn for Avycaz (Franzese 2022, 2026-11-25): plasma only
+    "ceftazidime",
     # imipenem (Patel 2022, 2026-11-25): plasma only
     "imipenem",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
