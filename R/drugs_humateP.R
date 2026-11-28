@@ -68,7 +68,14 @@
 # von Willebrand disease patient's (F0, kout): a patient with haemophilia A
 # has normal von Willebrand factor and no factor VIII of their own, which the
 # model cannot represent (it would draw their factor VIII near 80 IU/dL before
-# any dose).
+# any dose).  Kept out on Shafer's decision of 2026-11-28, an exception to the
+# rule that a drug offers every unit its label uses: do not add the factor
+# VIII units without reopening it.  Haemophilia A is the factor VIII models'
+# (R/drugs_factorVIII.R).
+#
+# THE TWO HALF-LIVES: the factor VIII curve uses this model's own Imax and
+# IC50, not the rVWF model's that the supplement's 11.5 h comes from
+# (Shafer's decision of 2026-11-28; see below).
 #
 # CHECKS against the label (HUMATE-P prescribing information, BLA 103960,
 # revised 6/2020, 12.3, Table 9: subjects with types 1, 2 and 3 before

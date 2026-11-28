@@ -36,7 +36,7 @@ VWF:RCo in **IU/dL**: the patient's own, the Patient Profile's **VWF:RCo baselin
 
 ### Doses
 
-`IU/kg` or `IU` of **VWF:RCo**, as the label doses von Willebrand disease, and `IU/kg/hr` or `IU/hr` as an infusion. The label doses haemophilia A in IU of factor VIII; that use is not offered, because the model's factor VIII production is that of a patient with von Willebrand disease: a patient with haemophilia A has normal von Willebrand factor and makes no factor VIII, which the model cannot represent.
+`IU/kg` or `IU` of **VWF:RCo**, as the label doses von Willebrand disease, and `IU/kg/hr` or `IU/hr` as an infusion. The label doses haemophilia A in IU of factor VIII; that use is not offered, because the model's factor VIII production is that of a patient with von Willebrand disease: a patient with haemophilia A has normal von Willebrand factor and makes no factor VIII, which the model cannot represent. For haemophilia A, use [factor VIII](help:drugs/factorVIII) (Steven L. Shafer's decision, 2026-11-28).
 
 ### Not modelled
 
