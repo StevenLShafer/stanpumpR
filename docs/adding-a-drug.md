@@ -222,13 +222,25 @@ sources** (see *Comparing sources* in `AGENTS.md`).
 ### When no individual parameters are printed
 
 Then no refit of this kind is possible -- but that is a statement about *parameters*, not about data.
-Look for a published mean concentration-time curve, or a figure, and fit the polyexponential to that
-instead (log-residual weighting). On de Groot the only real observations in the paper were the points
-in Figure 1, and digitising them both checked the closure against the data the authors fitted (the
-closed model reproduced subject 1's own intravenous points at a median ratio of 1.044) and let the
-absorption input be estimated at all -- as a choice among the candidate shapes described below, not
-as a settled fact. Never invent pseudo-subjects from mean +/- SD: the correlations are unknown, which
-is the very problem.
+Look for a published **MEAN or median concentration-time curve**, one that stands for the group, and
+fit the polyexponential to that instead (log-residual weighting).
+
+**A figure of one subject is not a population curve.** Fitting it gives that subject's model, and a
+single subject says nothing about where the population sits: in de Groot's six men the individual
+central volumes span 3.7-fold. Where the only figure plots one patient, RECORD it -- do not fit it
+and call the result a model. (The point was raised by the methylergonovine session on 2026-11-27
+against this rule as first written, and it was right: de Groot 1995 plots one woman, and PR 993
+records that figure rather than fitting it.)
+
+What a single-subject figure IS good for is narrower and still worth having: checking a closure
+against the data its own authors fitted, and identifying that subject's input function once the
+disposition is fixed. de Groot 1994's Figure 1 did both -- the closed model reproduced subject 1's
+own intravenous points at a median ratio of 1.044, and his seven oral points then selected an input
+shape among the four candidates tried. Neither step produced a population parameter set, and the
+card says so.
+
+Never invent pseudo-subjects from mean +/- SD: the correlations are unknown, which is the very
+problem.
 
 If nothing can be fitted, use the means and **say in the drug's header and help page that they are a
 two-stage average, and which parameter is most likely distorted**. Be careful with direction: a

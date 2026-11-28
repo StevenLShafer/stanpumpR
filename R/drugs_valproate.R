@@ -144,25 +144,58 @@
 #
 # With the Patient Profile's Pregnant field on, CL/F (cl1) is multiplied by
 # VALPROATE_PREGNANCY_CL_FACTOR = 1.6, on every route (the oral products and
-# the injection share the one clearance).  Arithmetic: total = free / fu; the
-# free concentration x 1.25 (Yerby) and fu x 2.0 (10% to 20%, Nau and
-# Krauer) give a total of 1.25 / 2.0 = 0.625 of baseline at the same dose,
-# so total CL/F x 1 / 0.625 = 1.6 (the clearance of unbound drug falls to
-# 0.8).  If Yerby's rise in the free concentration is a dosing artefact
-# (free unchanged, Tomson 2005), the factor would be the fu ratio, 2.0.  The
-# volume and the absorption are unchanged.  Low confidence: the measured
-# total ratios run from 1.14 per kg (n 5) to 1.66 (51 pregnancies, abstract
-# only), and the factor sits at the top of that range.  Johannessen
-# Landmark's ratio is not per kilogram while the model's weight term also
-# rises with the weight entered, so at a 15% weight gain the curve's total
-# clearance rises about 7% more than 1.6 (fat-free-mass scaling on).
+# the injection share the one clearance).  The volume and the absorption are
+# unchanged.
+#
+# WHAT THE FACTOR RESTS ON -- the MEASURED total ratios, not a binding
+# derivation (restated 2026-11-28 on Steven L. Shafer's decision, after
+# CodeRabbit queried the wording on pull request 1024; the factor itself is
+# unchanged).  The model multiplies a TOTAL clearance and the curve is TOTAL
+# valproate, so the directly measured total ratios are the evidence that
+# counts, and they agree: 1.49 and 1.65 from Yerby 1992's own printed totals
+# (third trimester and delivery, 39.7 and 35.8 against 59.0 ug/mL), and 1.66
+# against baseline or 1.86 against post-partum from Johannessen Landmark's 51
+# pregnancies.  1.6 sits in the middle of that range.  Voinescu's 1.142 is the
+# low outlier and is not adopted (n 5, not significant, per kg; its upper limit
+# 1.408 per kg reaches 1.6 in absolute terms only at an ASSUMED 15% weight
+# gain, the paper printing no weights).  Low confidence stands: the Johannessen
+# Landmark stage means are unpaired (n 11-19 per stage) and measure total, not
+# the active unbound, drug.
+#
+# THE BINDING ARITHMETIC IS A CONSISTENCY NOTE, NOT THE DERIVATION, AND IT IS A
+# DELIVERY ESTIMATE.  total = free / fu; Yerby's free concentration x 1.25 over
+# Nau and Krauer's fu x 2.0 leaves a total of 0.625 of baseline, so CL/F x 1.6
+# -- but BOTH inputs were measured at delivery (Nau and Krauer's term pairs, as
+# above; Yerby's +25% is its delivery value, its THIRD-TRIMESTER free
+# concentration having FALLEN to 5.6 against 7.2).  Used consistently within
+# one period, Yerby's own table gives free x0.78 over fu x1.18 (13% against
+# 11%) in the third trimester, a total of 0.658, so CL/F x1.52; and free x1.33
+# over fu x2.36 at delivery, a total of 0.564, so CL/F x1.77.  Both SUPPORT 1.6
+# rather than producing it, which is why the factor is no longer stated as
+# their quotient.  Do NOT mix the periods: a third-trimester free concentration
+# over a delivery free fraction (0.78 / 2.0) gives a spurious 2.57.
+#
+# AN EARLIER NOTE HERE OFFERED 2.0, the fu ratio, as the factor if Yerby's free
+# rise were a dosing artefact and unbound drug were unchanged (Tomson 2005).
+# That branch is WITHDRAWN (2026-11-28) for two reasons: Tomson cites only
+# Yerby 1992, so it is not independent evidence of an unchanged free level (see
+# above), and 2.0 is again the DELIVERY fu ratio -- at the third trimester the
+# fu ratio is 1.18 (Yerby's own) or 1.39 (Voinescu's 1.142 / 0.820), so that
+# branch would give 1.2 to 1.4, not 2.0.
+#
+# Johannessen Landmark's ratio is not per kilogram while the model's weight
+# term also rises with the weight entered, so at a 15% weight gain the curve's
+# total clearance rises about 7% more than 1.6 (fat-free-mass scaling on).
 #
 # WHAT THIS MEANS FOR THE CURVE: the library plots TOTAL valproate, and the
 # 50-100 mg/L band is a total-concentration band.  In late pregnancy the
 # plotted total falls, often below the band, while the unbound, active
-# concentration does not fall (it may rise); a normal unbound level then
-# goes with a low total, and a free valproate level, not the total, is the
-# guide to the dose.  The free fraction is higher still in labour (oxytocin
+# concentration changes far less.  Its DIRECTION in the third trimester is
+# unresolved: Yerby's own third-trimester means give a 22% FALL (free 5.6
+# against 7.2 ug/mL) while Voinescu's free clearance ratio of 0.820 implies a
+# 22% RISE, and neither is significant; the +25% rise is a delivery value.
+# Either way a normal unbound level goes with a low total, and a free valproate
+# level, not the total, is the guide to the dose.  The free fraction is higher still in labour (oxytocin
 # and free fatty acids; Nau and Krauer).  The saturable binding that raises
 # fu with dose is not modelled in or out of pregnancy, nor are the
 # trimesters before the third.  See R/pregnancy.R.  (Claude Code,
@@ -192,13 +225,14 @@
 #   https://doi.org/10.1097/00007691-199001000-00008 (labour)
 # -----------------------------------------------------------------------------
 
-# Total CL/F in late pregnancy relative to the published value: the free
-# concentration x 1.25 (Yerby 1992) over the free fraction x 2.0 (Nau and
-# Krauer 1986) leaves the total at 0.625 of baseline; 1 / 0.625 = 1.6.  The
-# measured third-trimester total ratios are 1.142 per kg (Voinescu 2018,
-# n 5, not significant) and 1.66 against baseline or 1.86 against
-# post-partum (Johannessen Landmark 2018, 51 pregnancies, full text, ratios
-# of trough stage means); see the header.
+# Total CL/F in late pregnancy relative to the published value, from the
+# MEASURED total ratios: 1.49 and 1.65 from Yerby 1992's own printed totals
+# (third trimester and delivery), and 1.66 against baseline or 1.86 against
+# post-partum from Johannessen Landmark 2018 (51 pregnancies, full text,
+# ratios of trough stage means), against the low outlier 1.142 per kg from
+# Voinescu 2018 (n 5, not significant).  1.6 sits in the middle.  The binding
+# arithmetic (free x 1.25 over fu x 2.0) is a DELIVERY consistency note and
+# not the derivation; see the header.
 VALPROATE_PREGNANCY_CL_FACTOR <- 1.6
 
 # The age term on CL/F, (AGE/15)^-0.0154 (Equation 1), and the youngest age it
@@ -248,9 +282,13 @@ valproate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("total clearance x ", VALPROATE_PREGNANCY_CL_FACTOR,
-             " (the free fraction doubles; the unbound level does not fall)"),
-      paste0("Nau H, Krauer B, J Clin Pharmacol 1986;26:215-221. ",
-             "https://doi.org/10.1002/j.1552-4604.1986.tb02937.x")))
+             " (the measured total ratios, 1.49 to 1.86; unbound drug changes",
+             " far less, and its third-trimester direction is unresolved)"),
+      paste0("Johannessen Landmark C et al, Epilepsy Res 2018;141:31-37. ",
+             "https://doi.org/10.1016/j.eplepsyres.2018.02.004",
+             "; Nau H, Krauer B, J Clin Pharmacol 1986;26:215-221. ",
+             "https://doi.org/10.1002/j.1552-4604.1986.tb02937.x",
+             " (the binding note)")))
   }
 
   list(

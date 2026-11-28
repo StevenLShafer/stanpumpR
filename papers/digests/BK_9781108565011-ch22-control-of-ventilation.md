@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch22-control-of-ventilation.pdf
+---
+file: BK_9781108565011-ch22-control-of-ventilation.pdf
 pmid: null
 doi: 10.1017/9781108565011.025
 citation: 'Chapter 22, Control of Ventilation, Section 2 Respiratory Physiology, printed pp. 93-96. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'

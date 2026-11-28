@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch25-ventilatory-failure.pdf
+---
+file: BK_9781108565011-ch25-ventilatory-failure.pdf
 pmid: none
 doi: 10.1017/9781108565011.028
 citation: 'Chapter 25, Ventilatory Failure, Section 2 Respiratory Physiology, printed pp. 104-106. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'

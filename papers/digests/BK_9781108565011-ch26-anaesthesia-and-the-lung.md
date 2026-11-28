@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch26-anaesthesia-and-the-lung.pdf
+---
+file: BK_9781108565011-ch26-anaesthesia-and-the-lung.pdf
 citation: 'Chapter 26, Anaesthesia and the Lung, Section 2 Respiratory Physiology, printed pp. 107-110. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []

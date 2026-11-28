@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch11-ventilation-and-dead-space.pdf
+---
+file: BK_9781108565011-ch11-ventilation-and-dead-space.pdf
 pmid: none
 doi: 10.1017/9781108565011.014
 citation: 'Chapter 11, Ventilation and Dead Space, Section 2 Respiratory Physiology, printed pp. 45-49. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
