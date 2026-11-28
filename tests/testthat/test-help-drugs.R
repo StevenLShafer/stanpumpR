@@ -38,6 +38,7 @@ test_that("every narrative belongs to a drug in the library", {
 # R/drugs_temazepam.R) (2026-10-09).
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
+  "methylergonovine",  # no measured time of peak effect (2026-11-25)
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "vancomycinKidneyTransplant",
   "metronidazole", "gentamicin",
@@ -141,6 +142,8 @@ plasmaOnly <- c(
     "rosuvastatin",
     # evolocumab (Kuchimanchi 2018, 2026-11-19): plasma only, Michaelis-Menten engine
     "evolocumab",
+    # tocilizumab (Moes 2022, 2026-11-28): plasma only, Michaelis-Menten engine
+    "tocilizumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only

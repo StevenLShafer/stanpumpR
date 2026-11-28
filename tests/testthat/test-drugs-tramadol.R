@@ -412,6 +412,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "milrinonePediatric",
     "digoxinIVPediatric",
     "methyleneBlue",
+    "methylergonovine",  # no measured time of peak effect (2026-11-25)
     "levosimendan",  # no measured time to peak haemodynamic effect (2026-11-25)
     "OR1896",  # levosimendan's metabolite, concentration only (2026-11-27)
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
@@ -439,6 +440,8 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "rosuvastatin",
     # evolocumab (Kuchimanchi 2018, 2026-11-19): plasma only, Michaelis-Menten engine
     "evolocumab",
+    # tocilizumab (Moes 2022, 2026-11-28): plasma only, Michaelis-Menten engine
+    "tocilizumab",
     # mirabegron (FDA review of NDA 202611, 2026-11-19): plasma only
     "mirabegron",
     # anakinra (Urien 2013, 2026-11-25): plasma only
