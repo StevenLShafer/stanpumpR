@@ -444,10 +444,14 @@ alveoli. That blood reaches the arteries as it left the tissues, mixed venous:
 it takes up no oxygen and no anesthetic, and gives none off. Steven Shafer put
 the physics so (27 November 2026): if the anesthetic is entering from the
 pulmonary arteries, it flows through the lungs unaffected; if it is entering
-from the trachea, it never reaches the shunt fraction. So for every gas the
-arterial partial pressure is (1 − shunt) of the alveolar plus the shunt's share
-of the mixed venous, and only the unshunted blood takes gas up from the
-alveoli.
+from the trachea, it never reaches the shunt fraction. So only the
+unshunted blood takes gas up from the alveoli, and arterial blood is the
+mixture of the two streams. For an anesthetic, which blood carries in
+proportion to its partial pressure, the arterial partial pressure is
+(1 − shunt) of the alveolar plus the shunt's share of the mixed venous. Oxygen
+is carried mostly on haemoglobin, so it is the oxygen contents that mix, and
+the arterial partial pressure is read back from the mixture's content
+(*Oxygen*, below).
 
 The slider starts at **10%, the shunt under anesthesia**: the venous admixture
 of an anaesthetised, ventilated patient with normal lungs. Atelectasis appears

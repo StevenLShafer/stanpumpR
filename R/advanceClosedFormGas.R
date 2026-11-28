@@ -1800,9 +1800,11 @@ gasBodySteps <- function(weight, events, base = getGasBody(weight),
 #'   arterial oxygen read off the run (\code{gasArterialOxygen()},
 #'   R/arterialOxygen.R), kept in the body as \code{haemoglobin}; the engine
 #'   does not read it
-#' @param shunt NULL (0.5), or the share of cardiac output through the
-#'   unventilated lung with an endobronchial tube, 0 to 0.5
-#'   (R/endobronchial.R); ignored without the tube
+#' @param shunt the share of cardiac output that passes no ventilated
+#'   alveoli, 0 to 0.5, for every gas (R/endobronchial.R).  NULL is the
+#'   default: 0.1, the shunt under anesthesia, without an endobronchial tube
+#'   and 0.5 with one; 0 with the semi-closed circuit or
+#'   \code{volumeConversion = FALSE}, GasMan having no shunt
 #' @param height,sex the patient's height (cm) and sex, which with \code{age}
 #'   scale the compartments by body composition (getGasBody()); NULL for
 #'   GasMan's linear scaling in weight
