@@ -84,8 +84,11 @@ vwfFactorVIIISeries <- function(time, vwf, response, input = NULL)
   }
   rateAt <- function(t) {
     if (is.null(input) || length(input$rateTime) == 0) return(0)
+    # as the engines read the dose table (doseLines()): the rate set is the
+    # one set at the last time at or before t, rows at that time summed
     j <- which(input$rateTime <= t)
-    if (length(j) == 0) 0 else input$rate[j[length(j)]]
+    if (length(j) == 0) return(0)
+    sum(input$rate[input$rateTime == max(input$rateTime[j])])
   }
   f <- f + bolusAt(-Inf, time[1])
   out[1] <- f

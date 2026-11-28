@@ -1014,6 +1014,11 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
     # pre-dose level, the steady state on the patient's own VWF:RCo, is what
     # normalisation subtracts, as for a factor concentrate
     attr(metaboliteSeries, "nonlinear") <- TRUE
+    # whether this concentrate was given at all inside the plot: a drug left
+    # at 0 in the dose table (the startup menu's rows) draws only the
+    # patient's own factor VIII and does not count as a second concentrate
+    attr(metaboliteSeries, "exposed") <-
+      any(suppressWarnings(as.numeric(dose$Dose)) > 0, na.rm = TRUE)
     attr(metaboliteSeries, "baseline") <-
       r$baseline / (1 - r$imax * r$vwfBaseline / (r$ic50 + r$vwfBaseline))
   }

@@ -232,6 +232,19 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
     # be added: the panel would be neither product's model.
     nonlinear <- vapply(parents, function(p)
       isTRUE(attr(drugs[[p]]$metaboliteSeries, "nonlinear")), logical(1))
+    # A concentrate in the dose table but not given (a startup row at 0, a
+    # dose after the plot ends) draws only the patient's own factor VIII, so
+    # only the concentrates given count; with none given, one draws it
+    if (any(nonlinear))
+    {
+      exposed <- vapply(parents, function(p)
+        isTRUE(attr(drugs[[p]]$metaboliteSeries, "exposed")), logical(1))
+      keep <- !nonlinear | exposed
+      if (!any(keep & nonlinear)) keep[which(nonlinear)[1]] <- TRUE
+      parents <- parents[keep]
+      nonlinear <- nonlinear[keep]
+      contributions[[target]] <- parents
+    }
     if (length(parents) > 1 && any(nonlinear))
       stop("The factor VIII drawn as ", target, " is formed by ",
            paste(parents, collapse = " and "), " together, which the model cannot ",

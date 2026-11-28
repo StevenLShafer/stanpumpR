@@ -98,3 +98,39 @@ test_that("Vonvendi and Humate-P together are refused, saying why", {
   expect_error(simulateDrugsWithCovariates(dt, noEvents, 75, 175, 35, "male", 600, FALSE),
                "one VWF concentrate at a time")
 })
+
+test_that("a concentrate left at 0 is not a second concentrate (Devin, PR #1023)", {
+  run <- function(dt) simulateDrugsWithCovariates(dt, noEvents, 75, 175, 35, "male", 600,
+                                                  FALSE)$factorVIIIvwf$wide
+  alone <- run(data.frame(Drug = "humateP", Time = 0, Dose = 50, Units = "IU/kg"))
+  # the startup menu's row at 0, either order
+  for (drugs in list(c("humateP", "vonicogAlfa"), c("vonicogAlfa", "humateP")))
+  {
+    dt <- data.frame(Drug = drugs, Time = 0, Dose = ifelse(drugs == "humateP", 50, 0),
+                     Units = "IU/kg")
+    both <- run(dt)
+    expect_equal(approx(both$Time, both$Plasma, c(60, 300, 590))$y,
+                 approx(alone$Time, alone$Plasma, c(60, 300, 590))$y, tolerance = 1e-8)
+  }
+  # neither given: the patient's own factor VIII, drawn once
+  none <- run(data.frame(Drug = c("humateP", "vonicogAlfa"), Time = 0, Dose = 0,
+                         Units = "IU/kg"))
+  expect_true(all(abs(none$Plasma - none$Plasma[1]) < 1e-8))
+  # a second concentrate dosed only after the plot ends is not given in it
+  late <- run(data.frame(Drug = c("humateP", "vonicogAlfa"), Time = c(0, 600),
+                         Dose = 50, Units = "IU/kg"))
+  expect_equal(approx(late$Time, late$Plasma, 300)$y,
+               approx(alone$Time, alone$Plasma, 300)$y, tolerance = 1e-8)
+})
+
+test_that("two infusion rows at one time give the factor VIII of their sum (Devin, PR #1023)", {
+  run <- function(dt) simulateDrugsWithCovariates(dt, noEvents, 75, 175, 35, "male", 600,
+                                                  FALSE)$factorVIIIvwf$wide
+  one <- run(data.frame(Drug = "humateP", Time = c(0, 240), Dose = c(18, 0),
+                        Units = "IU/kg/hr"))
+  two <- run(data.frame(Drug = "humateP", Time = c(0, 0, 240), Dose = c(12, 6, 0),
+                        Units = "IU/kg/hr"))
+  at <- c(60, 200, 400, 590)
+  expect_equal(approx(two$Time, two$Plasma, at)$y, approx(one$Time, one$Plasma, at)$y,
+               tolerance = 1e-8)
+})
