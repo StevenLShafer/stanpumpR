@@ -10,7 +10,7 @@ stanpumpR draws isavuconazole with Desai and colleagues' population model (Desai
 
 ### The oral absorption
 
-Desai described oral absorption with a Weibull function. In that function the rate of absorption rises from zero to 1.08 per hour over the first two hours or so. stanpumpR's depots absorb at a constant rate, so each oral dose is split into a few portions given at fixed delays, each absorbed at 1.08 per hour, the rate the Weibull function settles to. The split was fitted to an exact solution of Desai's model. Over the whole curve it is held within 0.53% of the peak concentration, and within 0.01% at the peak itself, the same standard as hydrochlorothiazide's Weibull. The portions are a numerical stand-in for the published shape and say nothing about the capsule.
+Desai described oral absorption with a Weibull function. In that function the rate of absorption rises from zero to 1.08 per hour over the first two hours or so. stanpumpR's depots absorb at a constant rate, so each oral dose is split into eight portions given at fixed delays (35 to 108 minutes), each absorbed at 1.08 per hour, the rate the Weibull function settles to. The split was fitted to an exact solution of Desai's model. Over the whole curve it is held within 0.53% of the peak concentration, and within 0.01% at the peak itself, the same standard as hydrochlorothiazide's Weibull. The portions are a numerical stand-in for the published shape and say nothing about the capsule.
 
 ### Target concentrations
 
