@@ -83,6 +83,184 @@ used where it is the best available, and its header and help page say that it is
 Ciprofol (Liu 2024) was the first case: arterial sampling is the reference of its
 equations.
 
+## A two-stage source: do not trust its summary parameters
+
+Where a paper fitted each subject separately and then averaged the parameters -- the two-stage
+approach -- **the printed means may not describe the data at all**, and must not be transcribed into
+a model as though they did (Steven L. Shafer, 2026-11-27). Simulate the subjects, pool them on a
+reasonable grid of points, and refit a single model to that.
+
+The failure is not sampling noise, so a standard error does not capture it. Averaging a parameter
+over subjects is an operation with no pharmacokinetic meaning, and it is worst for whichever
+parameter is most skewed across them -- usually a rate constant or a half-life, because one slow
+subject drags an arithmetic mean a long way. The surviving parameters can look perfectly healthy
+while one is badly wrong, which is what makes this hard to spot.
+
+**The worked case is de Groot 1994** (methylergometrine, six men; `papers/digests/DOI_10.1007_bf03257449.md`,
+section *What this paper actually supports*, which carries every number below).
+
+### The procedure
+
+1. **Close each subject.** A two-compartment model needs four non-redundant quantities per subject;
+   CL, Vss and both half-lives are the common case, and
+   `V1 = CL / ((alpha+beta) - alpha*beta*Vss/CL)`, which is linear in 1/V1 and so has a unique root.
+   Before writing that a model cannot be closed, count the non-redundant parameters.
+   **Unique is not the same as physical: check the result before simulating it.** Four quantities
+   that each look reasonable can close to a model that is not, because nothing in the arithmetic
+   constrains the denominator. Require V1 > 0, V2 = Vss - V1 > 0 and k10, k12, k21 all positive, and
+   round-trip the eigenvalues back to the printed half-lives. CL = 1, Vss = 1.2, alpha = 2, beta = 1
+   gives V1 = 1.667 against a Vss of 1.2, so V2 is negative; a source whose printed values do that
+   is inconsistent with a two-compartment model and must be reported, not simulated. (All six of
+   de Groot's men and the 1995 women's mean set are admissible; the check costs nothing and the
+   failure is silent.)
+2. **Simulate each subject** on his own closed model, in the form the study actually used -- a short
+   infusion is not a bolus when the distribution half-life is minutes.
+3. **Take the MEDIAN at each time**, not the mean and not the whole cloud. Least squares over the
+   pooled cloud lets one outlying subject torque the model off its centre; the median demotes him to
+   one of n. With simulated data there are equal numbers at each time, so no n-weighting is needed.
+4. **Fit the medians by OLS on the LOG concentrations.** That is scale-free, has no variance model to
+   misidentify, and is in the same currency as the goodness-of-fit criteria below. Extended least
+   squares is not the answer here: its variance power is unidentifiable from noise-free medians (the
+   objective falls monotonically with theta and has no interior minimum), so it would have to be
+   fixed at 1 on physical grounds anyway. Weighting still matters -- unweighted least squares on the
+   medians fixes the outlier and leaves the heteroscedasticity, and on de Groot it put Vss 11% and
+   t1/2beta 20% low.
+5. **Score with MDPE and MDAPE** (Varvel, Donoho and Shafer 1992, PMID 1588504;
+   `papers/digests/PMID_1588504.md`), PE = 100 (measured - predicted) / predicted, the denominator
+   being the PREDICTED concentration. Expect **MDPE to discriminate and MDAPE not to**: MDAPE floors
+   at the between-subject spread rather than the estimator's quality, and its ranking can change with
+   the pooling. Do not minimise MDAPE directly -- it buys the criterion with bias, by writing the
+   outlying subject off.
+
+### Where the grid starts is the largest single choice
+
+**Include the model's own concentration at time zero, where it is not zero.** For an intravenous
+bolus that is `dose / V1`, the intercept the curve extrapolates back to. It is not a physical
+concentration -- at time zero the drug has not left the injection site -- but it is intrinsic to the
+mammillary model with injection into the central compartment, which is the model being fitted, and it
+is where V1 lives. Including it anchors the fit to the median of the subjects' own intercepts and
+makes the grid's start almost irrelevant. On de Groot, over starts of 1 to 10 minutes:
+
+| grid start | V1 without t = 0 | V1 with t = 0 |
+|---|---|---|
+| 1 min | 16.57 | 16.33 |
+| 3 min | 18.98 | 16.88 |
+| 5 min | 21.71 | 16.77 |
+| 10 min | 21.12 | 16.03 |
+| **spread** | **31%** | **5%** |
+
+and the anchored answer sits on 16.35 L, the median of the six subjects' individual V1, which is what
+anchoring to the median intercept must give.
+
+**Where the intercept is zero, the start matters and must be chosen.** Every model has an intercept;
+for an absorption input it is exactly zero, by the equations as much as by logic. Oral into one
+compartment is `A exp(-alpha t) - A exp(-beta t)`, and at t = 0 both exponentials are 1, so the
+intercept is A - A = 0 (Steven L. Shafer, 2026-11-27). A zero intercept carries no information in a
+log fit, and `log(0)` would stop step 4 outright, so it cannot serve as the anchor. Then **begin at
+the study's first POSITIVE post-dose observation**, exclude any non-positive median, and record which
+times were dropped. Where the drug has an **endogenous baseline** -- so that C(0) is that baseline
+rather than zero -- the baseline is the intercept and can anchor the fit as a bolus intercept does.
+Earlier
+than that, the individual models are extrapolated into a region where the study has no data, which is
+exactly where subjects differ most. On de Groot, moving the start from 1 to 5 minutes moved V1 by 32%
+and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
+damaged. Record the start in the header, and say what the refit does and does not determine.
+
+The reason is worth understanding, because it is not a numerical accident. **The grid's start is the
+first sample time of the simulated study**, and V1 is fixed by the first sample after a bolus. So
+moving the start is running a different experiment, and the refit will report the V1 that experiment
+would have found. Choosing the real study's first observation is choosing to reproduce the design that
+actually produced the data.
+
+### Why V1 is where the damage lands, and clearance is not
+
+**V1 is a fiction; clearance is real** (Steven L. Shafer, 2026-11-27). By its definition V1 is the
+dose over the concentration at time zero -- but at time zero the drug has not left the injection site,
+so the true concentration is zero and the true V1 infinite. What a study reports is where its own
+curve, measured from the first sample onward, extrapolates back to an intercept that does not exist.
+That extrapolation depends on **when the first sample was drawn**: a study sampling at one minute
+extrapolates to a higher intercept, and so a smaller V1, than one sampling at ten. Clearance has no
+such dependence. It is the dose over the AUC, it measures a real physiological process, and any
+reasonable sampling scheme captures it. This is the mechanism behind *Comparing sources: only
+clearance is real* in `AGENTS.md`, and behind the observation there that central volumes fall with
+publication date as sampling got earlier.
+
+Three consequences for a two-stage refit:
+
+- **Expect V1 to carry more variability than CL**, between subjects and between methods. In de
+  Groot's six men, individual V1 spans 3.7-fold and CL 2.8-fold; across every candidate set and
+  fitting method tried, CL stayed within 32.3-32.9 L/h while V1 ranged 16 to 33.
+- **Do not claim a direction for a bias in V1.** A mean-closure's V1 can be compared with a refit of
+  the same subjects, which is an estimator-against-population statement; it is not a prediction about
+  any individual, and a single subject cannot establish it -- five of de Groot's six men fall below
+  the mean-closure and one sits well above. Where a direction is asserted for a cohort, it needs a
+  population refit of that cohort, not one patient.
+- **Stand behind clearance.** When a header must say what the model does and does not determine, CL
+  is the quantity to quote with confidence and V1 the one to qualify.
+
+None of that makes V1 dispensable. A mammillary model with injection into the central compartment is
+a deliberate simplification -- its time-zero intercept is a construct, and the price of it is paid in
+the first minutes after a bolus -- but the simplicity is worth the model error for the dosing
+questions stanpumpR answers, and the intercept is how the model is fitted and visualised. The
+practical consequence is the one above: give the refit that intercept so the number it reports is the
+subjects' own, not an artifact of where you chose to start sampling them.
+
+### What de Groot's numbers looked like
+
+| | V1 | Vss | CL | t1/2alpha | t1/2beta |
+|---|---|---|---|---|---|
+| printed means, closed | 32.60 | 71.50 | 32.20 | 11.4 min | 1.85 h |
+| mean of the six individual closures | 20.34 | 71.52 | 32.16 | 5.5 min | 1.84 h |
+| refit, grid from the first observation | 18.32 | 76.88 | 32.45 | 4.05 min | 1.903 h |
+| refit anchored at t = 0 | 16.88 | 75.75 | 32.28 | 3.70 min | 1.886 h |
+
+Against the geometric mean of the six, the printed means sit -30% at 3 min and +28% at 20 min. CL,
+Vss and t1/2beta survived averaging to within 3, 3.5 and 4%; t1/2alpha did not, and took V1 with it.
+That is the usual shape of the damage, and it is why **clearance is the parameter to compare across
+sources** (see *Comparing sources* in `AGENTS.md`).
+
+### When no individual parameters are printed
+
+Then no refit of this kind is possible -- but that is a statement about *parameters*, not about data.
+Look for a published mean concentration-time curve, or a figure, and fit the polyexponential to that
+instead (log-residual weighting). On de Groot the only real observations in the paper were the points
+in Figure 1, and digitising them both checked the closure against the data the authors fitted (the
+closed model reproduced subject 1's own intravenous points at a median ratio of 1.044) and let the
+absorption input be estimated at all -- as a choice among the candidate shapes described below, not
+as a settled fact. Never invent pseudo-subjects from mean +/- SD: the correlations are unknown, which
+is the very problem.
+
+If nothing can be fitted, use the means and **say in the drug's header and help page that they are a
+two-stage average, and which parameter is most likely distorted**. Be careful with direction: a
+magnitude borrowed from a comparable cohort is an illustration of how large the error can be, not a
+prediction for this one, and for V1 it is not even a stable quantity to have a direction about (see
+above). Saying "the mean-closure can be badly wrong, and the volume is the parameter it falls on" is
+honest; "the volume is overestimated" usually is not. A model carrying its own caveats is better than
+no model: a clinician with neither has only the label.
+
+### The same fault corrupts the input function
+
+A paper that fitted the wrong disposition structure will have absorbed the error into its absorption
+parameters, so **its ka, lag or absorption half-life are not measurements either**. Once a unit
+disposition function is in hand, the input can be estimated separately instead of being entangled
+with the disposition. Say what that estimate rests on: with sparse samples the input is **not
+identified uniquely** -- infinitely many input profiles reproduce a finite set of concentrations --
+so the recovery is only as good as the family it is drawn from. Fit a small set of candidate input
+shapes with the disposition held fixed, choose between them on a criterion that charges for
+parameters, and report the winner as conditional on that family and sampling.
+
+On de Groot the published absorption half-lives imply first-order ka of 3.0 to 69.3 /h, one of them
+a 36-second absorption half-life for a tablet taken after breakfast. Deconvolving the closed UDF out
+of seven digitised oral points from one subject, with four candidate shapes (first-order,
+zero-order, Weibull, two parallel first-order), **selected a zero-order input** released over 55
+minutes after a 15-minute lag: it won on AIC by 12 points over first-order at equal parameter count,
+the Weibull was no better for its extra parameter, and the two parallel paths collapsed to one. That
+is strong evidence against the published first-order ka among the shapes tried; it is not a proof
+that no other shape fits, and seven points from one subject cannot make it one. The bioavailability,
+which is model-independent, was right; what the comparison puts in doubt is the input's KIND, which
+the published fit reports as first-order and these data do not support. Check whether a published
+absorption rate is a measurement or a compensation before carrying it into a model.
+
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one
