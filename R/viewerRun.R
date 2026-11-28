@@ -736,8 +736,15 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   # Partial pressures at the body's altitude (R/altitude.R), so the vapour
   # delivered is in sea-level millilitres, as the amounts are
   settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
-                                                      gasPressureRatio(bodyAt(k))))
-  flow <- vapply(settings, function(s) s$Q, numeric(1))
+                                                      gasPressureRatio(bodyAt(k)),
+                                                      gasFreshGasExpansion(bodyAt(k))))
+  # `flow` is what the flowmeters read: the engine takes the fresh gas in the
+  # lungs' litres (gasFreshGasExpansion()), but the Visualizer shows the
+  # setting, and counts every amount of vapour in litres at the machine
+  # (gasMachineLitres(), the run's amountScale), so that the agent delivered
+  # is the flow times the vaporiser's setting, as a clinician reckons it
+  expansion <- vapply(knots, function(k) gasFreshGasExpansion(bodyAt(k)), numeric(1))
+  flow <- vapply(settings, function(s) s$Q, numeric(1)) / expansion
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))
   va <- vapply(settings, function(s) s$VA, numeric(1))
@@ -755,7 +762,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     category = if (length(category) == 1) category else NA_character_,
     typical = mac, mac = mac,
     units = list(conc = "%", amount = "mL", rate = "mL/min"),
-    amountScale = 10,
+    amountScale = 10 * gasMachineLitres(body),
     patient = list(weight = gr$weight, age = gr$age),
     # The physiology panel; altitude, intubation, temperature and cardiac
     # output as the gas engine ran (its body)

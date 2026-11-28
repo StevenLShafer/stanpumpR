@@ -105,7 +105,7 @@ The run is the gas engine's own five states for the plot (`gasDrugEntries()` kee
 | `p` | `circuit`, `lungs`, `vrg`, `mg`, `fg`: partial pressures at each time, %. |
 | `capacity`, `volume`, `partition` | Each compartment's capacity (L of gas), volume (L) and tissue:gas partition coefficient; the ideal circuit's capacity and volume are 0. |
 | `lungsCapacity` | The lungs' capacity in force from each time, L of gas, where the intubation steps during the run (a physiology event): one lung's share of `capacity.lungs` while the tube is in a bronchus. Optional: without it `capacity.lungs` holds throughout. |
-| `amountScale` | 10: capacity (L) × partial pressure (%) × this is mL of vapour. |
+| `amountScale` | Capacity (L) × partial pressure (%) × this is mL of vapour at the anaesthesia machine (dry, 20 °C, one atmosphere): 8.867 at 37 °C, which is 10 × the machine's litres per litre in the lungs, so that the agent delivered is the fresh gas flow × the vaporiser's setting, as a clinician reckons it. 10 for a run whose volumes are taken litre for litre (GasMan's). |
 | `fresh`, `freshFlow`, `ventilation` | In force from each time: the agent's share of the fresh gas (%), the fresh gas flow and the minute ventilation (L/min). |
 | `alveolarVentilation` | In force from each time: the minute ventilation less the dead space the engine took (L/min). Optional. |
 | `venous` | The mixed venous partial pressure at each time, %. Optional: without it no blood is drawn. |

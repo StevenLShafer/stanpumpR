@@ -561,6 +561,20 @@ caffeineCitrateUnits <- paste(c("mg", "mg/kg"), CAFFEINE_SALT)
 VALGANCICLOVIR_PRODUCT <- "valganciclovir"
 valganciclovirUnits <- paste("mg PO", VALGANCICLOVIR_PRODUCT)
 
+# Isavuconazonium sulfate (R/drugs_isavuconazole.R): the prodrug, labelled and
+# dosed that way in the US (Cresemba: 372 mg isavuconazonium sulfate is 200 mg
+# isavuconazole), while the EU label and much of the literature dose
+# isavuconazole itself.  Both bases are in common use and they are 1.86-fold
+# apart, so the unit names the prodrug (docs/adding-a-drug.md, "Both bases are
+# in common use"), the drug's `doseProducts` block converts it, and a plain mg
+# unit is isavuconazole.  Oral (may be scheduled once or three times a day,
+# the loading regimen being every 8 hours) and intravenous as a rate, the
+# label forbidding an intravenous bolus.  Devin's review of PR #1018,
+# 2026-11-28.
+ISAVUCONAZONIUM_PRODUCT <- "isavuconazonium"
+isavuconazoniumUnits <- c(paste("mg PO", ISAVUCONAZONIUM_PRODUCT),
+                          paste("mg/hr", ISAVUCONAZONIUM_PRODUCT))
+
 # Quinidine sulfate (R/drugs_quinidine.R): the oral tablet is labelled and
 # dosed as the sulfate (200 and 300 mg), 82.9% quinidine base, the factor the
 # model's source converted its doses with.  The curve is quinidine, so the
@@ -600,6 +614,7 @@ allUnits <- c(bolusUnits, infusionUnits, poUnits, poRateUnits, enteralRateUnits,
               iuUnits, scUnits, iuScUnits, ghbUnits, insulinUnits, insulinRateUnits,
               ivPotencyUnits, ivPotencyBodySizeUnits, milliunitRateUnits, aminophyllineUnits, caffeineCitrateUnits,
               valganciclovirUnits, quinidineSulfateUnits, mycophenolateMofetilUnits, tdRateUnits,
+              isavuconazoniumUnits,
               piperacillinTazobactamUnits, coartemUnits)
 
 # Target-controlled infusion (tci.R).  The "dose" of a target row is the target
@@ -681,6 +696,8 @@ scheduledUnits <- c(
   paste(caffeineCitrateUnits, "qd"),
   # Valganciclovir's once- and twice-daily regimens (R/drugs_ganciclovir.R)
   paste(valganciclovirUnits, c("qd", "bid")),
+  # Isavuconazonium once a day, or every 8 hours to load (R/drugs_isavuconazole.R)
+  paste(isavuconazoniumUnits[1], c("qd", "tid")),
   # Quinidine sulfate's regimens (R/drugs_quinidine.R)
   paste(quinidineSulfateUnits, c("tid", "qid", "q4h")),
   # Mycophenolate mofetil twice or three times a day (R/drugs_mycophenolate.R)

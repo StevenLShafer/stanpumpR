@@ -550,7 +550,7 @@ antibioticTroughBands <- function()
 antibioticNoBands <- function()
 {
   data.frame(
-    Drug = c("colistin", "cefepime", "ceftolozane"),
+    Drug = c("colistin", "cefepime", "ceftolozane", "ceftazidime"),
     Reason = c(
       paste(
         "No MBC source for colistin has been read, so the band rule cannot be applied. The consensus",
@@ -565,7 +565,13 @@ antibioticNoBands <- function()
         "(ceftolozane AND (MBC OR minimum bactericidal OR bactericidal); 33 records) found time-kill",
         "studies of single strains (Moya B et al., Antimicrob Agents Chemother 2010;54:3933-3937: a",
         "> 3-log kill of one P. aeruginosa at 1x its MIC) and biofilm MBCs, but no MBC distribution",
-        "for a population of isolates, so the band rule cannot be applied.")),
+        "for a population of isolates, so the band rule cannot be applied."),
+      paste(
+        "No MBC source for ceftazidime with avibactam has been read, so the band rule cannot be",
+        "applied. A PubMed search on 2026-11-25 (ceftazidime-avibactam AND (MBC OR minimum",
+        "bactericidal concentration); 28 records) was not followed to a population MBC50 or MBC90; the",
+        "source's target is a time above the MIC (50% fT > 8 mg/L; Franzese 2022), not a range on the",
+        "curve.")),
     stringsAsFactors = FALSE
   )
 }

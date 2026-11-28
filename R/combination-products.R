@@ -72,6 +72,13 @@ COMBINATION_PRODUCTS <- list(
     # "30 mg/kg ... Provides 20 mg/kg ceftolozane and 10 mg/kg tazobactam".
     # Tazobactam is not drawn.
     shares = c(ceftolozane = 2 / 3)
+  ),
+  Avycaz = list(
+    # Avycaz label (NDA 206494, DailyMed 2026-08-11), section 2: "AVYCAZ 2.5
+    # grams (ceftazidime 2 grams and avibactam 0.5 grams)"; the pediatric
+    # "62.5 mg/kg (ceftazidime 50 mg/kg and avibactam 12.5 mg/kg)".
+    # Avibactam is not drawn.
+    shares = c(ceftazidime = 0.8)
   )
 )
 

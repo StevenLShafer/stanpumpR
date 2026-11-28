@@ -473,9 +473,13 @@ test_that("a gas run holds the plot's partial pressures, and its capacities are 
                c(lungs = body$V_alveolar, vrg = body$V_brain * sevo$tg_brain,
                  mg = body$V_muscle * sevo$tg_muscle, fg = body$V_fat * sevo$tg_fat))
   expect_equal(r$mac, macForAge(sevo$MAC40, 50))
-  expect_equal(r$amountScale, 10)
+  # mL of vapour at the machine per L of capacity and % (gasMachineLitres())
+  expect_equal(r$amountScale, 10 * gasMachineLitres(getGasBody(70)))
+  expect_equal(r$amountScale, 8.867, tolerance = 1e-4)
   # The settings in force, and the agent delivered: 6 L/min of 2% for 15 min,
-  # then 1 L/min, is 10 x (6 x 2 x 15 + 1 x 2 x 45) = 2700 mL of vapour.
+  # then 1 L/min, is 10 x (6 x 2 x 15 + 1 x 2 x 45) = 2700 mL of vapour, as a
+  # clinician reckons it: the flow and the delivered agent are the machine's,
+  # whatever the engine makes of the fresh gas in the lungs (2026-11-28).
   expect_equal(r$freshFlow[r$t == 600], 6)
   expect_equal(r$freshFlow[r$t == 1200], 1)
   expect_equal(unique(r$fresh), 2)
@@ -514,7 +518,7 @@ test_that("the agent adds up: nothing is vented that was not delivered, and each
     for (k in c("vrg", "mg", "fg")) {
       f <- c(vrg = body$f_brain, mg = body$f_muscle, fg = body$f_fat)[[k]]
       fromAmounts <- diff(amount(k)) / dt
-      physiology <- 10 * f * body$Q_cardiac * lb * (mid(r$p$lungs) - mid(r$p[[k]]))
+      physiology <- r$amountScale * f * body$Q_cardiac * lb * (mid(r$p$lungs) - mid(r$p[[k]]))
       expect_lt(max(abs(fromAmounts - physiology)[quiet]), 0.01 * max(abs(physiology)))
     }
   }
@@ -546,7 +550,7 @@ test_that("the blood: the mixed venous gradient carries the uptake, at the cardi
     dt <- diff(r$t) / 60
     mid <- function(v) (v[-1] + v[-n]) / 2
     taken <- diff(amount("vrg") + amount("mg") + amount("fg")) / dt
-    gradient <- 10 * r$cardiacOutput * lb * (mid(r$p$lungs) - mid(r$venous))
+    gradient <- r$amountScale * r$cardiacOutput * lb * (mid(r$p$lungs) - mid(r$venous))
     quiet <- vapply(r$t[-n] / 60, function(m) all(m < c(0, 15) | m > c(0, 15) + 5), logical(1))
     expect_lt(max(abs(taken - gradient)[quiet]), 0.01 * max(abs(gradient)))
   }

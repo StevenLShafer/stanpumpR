@@ -465,10 +465,10 @@ test_that("simulateGases() keeps its positional arguments: physiology comes last
   args <- names(formals(simulateGases))
   expect_identical(args[1:9], c("doseTable", "weight", "age", "maximum", "cardiacOutput",
                                 "uptakeEffect", "circuit", "deadSpace", "oxygenUptake"))
-  expect_identical(utils::tail(args, 10),
+  expect_identical(utils::tail(args, 11),
                    c("physiology", "temperature", "altitude", "endobronchial",
                      "physiologyEvents", "haemoglobin", "shunt", "height", "sex",
-                     "adjustToFFM"))
+                     "adjustToFFM", "volumeConversion"))
   # The old positional call that turns the uptake coupling off still does.
   expect_equal(simulateGases(SEVO_RUN, 70, 50, 30, NULL, FALSE)$results,
                simulateGases(SEVO_RUN, 70, 50, 30, uptakeEffect = FALSE)$results)
