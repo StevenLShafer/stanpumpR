@@ -18,7 +18,7 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "factorVIIIvwf",
                   # the components of a combination product, given only in it
                   # (R/combination-products.R)
-                  "artemether", "dihydroartemisinin", "lumefantrine", "ceftolozane",
+                  "artemether", "dihydroartemisinin", "lumefantrine", "ceftolozane", "ceftazidime",
                   "air", "oxygen", "ventilation")
   # and the candidate models of a drug whose model the program chooses
   # (R/modelSelection.R), offered only through their drug's name

@@ -131,6 +131,9 @@ renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
                 "cefepime",
                 # Cockcroft-Gault on clearance (Zhang 2021, R/drugs_ceftolozane.R)
                 "ceftolozane",
+                # Cockcroft-Gault x 1.73/BSA or bedside Schwartz, piecewise
+                # (Franzese 2022, R/drugs_ceftazidime.R)
+                "ceftazidime",
                 # the CKD-EPI 2021 eGFR, as a power, on clearance
                 # (Vuong 2025, R/drugs_fluconazole.R)
                 "fluconazole",

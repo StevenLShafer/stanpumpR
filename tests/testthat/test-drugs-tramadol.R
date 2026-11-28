@@ -348,6 +348,7 @@ test_that("exactly the drugs meant to be plasma-only lack an effect site", {
     "mycophenolate",  # concentration only, no ke0 (2026-11-25)
     "ceftolozane",  # Zerbaxa's drawn component (2026-11-25)
     "vonicogAlfa", "factorVIIIvwf",  # Vonvendi and the factor VIII it protects (2026-11-28)
+    "ceftazidime",  # Avycaz's drawn component (2026-11-25)
     "codeine", "tramadol", "prednisone",
     "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
     "vancomycinKidneyTransplant",
