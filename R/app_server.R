@@ -678,6 +678,10 @@ app_server <- function(input, output, session) {
       # at the reference age), keyed by drug, so a changed drug list does not
       # misalign it.
       state$values$macThreshold <- macThreshold()
+      # The Shunt fraction slider is the shunt under anesthesia too (R/
+      # endobronchial.R, 2026-11-28): a link without this was made when the
+      # slider acted only with the tube and sat hidden at 50%
+      state$values$shuntRule <- SHUNT_BOOKMARK_RULE
       state$values$endCe <- changedThresholds(drugDefaults())
       # And the Drug Library's changes, which the dose table's units, targets
       # and measured levels are in: a link without them reopened a drug moved
@@ -1567,11 +1571,40 @@ app_server <- function(input, output, session) {
   haemoglobin <- debounce(reactive({
     haemoglobinFromInput(input$physiology_haemoglobin)
   }), PHYSIOLOGY_DEBOUNCE_MS)
-  # The share of cardiac output through the unventilated lung, a fraction
-  # (R/endobronchial.R; Shafer, 2026-11-25)
-  shunt <- debounce(reactive({
-    shuntFromInput(input$physiology_shunt)
-  }), PHYSIOLOGY_DEBOUNCE_MS)
+  # The shunt, a fraction of cardiac output (R/endobronchial.R): one slider
+  # (Shafer, 2026-11-27), 10% under anesthesia and 50% with the endobronchial
+  # tube.  Ticking the box moves the slider to 50% and unticking it back to
+  # 10%.  The value is held in a reactiveVal, which tells its readers only of
+  # a value that differs, and is set to the box's default at once: otherwise
+  # the gases were simulated for the new box with the old shunt while the
+  # slider's update was on its way back from the browser, and then again.
+  # A restored link's box is not a change (ignoreInit), so its own slider
+  # value stands.
+  shuntSlider <- debounce(reactive(input$physiology_shunt), PHYSIOLOGY_DEBOUNCE_MS)
+  shunt <- reactiveVal(GAS_SHUNT_ANESTHESIA)
+  # A link from before the shunt under anesthesia (it records no shuntRule):
+  # without the tube its slider's value, hidden then at 50% and never
+  # applied, is not a shunt the user chose.  Noted before the first flush
+  # (onRestore()), so that the link is not first simulated at 50%.
+  shuntFromOldLink <- FALSE
+  onRestore(function(state) {
+    shuntFromOldLink <<- isBookmarkRestore(state$values) &&
+      !identical(state$values$shuntRule, SHUNT_BOOKMARK_RULE) &&
+      !endobronchialFromInput(state$input$endobronchialIntubation)
+  })
+  observeEvent(shuntSlider(), {
+    if (shuntFromOldLink) {
+      shuntFromOldLink <<- FALSE
+      shunt(GAS_SHUNT_ANESTHESIA)
+      updateSliderInput(session, "physiology_shunt", value = 100 * GAS_SHUNT_ANESTHESIA)
+      return()
+    }
+    shunt(shuntFromInput(shuntSlider(), endobronchial()))
+  }, ignoreNULL = FALSE, priority = 10)
+  observeEvent(input$endobronchialIntubation, {
+    shunt(gasShuntDefault(endobronchial()))
+    updateSliderInput(session, "physiology_shunt", value = 100 * shunt())
+  }, ignoreInit = TRUE, priority = 10)
 
   observeEvent(input$physiologyReset, {
     for (f in PHYSIOLOGY_FACTORS)
@@ -1581,15 +1614,15 @@ app_server <- function(input, output, session) {
     updateSliderInput(session, "physiology_altitude", value = ALTITUDE_DEFAULT)
     updateCheckboxInput(session, "endobronchialIntubation", value = FALSE)
     updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
-    updateSliderInput(session, "physiology_shunt", value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION)
+    updateSliderInput(session, "physiology_shunt", value = 100 * GAS_SHUNT_ANESTHESIA)
   })
 
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(list(physiology(), altitude(), endobronchial()), {
+  observeEvent(list(physiology(), altitude(), endobronchial(), shunt()), {
     if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
-        endobronchial())
+        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA)
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -1644,10 +1677,8 @@ app_server <- function(input, output, session) {
       altitude = altitudeFromInput(input$physiology_altitude),
       endobronchial = as.numeric(endobronchialFromInput(input$endobronchialIntubation)),
       haemoglobin = haemoglobinFromInput(input$physiology_haemoglobin),
-      # The shunt acts only through the tube: without it the default, so an
-      # event's settings do not carry a hidden slider's value
-      shunt = if (endobronchialFromInput(input$endobronchialIntubation))
-        shuntFromInput(input$physiology_shunt) else ENDOBRONCHIAL_SHUNT_FRACTION)
+      shunt = shuntFromInput(input$physiology_shunt,
+                             endobronchialFromInput(input$endobronchialIntubation)))
   }
 
   observeEvent(input$physiologyCreateEventBtn, {
@@ -1882,7 +1913,10 @@ app_server <- function(input, output, session) {
   nominalDrugs <- reactive({
     profileCode({
       ivChanged <- !physiologyIsNormal(physiology()) || nrow(physiologyEvents()) > 0
-      gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial())
+      gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial()) ||
+        shunt() != GAS_SHUNT_ANESTHESIA ||
+        # which the arterial oxygen follows at any shunt (Devin, PR 1022)
+        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN
       if (!gasChanged) return(NULL)
       tryCatch({
         DT <- doseTableIV()

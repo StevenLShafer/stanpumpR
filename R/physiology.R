@@ -594,6 +594,20 @@ GAS_SOLUBILITY_TEMPERATURE_SLOPE <- c(desflurane = 0.0302,
                                       sevoflurane = 0.0295,
                                       isoflurane = 0.0382)
 
+#' Slopes of ln(tissue:gas) on temperature, per degree C, by tissue group
+#'
+#' Zhou JX, Liu J.  Anesth Analg 2001;93:234-8 (PMID 11429373), Table 1,
+#' human brain, muscle and fat.  Steven L. Shafer, 2026-11-27: "Yes, use
+#' tissue specific slopes relative to temperature" and "Use the brain slope
+#' for the vessel-rich group."  Until 2026-11-28 every tissue:gas coefficient
+#' took its agent's blood:gas slope, on the authors' conclusion that the
+#' increases are "approximately the same", which held tissue:blood fixed.
+#' @noRd
+GAS_TISSUE_TEMPERATURE_SLOPE <- list(
+  tg_brain  = c(desflurane = 0.0322, sevoflurane = 0.0307, isoflurane = 0.0303),
+  tg_muscle = c(desflurane = 0.0393, sevoflurane = 0.0382, isoflurane = 0.0405),
+  tg_fat    = c(desflurane = 0.0325, sevoflurane = 0.0378, isoflurane = 0.0434))
+
 #' Nitrous oxide's temperature coefficients of solubility, per degree C at
 #' 37 C (Allott 1973, Br J Anaesth 45:294-300, read in full): water and
 #' aqueous media, blood among them, 2.33%/C (Table II, the mean of four
@@ -643,29 +657,43 @@ gasMacTemperatureFactor <- function(temperature = PHYSIOLOGY_TEMPERATURE_DEFAULT
   (temperature - zero) / (37 - zero)
 }
 
-#' The gas properties at a body temperature
+#' The gas properties at a body temperature and haematocrit
 #'
-#' \code{getGasProperties()} with each volatile agent's partition coefficients
-#' (blood:gas and every tissue:gas) multiplied by
-#' \code{exp(-slope (T - 37))} (Zhou 2002, 2001) and its MAC by
-#' \code{gasMacTemperatureFactor()} (Liu 2001); nitrous oxide's blood:gas,
-#' brain and muscle coefficients by Allott 1973's aqueous coefficient, its
-#' fat:gas by the oil one, and its MAC by its own factor (Antognini 1994).
-#' Nitrogen and oxygen are unchanged.  At 37 C (or NULL) the table is returned as it is.
+#' \code{getGasProperties()} with each volatile agent's blood:gas coefficient
+#' multiplied by \code{exp(-slope (T - 37))} (Zhou 2002) and by
+#' \code{exp(c (Hct - 45))} (Zhou 2002, \code{GAS_HAEMATOCRIT_SOLUBILITY_SLOPE}),
+#' each tissue:gas coefficient by its own tissue's temperature slope (Zhou
+#' and Liu 2001, \code{GAS_TISSUE_TEMPERATURE_SLOPE}; the vessel-rich group
+#' the brain's), and its MAC by \code{gasMacTemperatureFactor()} (Liu 2001);
+#' nitrous oxide's blood:gas, brain and muscle coefficients by Allott 1973's
+#' aqueous coefficient, its fat:gas by the oil one, and its MAC by its own
+#' factor (Antognini 1994).  Nitrogen and oxygen are unchanged.  At 37 C and
+#' the reference haematocrit the table is returned as it is.
 #'
 #' @param temperature body temperature, C, or NULL for 37
+#' @param haemoglobin g/dL, or NULL for the default 15 (haematocrit 45%)
+#' @param gasMans TRUE for GasMan's blood:gas coefficients
 #' @returns a data frame as \code{getGasProperties()}
 #' @export
-gasPropertiesAt <- function(temperature = NULL)
+gasPropertiesAt <- function(temperature = NULL, haemoglobin = NULL, gasMans = FALSE)
 {
-  props <- getGasProperties()
+  props <- getGasProperties(gasMans = gasMans)
   temperature <- checkBodyTemperature(temperature)
+  hct <- gasHaematocrit(haemoglobin)
+  if (hct != GAS_HAEMATOCRIT_REFERENCE) {
+    c <- GAS_HAEMATOCRIT_SOLUBILITY_SLOPE[props$gas]
+    props$lambda_blood <- props$lambda_blood *
+      ifelse(is.na(c), 1, exp(c * (hct - GAS_HAEMATOCRIT_REFERENCE)))
+  }
   if (temperature == 37) return(props)
   slope <- GAS_SOLUBILITY_TEMPERATURE_SLOPE[props$gas]
   volatile <- !is.na(slope)
-  f <- ifelse(volatile, exp(-slope * (temperature - 37)), 1)
-  for (col in c("lambda_blood", "tg_brain", "tg_muscle", "tg_fat"))
-    props[[col]] <- props[[col]] * f
+  props$lambda_blood <- props$lambda_blood *
+    ifelse(volatile, exp(-slope * (temperature - 37)), 1)
+  for (col in names(GAS_TISSUE_TEMPERATURE_SLOPE)) {
+    tissue <- GAS_TISSUE_TEMPERATURE_SLOPE[[col]][props$gas]
+    props[[col]] <- props[[col]] * ifelse(is.na(tissue), 1, exp(-tissue * (temperature - 37)))
+  }
   props$MAC40[volatile] <- props$MAC40[volatile] * gasMacTemperatureFactor(temperature)
   n2o <- props$gas == "nitrousOxide"
   aqueous <- exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["aqueous"]] * (temperature - 37))
@@ -675,6 +703,21 @@ gasPropertiesAt <- function(temperature = NULL)
     exp(-GAS_N2O_SOLUBILITY_TEMPERATURE_SLOPE[["fat"]] * (temperature - 37))
   props$MAC40[n2o] <- props$MAC40[n2o] * gasMacTemperatureFactor(temperature, "nitrousOxide")
   props
+}
+
+#' The gas properties a body runs on
+#'
+#' \code{gasPropertiesAt()} at the body's temperature and haemoglobin, with
+#' GasMan's blood:gas coefficients for a body in GasMan's mode
+#' (\code{body$volumesAsStated}: \code{volumeConversion = FALSE} or the
+#' semi-closed circuit).  What every reader of the gas properties takes.
+#'
+#' @param body a gas body, or NULL for the default patient
+#' @returns a data frame as \code{getGasProperties()}
+#' @keywords internal
+gasPropertiesOf <- function(body = NULL)
+{
+  gasPropertiesAt(body$temperature, body$haemoglobin, gasMans = isTRUE(body$volumesAsStated))
 }
 
 #' The inhaled agents the cardiac slider moves (every soluble agent a user
@@ -1102,48 +1145,50 @@ physiologyPanel <- function()
             "unventilated lung."),
       placement = "right"
     ),
-    # The shunt fraction (R/endobronchial.R; Shafer, 2026-11-25) and the
-    # haemoglobin, which sets how far the shunt desaturates the arterial blood
-    # (R/arterialOxygen.R; Shafer, 2026-11-19), act only through the tube, so
-    # they are shown with the box
-    conditionalPanel(
-      condition = "input.endobronchialIntubation",
-      fieldHelp(
-        sliderInput(
-          inputId = "physiology_shunt",
-          label = "Shunt fraction (%)",
-          min = 0,
-          max = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
-          value = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
-          step = ENDOBRONCHIAL_SHUNT_STEP_PERCENT,
-          ticks = FALSE
-        ),
-        paste("The share of cardiac output that passes the unventilated lung.",
-              "It starts at 50%, Eger and Shafer's idealisation, the most it",
-              "can be. Hypoxic pulmonary vasoconstriction diverts blood from",
-              "the unventilated lung, which this slider stands in for: lower",
-              "it toward 0% and watch the arterial oxygen improve. At 0% the",
-              "unventilated lung takes no blood, and only the smaller volume",
-              "of the ventilated lung remains of the tube's effect."),
-        placement = "right"
+    # The one shunt slider (R/endobronchial.R; Shafer, 2026-11-27): 10% under
+    # anesthesia, 50% with the tube, for every gas.  The haemoglobin sets how
+    # far a shunt desaturates the arterial blood (R/arterialOxygen.R)
+    fieldHelp(
+      sliderInput(
+        inputId = "physiology_shunt",
+        label = "Shunt fraction (%)",
+        min = 0,
+        max = 100 * ENDOBRONCHIAL_SHUNT_FRACTION,
+        value = 100 * GAS_SHUNT_ANESTHESIA,
+        step = ENDOBRONCHIAL_SHUNT_STEP_PERCENT,
+        ticks = FALSE
       ),
-      fieldHelp(
-        sliderInput(
-          inputId = "physiology_haemoglobin",
-          label = "Haemoglobin (g/dL)",
-          min = HAEMOGLOBIN_MIN,
-          max = HAEMOGLOBIN_MAX,
-          value = ARTERIAL_OXYGEN_HAEMOGLOBIN,
-          step = HAEMOGLOBIN_STEP,
-          ticks = FALSE
-        ),
-        paste("With cardiac output shunted, the oxygen the shunt fails to",
-              "carry is a larger share of a smaller capacity, so an anaemic",
-              "patient desaturates more: with half the output shunted, on pure",
-              "oxygen the arterial saturation is about 69% at 7 g/dL and 87%",
-              "at 17 g/dL. Without a shunt it changes nothing the plot shows."),
-        placement = "right"
-      )
+      paste("The share of cardiac output that passes no ventilated alveoli",
+            "and reaches the arteries as mixed venous blood, for oxygen and",
+            "for every anesthetic. It starts at 10%, the shunt under",
+            "anesthesia in a ventilated patient with normal lungs, and moves",
+            "to 50% when Endobronchial intubation is ticked, the most it can",
+            "be; lowering it from there stands in for hypoxic pulmonary",
+            "vasoconstriction. Awake with healthy lungs it is about 3%;",
+            "measured on oxygen it was 7.4% in emphysema, 8.3% in diffuse",
+            "pulmonary fibrosis and 9.1% in marked obesity (Said and",
+            "Banerjee 1963)."),
+      placement = "right"
+    ),
+    fieldHelp(
+      sliderInput(
+        inputId = "physiology_haemoglobin",
+        label = "Haemoglobin (g/dL)",
+        min = HAEMOGLOBIN_MIN,
+        max = HAEMOGLOBIN_MAX,
+        value = ARTERIAL_OXYGEN_HAEMOGLOBIN,
+        step = HAEMOGLOBIN_STEP,
+        ticks = FALSE
+      ),
+      paste("With cardiac output shunted, the oxygen the shunt fails to",
+            "carry is a larger share of a smaller capacity, so an anaemic",
+            "patient desaturates more: with half the output shunted, on pure",
+            "oxygen the arterial saturation is about 69% at 7 g/dL and 87%",
+            "at 17 g/dL. It also sets the haematocrit, at three times the",
+            "haemoglobin, and diluted blood dissolves less of a volatile",
+            "anesthetic (Zhou 2002), so in anaemia end-tidal and the brain",
+            "rise a little faster."),
+      placement = "right"
     )
     ),
     actionLink("physiologyReset", "Reset to normal"),
@@ -1266,14 +1311,14 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                            "Body temperature (C)",
                            "Altitude (m), inhaled anesthetics",
                            "Endobronchial intubation, inhaled anesthetics",
-                           "Shunt fraction (%), with an endobronchial tube",
-                           "Haemoglobin (g/dL), arterial oxygen with an endobronchial tube"),
+                           "Shunt fraction (%), inhaled anesthetics",
+                           "Haemoglobin (g/dL), arterial oxygen"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
                        if (isTRUE(endobronchial)) "yes" else "no",
                        {
-                         s <- tryCatch(checkShunt(shunt), error = function(e) NULL)
+                         s <- tryCatch(checkShunt(shunt, isTRUE(endobronchial)), error = function(e) NULL)
                          if (is.null(s)) "unreadable" else format(round(100 * s, 1))
                        },
                        format(haemoglobinFromInput(haemoglobin))),

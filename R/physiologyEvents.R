@@ -124,7 +124,7 @@ PHYSIOLOGY_EVENT_FIELDS <- c(names(PHYSIOLOGY_DEFAULT), "altitude", "endobronchi
 #' @keywords internal
 physiologyEventNormal <- function()
   c(PHYSIOLOGY_DEFAULT, altitude = ALTITUDE_DEFAULT, endobronchial = 0,
-    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN, shunt = ENDOBRONCHIAL_SHUNT_FRACTION)
+    haemoglobin = ARTERIAL_OXYGEN_HAEMOGLOBIN, shunt = GAS_SHUNT_ANESTHESIA)
 
 #' Check one physiology event's settings
 #'
@@ -149,8 +149,11 @@ checkPhysiologyEvent <- function(x)
   if (!out[["endobronchial"]] %in% c(0, 1))
     stop("Invalid physiology event settings: endobronchial must be 0 or 1")
   out[["haemoglobin"]] <- checkHaemoglobin(out[["haemoglobin"]])
-  # The shunt fraction (a fraction, 0 to 0.5) acts only through the tube
-  out[["shunt"]] <- checkShunt(out[["shunt"]])
+  # The shunt fraction (a fraction, 0 to 0.5).  One not given is the state's
+  # default, 10% under anesthesia and 50% with the tube (gasShuntDefault()),
+  # so a link made when the shunt existed only with the tube reads as it did
+  out[["shunt"]] <- if ("shunt" %in% names(x)) checkShunt(out[["shunt"]]) else
+    gasShuntDefault(out[["endobronchial"]] == 1)
   out
 }
 
@@ -166,6 +169,8 @@ physiologyEventEncode <- function(x)
 {
   x <- checkPhysiologyEvent(x)
   off <- x != physiologyEventNormal()
+  # The shunt is recorded only away from its state's default
+  off[["shunt"]] <- x[["shunt"]] != gasShuntDefault(x[["endobronchial"]] == 1)
   if (!any(off)) return(PHYSIOLOGY_EVENT_NORMAL_TEXT)
   paste0(names(x)[off], "=", vapply(unname(x[off]), function(v) format(v, digits = 15), ""),
          collapse = ";")
@@ -273,10 +278,9 @@ physiologyEventSummary <- function(x, gas = TRUE)
                  sprintf("Altitude %s m (%.0f Torr)", format(x[["altitude"]]),
                          barometricPressure(x[["altitude"]]))
                else "Sea level",
-               if (x[["endobronchial"]] == 1)
-                 sprintf("Endobronchial intubation, shunt %s%%, haemoglobin %s g/dL",
-                         format(round(100 * x[["shunt"]], 1)), format(x[["haemoglobin"]]))
-               else "Tracheal intubation")
+               sprintf("%s intubation, shunt %s%%, haemoglobin %s g/dL",
+                       if (x[["endobronchial"]] == 1) "Endobronchial" else "Tracheal",
+                       format(round(100 * x[["shunt"]], 1)), format(x[["haemoglobin"]])))
   paste(parts, collapse = ", ")
 }
 

@@ -1,12 +1,16 @@
 # Endobronchial intubation and the inhaled anesthetics (R/endobronchial.R;
 # Shafer, 2026-11-19, from Eger and Shafer's chapter 8)
 
-gasRun <- function(drug, dose, endobronchial, maximum = 60, ...) {
+# The two-lung comparison is the chapter's, a patient with no shunt: since
+# 2026-11-28 the engine's own default without the tube is the 10% shunt under
+# anesthesia (test-gas-shunt.R)
+gasRun <- function(drug, dose, endobronchial, maximum = 60,
+                   shunt = if (isTRUE(endobronchial)) NULL else 0, ...) {
   dt <- if (drug == "nitrousOxide")
     data.frame(Drug = c("oxygen", "nitrousOxide", "ventilation"), Time = 0, Dose = c(2, 4, 6))
   else
     data.frame(Drug = c("oxygen", drug, "ventilation"), Time = 0, Dose = c(6, dose, 6))
-  simulateGases(dt, maximum = maximum, endobronchial = endobronchial, ...)
+  simulateGases(dt, maximum = maximum, endobronchial = endobronchial, shunt = shunt, ...)
 }
 at <- function(sim, gas, t) {
   y <- sim$state[[gas]][which.min(abs(sim$timeLine - t)), ]
@@ -101,22 +105,26 @@ test_that("the box shows only with an inhaled agent, and the Visualizer is told"
 })
 
 test_that("the Shunt fraction slider sets the tube's shunt, 0 to 50% (Shafer, 2026-11-25)", {
-  # The default and the maximum is the chapter's half
-  expect_equal(checkShunt(NULL), 0.5)
+  # With the tube the default and the maximum is the chapter's half
+  expect_equal(checkShunt(NULL, TRUE), 0.5)
   expect_equal(checkShunt(0), 0)
   expect_error(checkShunt(0.6), "shunt")
   expect_error(checkShunt(-0.1), "shunt")
   expect_equal(shuntFromInput(30), 0.3)
   expect_equal(shuntFromInput(80), 0.5)
   expect_equal(shuntFromInput(-5), 0)
-  expect_equal(shuntFromInput("junk"), 0.5)
-  expect_equal(shuntFromInput(NULL), 0.5)
-  # The body carries it; without the tube it does nothing
+  expect_equal(shuntFromInput("junk", TRUE), 0.5)
+  expect_equal(shuntFromInput(NULL, TRUE), 0.5)
+  # The body carries it, with the tube or without (the shunt under
+  # anesthesia, 2026-11-28); only the tube halves the ventilated gas volume
   body <- gasBodyEndobronchial(getGasBody(70), TRUE, 0.2)
   expect_equal(gasShunt(body), 0.2)
-  expect_equal(gasShunt(gasBodyEndobronchial(getGasBody(70), FALSE, 0.2)), 0)
-  expect_identical(gasRun("sevoflurane", 2, FALSE, shunt = 0.2)$state,
-                   gasRun("sevoflurane", 2, FALSE)$state)
+  plain <- gasBodyEndobronchial(getGasBody(70), FALSE, 0.2)
+  expect_equal(gasShunt(plain), 0.2)
+  expect_equal(plain$V_alveolar, getGasBody(70)$V_alveolar)
+  expect_equal(body$V_alveolar, getGasBody(70)$V_alveolar * ENDOBRONCHIAL_VENTILATED_VOLUME_SHARE)
+  expect_false(identical(gasRun("sevoflurane", 2, FALSE, shunt = 0.2)$state,
+                         gasRun("sevoflurane", 2, FALSE)$state))
   # The default is the old tube exactly
   expect_identical(gasRun("sevoflurane", 2, TRUE, shunt = 0.5)$state,
                    gasRun("sevoflurane", 2, TRUE)$state)
@@ -156,18 +164,17 @@ test_that("the Shunt fraction slider sets the tube's shunt, 0 to 50% (Shafer, 20
   expect_lt(regexpr('id="endobronchialIntubation"', html, fixed = TRUE),
             regexpr('id="physiology_shunt"', html, fixed = TRUE))
   rows <- physiologyCovariateRows(PHYSIOLOGY_DEFAULT, endobronchial = TRUE, shunt = 0.3)
-  expect_equal(rows$Value[rows$Covariate == "Shunt fraction (%), with an endobronchial tube"], "30")
+  expect_equal(rows$Value[rows$Covariate == "Shunt fraction (%), inhaled anesthetics"], "30")
+  expect_equal(physiologyCovariateRows(PHYSIOLOGY_DEFAULT)$Value[5 + 3], "10")
   # The Visualizer is told
   sim <- gasRun("sevoflurane", 2, TRUE, shunt = 0.3)
   expect_equal(viewerPhysiology(NULL, sim$body)$shunt, 30)
-  # The server reads the slider, and an event records it only with the tube
+  # The server reads the slider, and an event records it (test-gas-shunt.R
+  # for the box moving the slider)
   shiny::testServer(app_server, {
-    session$setInputs(physiology_shunt = 25)
+    session$setInputs(endobronchialIntubation = TRUE, physiology_shunt = 25)
     session$elapse(PHYSIOLOGY_DEBOUNCE_MS + 100)
     expect_equal(shunt(), 0.25)
-    session$setInputs(endobronchialIntubation = FALSE)
-    expect_equal(physiologyPanelSettings()[["shunt"]], 0.5)
-    session$setInputs(endobronchialIntubation = TRUE)
     expect_equal(physiologyPanelSettings()[["shunt"]], 0.25)
   })
 })

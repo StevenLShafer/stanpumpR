@@ -10,7 +10,8 @@ gasShunt(body)
 \item{body}{a gas body}
 }
 \value{
-0, or the shunt fraction of an endobronchial tube
+the body's shunt fraction; 0 for a body that carries none
+(GasMan's, and any built without simulateGases())
 }
 \description{
 The share of cardiac output that bypasses the ventilated alveoli

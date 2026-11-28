@@ -89,7 +89,7 @@ gasDrugEntries <- function(sim, gasDose, drugDefaults = NULL, maximum = 60,
   # whole plot, at the temperature in force at time 0; with physiology off
   # normal the plot replaces it with the physiology ribbon
   # (R/physiologyRibbon.R), and the threshold line steps (endCeSteps).
-  props <- gasPropertiesAt(sim$body$temperature)
+  props <- gasPropertiesOf(sim$body)
   # (sim$body is the body in force at time 0, an event at 0 included,
   # advanceClosedFormGas(); ChatGPT's review of PR #796, finding 9)
   xout  <- seq(from = 0, to = maximum, length.out = RESOLUTION)

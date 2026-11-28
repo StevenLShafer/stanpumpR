@@ -342,11 +342,19 @@ test_that("agent parameters are GasMan's own, but MAC is Mapleson's", {
   p <- getGasProperties()
   get <- function(gas, col) p[[col]][p$gas == gas]
 
-  # blood:gas
+  # blood:gas: Esper 2015's for the volatile agents since 2026-11-28 (Shafer:
+  # "Baseline blood:gas - Use esper"), GasMan's kept for the comparison
   expect_equal(get("nitrousOxide", "lambda_blood"), 0.47)
-  expect_equal(get("sevoflurane",  "lambda_blood"), 0.65)
-  expect_equal(get("isoflurane",   "lambda_blood"), 1.3)   # not 1.4
-  expect_equal(get("desflurane",   "lambda_blood"), 0.42)
+  expect_equal(get("sevoflurane",  "lambda_blood"), 0.74)
+  expect_equal(get("isoflurane",   "lambda_blood"), 1.45)
+  expect_equal(get("desflurane",   "lambda_blood"), 0.57)
+  gm <- getGasProperties(gasMans = TRUE)
+  expect_equal(gm$lambda_blood[match(c("sevoflurane", "isoflurane", "desflurane"), gm$gas)],
+               c(0.65, 1.3, 0.42))   # isoflurane not 1.4
+  expect_equal(unname(GASMAN_BLOOD_GAS[c("sevoflurane", "isoflurane", "desflurane")]),
+               c(0.65, 1.3, 0.42))
+  # Everything else is the same table
+  expect_identical(gm[setdiff(names(gm), "lambda_blood")], p[setdiff(names(p), "lambda_blood")])
   expect_equal(get("nitrogen",     "lambda_blood"), 0.014)
 
   # MAC: Mapleson 1996, Table 2 (papers/digests/PMID_8777094.md), with

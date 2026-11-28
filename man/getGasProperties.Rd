@@ -4,7 +4,11 @@
 \alias{getGasProperties}
 \title{Physical properties of the inhaled gases}
 \usage{
-getGasProperties()
+getGasProperties(gasMans = FALSE)
+}
+\arguments{
+\item{gasMans}{TRUE for GasMan's blood:gas coefficients of the volatile
+agents (\code{GASMAN_BLOOD_GAS}), which the comparisons with GasMan use}
 }
 \value{
 a data frame of gas properties
@@ -21,7 +25,8 @@ Columns:
 compartments (nitrous oxide, the volatiles, nitrogen); FALSE for oxygen,
 which is modelled in the gas phase only with a metabolic sink -- it binds
 haemoglobin nonlinearly and has no meaningful partition coefficient.}
-\item{lambda_blood}{blood:gas partition coefficient}
+\item{lambda_blood}{blood:gas partition coefficient: Esper 2015's for the
+volatile agents, GasMan's with \code{gasMans = TRUE}}
 \item{tg_brain, tg_muscle, tg_fat}{tissue:GAS partition coefficients, as
 gasman.ini gives them (VRG, MUS, FAT).  These are what the equations
 need; they are NOT tissue:blood and must not be multiplied by

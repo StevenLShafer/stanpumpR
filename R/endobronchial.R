@@ -59,6 +59,27 @@
 # unventilated lung takes no blood and only the ventilated lung's smaller
 # alveolar volume remains of the tube.
 # The volume share remains a [decision].
+#
+# THE SHUNT UNDER ANESTHESIA (Shafer, 2026-11-27; built 2026-11-28, the second
+# piece of the gas engine expansion, docs/gas-engine-expansion.md).  Without
+# a tube the shunt is no longer 0: "I think you mean '10% shunt under
+# anesthesia'", GAS_SHUNT_ANESTHESIA, venous admixture (true shunt and low
+# V/Q together) in an anaesthetised, ventilated patient with normal lungs,
+# between Hedenstierna 2002's 6% true shunt and Beck 2001's 12 to 13% venous
+# admixture; the 10 itself is an interpolation.  It applies to every gas, by
+# his statement of the physics: "If the anesthetic is entering from the
+# pulmonary arteries, then yes.  It flows through the lungs unaffected.  If
+# the anesthetic is entering from the trachea, then no.  That drug never
+# reaches the shunt fraction."  So the equations above are in force at 10%
+# by default, and the tube differs only in its 50% and in halving the
+# ventilated gas volume.  "One shunt slider, 10% normally, 50% with the
+# endobronchial tube": the Shunt fraction slider is shown whenever an inhaled
+# agent is in the dose table, 0 to 50%; ticking the box moves it to 50% and
+# unticking it back to 10% (gasShuntDefault()), a value the user had set not
+# surviving the box, which is the simplest rule to predict.  GasMan has no
+# shunt: a body built without simulateGases() carries none, and
+# simulateGases() gives 0 with the semi-closed circuit or volumeConversion =
+# FALSE unless one is asked for.
 # -----------------------------------------------------------------------------
 
 #' Share of cardiac output through the unventilated lung (Eger and Shafer's
@@ -73,13 +94,36 @@ ENDOBRONCHIAL_SHUNT_FRACTION <- 0.5
 #' @keywords internal
 ENDOBRONCHIAL_SHUNT_STEP_PERCENT <- 1
 
+#' The shunt under anesthesia, a share of cardiac output: venous admixture in
+#' an anaesthetised, ventilated patient with normal lungs (Shafer, 2026-11-27;
+#' between Hedenstierna 2002's 6% true shunt and Beck 2001's 12 to 13% venous
+#' admixture).  The Shunt fraction slider's value without an endobronchial
+#' tube.
+#' @keywords internal
+GAS_SHUNT_ANESTHESIA <- 0.10
+
+#' What a bookmark records once its Shunt fraction slider is the shunt under
+#' anesthesia as well as the tube's (app_server()'s onBookmark())
+#' @keywords internal
+SHUNT_BOOKMARK_RULE <- "anesthesia"
+
+#' The shunt a state starts at: 10% under anesthesia, 50% with an
+#' endobronchial tube
+#' @param endobronchial TRUE (or 1) for an endobronchial tube
+#' @keywords internal
+gasShuntDefault <- function(endobronchial = FALSE)
+{
+  if (isTRUE(as.logical(endobronchial))) ENDOBRONCHIAL_SHUNT_FRACTION else GAS_SHUNT_ANESTHESIA
+}
+
 #' A shunt fraction, checked: NULL is the default, otherwise a number from 0
 #' to ENDOBRONCHIAL_SHUNT_FRACTION
 #' @param x the fraction of cardiac output, or NULL
+#' @param endobronchial TRUE for an endobronchial tube, which sets the default
 #' @keywords internal
-checkShunt <- function(x)
+checkShunt <- function(x, endobronchial = FALSE)
 {
-  if (is.null(x)) return(ENDOBRONCHIAL_SHUNT_FRACTION)
+  if (is.null(x)) return(gasShuntDefault(endobronchial))
   if (!is.numeric(x) || length(x) != 1 || !is.finite(x) || x < 0 ||
       x > ENDOBRONCHIAL_SHUNT_FRACTION)
     stop("Invalid shunt fraction: ", format(x), " (0 to ",
@@ -90,11 +134,12 @@ checkShunt <- function(x)
 #' The Shunt fraction slider, read: its percent as a fraction, the default
 #' when unreadable (a link is untrusted), held to the slider's range
 #' @param value \code{input$physiology_shunt}, percent
+#' @param endobronchial TRUE for an endobronchial tube, which sets the default
 #' @keywords internal
-shuntFromInput <- function(value)
+shuntFromInput <- function(value, endobronchial = FALSE)
 {
   if (!is.numeric(value) || length(value) != 1 || !is.finite(value))
-    return(ENDOBRONCHIAL_SHUNT_FRACTION)
+    return(gasShuntDefault(endobronchial))
   max(0, min(100 * ENDOBRONCHIAL_SHUNT_FRACTION, value)) / 100
 }
 
@@ -102,21 +147,22 @@ shuntFromInput <- function(value)
 #' @keywords internal
 ENDOBRONCHIAL_VENTILATED_VOLUME_SHARE <- 0.5
 
-#' The gas body with one lung intubated
+#' The gas body with its shunt, and with one lung intubated
 #'
 #' @param body output of \code{getGasBody()}, possibly through
 #'   \code{gasBodyPhysiology()}
 #' @param endobronchial TRUE for an endobronchial tube
-#' @param shunt the share of cardiac output through the unventilated lung,
-#'   0 to ENDOBRONCHIAL_SHUNT_FRACTION (the default)
-#' @returns the body, with \code{shunt} set and the alveolar volume that of
+#' @param shunt the share of cardiac output that passes no ventilated
+#'   alveoli, 0 to ENDOBRONCHIAL_SHUNT_FRACTION; NULL for the default, 10%
+#'   under anesthesia and 50% with the tube (gasShuntDefault())
+#' @returns the body, with \code{shunt} set, and the alveolar volume that of
 #'   the ventilated lung when \code{endobronchial} is TRUE
 #' @keywords internal
-gasBodyEndobronchial <- function(body, endobronchial = FALSE,
-                                 shunt = ENDOBRONCHIAL_SHUNT_FRACTION)
+gasBodyEndobronchial <- function(body, endobronchial = FALSE, shunt = NULL)
 {
-  if (!isTRUE(endobronchial)) return(body)
-  body$shunt <- checkShunt(shunt)
+  endobronchial <- isTRUE(endobronchial)
+  body$shunt <- checkShunt(shunt, endobronchial)
+  if (!endobronchial) return(body)
   body$V_alveolar <- body$V_alveolar * ENDOBRONCHIAL_VENTILATED_VOLUME_SHARE
   body$endobronchial <- TRUE
   body
@@ -124,7 +170,8 @@ gasBodyEndobronchial <- function(body, endobronchial = FALSE,
 
 #' The share of cardiac output that bypasses the ventilated alveoli
 #' @param body a gas body
-#' @returns 0, or the shunt fraction of an endobronchial tube
+#' @returns the body's shunt fraction; 0 for a body that carries none
+#'   (GasMan's, and any built without simulateGases())
 #' @keywords internal
 gasShunt <- function(body)
 {

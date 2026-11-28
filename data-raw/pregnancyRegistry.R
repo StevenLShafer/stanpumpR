@@ -3948,7 +3948,18 @@ registry <- rbind(
       source = "PubMed search 2026-11-25; Paton DM, Webster DR. Clin Pharmacokinet 1985;10:477-497 (PMID 2866055); Riggs KW et al. Am J Obstet Gynecol 1987;157:1286-1291 (PMID 3688093); Kumar S et al. J Pharmacol Exp Ther 1997;282:617-632 (PMID 9262323); diphenhydramine hydrochloride injection label, Hikma, ANDA 080817, Pregnancy (DailyMed setid 829bbcbf-fb27-4484-aff6-a7e7467670af)",
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=829bbcbf-fb27-4484-aff6-a7e7467670af",
       to_obtain = "",
-      notes = "Read: the label in full; the PubMed records as abstracts. The model (Meredith 1984) is healthy men's venous plasma. Diphenhydramine crosses the placenta and is taken up by the fetal liver in sheep, which matters for the fetus, not for the maternal curve plotted here.")
+      notes = "Read: the label in full; the PubMed records as abstracts. The model (Meredith 1984) is healthy men's venous plasma. Diphenhydramine crosses the placenta and is taken up by the fetal liver in sheep, which matters for the fetus, not for the maternal curve plotted here."),
+  row("idarucizumab", "Hemostasis and reversal", "applied",
+      finding = "No pharmacokinetics of idarucizumab in pregnancy were found (PubMed 2026-11-28: 'idarucizumab pregnancy', 5 records, every one checked: two Medical Letter reviews, a meeting report, a factor Xa study and a haemorrhage protocol, none with idarucizumab concentrations). The PRAXBIND label (8.1, read in full) states there are no data in pregnant women. Glund 2018 (read in full) finds idarucizumab cleared by glomerular filtration followed by tubular uptake and breakdown, its clearance falling with filtration, so the model's Cockcroft-Gault term takes the rise in filtration of pregnancy (applied), an assumption.",
+      applied = "Cockcroft-Gault creatinine clearance x 1.5 when the serum creatinine is left blank (physiological: no idarucizumab data); the 4.07 mL/min intercept, the volumes and Q unchanged.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Glund S et al. Clin Appl Thromb Hemost 2018;24:724-733 PMID 29534609; PRAXBIND prescribing information, BLA 761025, revised 2/2024, section 8.1",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "The factor is the physiology, not a measurement. Dabigatran, the drug idarucizumab reverses, is also cleared by filtration. Glund 2018 does not have Gideon Koren as an author (PubMed author list checked).")
 )
 
 # The candidate models renamed when their drug's model became the program's

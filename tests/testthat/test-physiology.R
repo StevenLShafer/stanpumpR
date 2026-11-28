@@ -536,7 +536,9 @@ test_that("the email workbook records the physiology sliders", {
   # and the haemoglobin (R/arterialOxygen.R)
   expect_equal(nrow(rows), length(PHYSIOLOGY_FACTORS) + 5)
   expect_equal(rows$Value[grepl("Haemoglobin", rows$Covariate)], "15")
-  expect_equal(rows$Value[grepl("Shunt fraction", rows$Covariate)], "50")
+  # The shunt under anesthesia without the tube, 50% with it (2026-11-28)
+  expect_equal(rows$Value[grepl("Shunt fraction", rows$Covariate)], "10")
+  expect_equal(physiologyCovariateRows(NULL, endobronchial = TRUE)$Value[8], "50")
   expect_equal(rows$Value[grepl("Endobronchial", rows$Covariate)], "no")
   expect_equal(rows$Value[grepl("Altitude", rows$Covariate)], "0 (760 Torr)")
   expect_equal(rows$Value[rows$Covariate == "Body temperature (C)"], "32")
@@ -550,8 +552,9 @@ test_that("the email workbook records the physiology sliders", {
 
 # ---- Body temperature (Shafer, 2026-11-16) ----------------------------------
 # Hypothermia raises every partition coefficient of a volatile agent by
-# exp(-slope (T - 37)) (Zhou 2002 blood, Zhou 2001 tissues: tissue:blood
-# unchanged) and lowers its MAC along Liu 2001's regression.
+# exp(-slope (T - 37)), blood by Zhou 2002's slope and each tissue by its own
+# (Zhou and Liu 2001; Shafer, 2026-11-27: "use tissue specific slopes"), and
+# lowers its MAC along Liu 2001's regression.
 
 test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at 37 C", {
   p37 <- getGasProperties()
@@ -564,9 +567,11 @@ test_that("gasPropertiesAt() follows Zhou 2002 and Liu 2001, and is the table at
     i <- p37$gas == g
     f <- exp(GAS_SOLUBILITY_TEMPERATURE_SLOPE[[g]] * 6)
     expect_equal(p31$lambda_blood[i], p37$lambda_blood[i] * f)
-    # Tissue:blood unchanged (Zhou 2001).
-    expect_equal(p31$tg_brain[i] / p31$lambda_blood[i], p37$tg_brain[i] / p37$lambda_blood[i])
-    expect_equal(p31$tg_fat[i] / p31$lambda_blood[i], p37$tg_fat[i] / p37$lambda_blood[i])
+    # Each tissue by its own slope (Zhou and Liu 2001, Table 1), so
+    # tissue:blood moves a little with temperature (it was held fixed until
+    # 2026-11-28)
+    for (col in names(GAS_TISSUE_TEMPERATURE_SLOPE))
+      expect_equal(p31[[col]][i], p37[[col]][i] * exp(GAS_TISSUE_TEMPERATURE_SLOPE[[col]][[g]] * 6))
   }
   # Zhou 2002's own regression for isoflurane at a haematocrit of 40%:
   # ln(lambda) = -0.0382 T + 0.0154 HCT + 1.120, so lambda(31) / lambda(37).

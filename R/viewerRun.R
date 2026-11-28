@@ -687,7 +687,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     rowBody <- function(i) steps$body[[gr$bodyRow[[i]]]]
   }
   # The tissues' capacities at the temperature of the window drawn
-  props <- gasPropertiesAt(body$temperature)
+  props <- gasPropertiesOf(body)
   pr <- props[props$gas == g, ]
   ltg <- gasPartitionTissueGas(pr)
   bodyAt <- function(t) if (is.null(steps)) body else
@@ -858,7 +858,7 @@ viewerPhysiologySteps <- function(events, start, body = NULL, end = Inf)
       step$pressure <- round(barometricPressure(step$altitude))
       step$endobronchial <- x[["endobronchial"]] == 1
       # The shunt fraction, percent (R/endobronchial.R)
-      if (step$endobronchial) step$shunt <- round(100 * unname(x[["shunt"]]), 1)
+      step$shunt <- round(100 * unname(x[["shunt"]]), 1)
     }
     step
   })
@@ -888,7 +888,7 @@ viewerPhysiology <- function(physiology = NULL, body = NULL)
     out$pressure <- round(barometricPressure(out$altitude))
     out$endobronchial <- isTRUE(body$endobronchial)
     # The shunt fraction, percent (R/endobronchial.R; Shafer, 2026-11-25)
-    if (out$endobronchial) out$shunt <- round(100 * gasShunt(body), 1)
+    out$shunt <- round(100 * gasShunt(body), 1)
   }
   out
 }

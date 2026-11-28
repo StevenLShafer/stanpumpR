@@ -64,14 +64,17 @@ test_that("the program chooses by the source populations", {
                micafunginJullien(84, 175, 60, "male", albumin = 2)$PK)
 })
 
-test_that("micafungin simulates, offers intravenous units and no band", {
+test_that("micafungin simulates, offers infusion rates only and no band", {
   dt <- data.frame(Drug = "micafungin", Time = 0, Dose = 100, Units = "mg/hr")
   dt <- rbind(dt, data.frame(Drug = "micafungin", Time = 60, Dose = 0, Units = "mg/hr"))
   w <- simulateDrugsWithCovariates(dt, events, 84, 175, 60, "male", 48 * 60, FALSE)$micafungin$wide
   expect_gt(max(w$Plasma), 0)
   dd <- getDrugDefaultsGlobal()
   units <- unlist(dd$Units[dd$Drug == "micafungin"])
-  expect_true(all(c("mg", "mg qd", "mg/kg", "mg/hr") %in% units))
+  # The label: "intravenous infusion only. Infuse over one hour." So rates
+  # only, no amount (bolus) unit (2026-11-28, after Devin's review of PR #1018
+  # found the same for caspofungin and isavuconazole).
+  expect_setequal(units, c("mg/hr", "mg/kg/hr"))
   expect_equal(dd$Upper[dd$Drug == "micafungin"], 0)
   expect_true(is.na(dd$Category[dd$Drug == "micafunginJullien"]) ||
                 !nzchar(dd$Category[dd$Drug == "micafunginJullien"]))
