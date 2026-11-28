@@ -494,9 +494,9 @@ gasTotalUptake <- function(state, props, body, Qco)
     total <- total + lb * (1 - gasShunt(body)) * Qco *
       (y[[2]] - gasMixedVenous(y, body)) / 100
   }
-  # An ambient volume: the same partial pressures are 1/r the volume at sea
-  # level (R/altitude.R)
-  total / gasPressureRatio(body)
+  # A volume in the lungs at the body's altitude: the same amount takes up
+  # more room where the dry gases share less pressure (gasLungPressureRatio())
+  total / gasLungPressureRatio(body)
 }
 
 
@@ -1277,7 +1277,7 @@ advanceClosedFormGas <- function(
     # VO2 is a sea-level volume; at altitude the same oxygen is 1/r the
     # ambient volume, and the carbon dioxide 1/r the share of the exhaled
     # gas (R/altitude.R).
-    VO2  <- if (consuming) gasOxygenUptake(body) / ratio else 0
+    VO2  <- if (consuming) gasOxygenUptake(body) / gasLungPressureRatio(body) else 0
     VCO2 <- GAS_RESPIRATORY_QUOTIENT * VO2
     u <- u + VO2 - VCO2
     buildProp(u, u, if (s$MV > 0) min(VCO2 / s$MV, GAS_MAX_EXHALED_CO2) else 0,
@@ -1295,7 +1295,8 @@ advanceClosedFormGas <- function(
       if (k != bodyIndex) {
         newBody <- bodySteps$body[[k]]
         newProps <- gasPropertiesAt(newBody$temperature)
-        state <- gasStateAcrossBodies(state, props, newProps)
+        state <- gasStateAcrossBodies(state, props, newProps,
+                                      gasMachineLitres(body) / gasMachineLitres(newBody))
         from <- body
         body <- newBody
         props <- newProps
@@ -1578,11 +1579,22 @@ gasBrainMac <- function(sim)
 #' temperature (gasPropertiesAt() changes the volatile agents' and nitrous
 #' oxide's), so for them nothing moves.
 #'
+#'
+#' The tissue's capacity is a volume of gas at the body's own temperature, so
+#' the same capacity times tension is fewer molecules in a warmer tissue.
+#' \code{molecules} carries that: the old body's \code{gasMachineLitres()}
+#' over the new one's, (273.15 + T_new) / (273.15 + T_old), which keeps the
+#' agent itself across a step in temperature (3\% from 37 to 28 C).  Until
+#' 2026-11-28 the capacity times tension was kept, and a cooled patient gained
+#' that 3\% of every tissue's agent (Devin's review of PR 1013, reproduced).
+#'
 #' @param state named list of state vectors, one per gas
 #' @param from,to gasPropertiesAt() tables of the two bodies
+#' @param molecules the old body's litres at the machine per litre in the
+#'   lungs over the new body's; 1 where the temperature does not step
 #' @returns the state in the new body
 #' @keywords internal
-gasStateAcrossBodies <- function(state, from, to)
+gasStateAcrossBodies <- function(state, from, to, molecules = 1)
 {
   for (g in names(state)) {
     if (g == "oxygen") next
@@ -1594,7 +1606,7 @@ gasStateAcrossBodies <- function(state, from, to)
     y <- state[[g]]
     n <- length(y)
     tissues <- c("brain", "muscle", "fat", "brain")[seq_len(n - 2L)]
-    y[3:n] <- y[3:n] * unname(la[tissues] / lb[tissues])
+    y[3:n] <- y[3:n] * unname(la[tissues] / lb[tissues]) * molecules
     state[[g]] <- y
   }
   state

@@ -7879,7 +7879,9 @@ Object.assign(Player, {
         // The greenhouse effect: kg of CO2 equivalent in the agent delivered,
         // and at the rate the fresh gas brings it now (mL/min to kg/h).
         const g = r.greenhouse, kgCO2e = mL => mL / 1000 * g.kgPerLitre * g.gwp100;
-        const freshNow = sc * r.freshFlow[j] * r.fresh[j];
+        // L/min x % x 10 is mL/min at the machine, the unit of `delivered`:
+        // not the amount scale, which is for what a compartment holds.
+        const freshNow = 10 * r.freshFlow[j] * r.fresh[j];
         return {
             t: T, gas: true, p, A, held,
             // The share of the lungs' gas that is ventilated: 1, or one lung's

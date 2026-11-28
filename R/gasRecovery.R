@@ -440,7 +440,7 @@ gasWashout <- function(sim, gasDose, weight = 70, cardiacOutput = NULL,
       uO2 <- 0; cE <- 0
       if (rebreathing && oxygenUptake) {
         # Ambient volumes at the body's altitude (R/altitude.R)
-        VO2 <- gasOxygenUptake(body) / gasPressureRatio(body)
+        VO2 <- gasOxygenUptake(body) / gasLungPressureRatio(body)
         uO2 <- VO2 * (1 - GAS_RESPIRATORY_QUOTIENT)
         if (s$MV > 0) cE <- min(GAS_RESPIRATORY_QUOTIENT * VO2 / s$MV,
                                 GAS_MAX_EXHALED_CO2)
@@ -848,13 +848,15 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
   # (R/altitude.R): the tensions are partial pressures, the uptake an ambient
   # volume.
   ratio  <- gasPressureRatio(body)
+  # Amounts to volumes in the lungs (gasLungPressureRatio())
+  lungRatio <- gasLungPressureRatio(body)
 
   # Summed uptake as a linear function of the state:
   #   u = sum_g lambda_g Qco (alveolar - mixed venous) / (100 r)
   uWeight <- numeric(m * nG)
   for (k in seq_len(nG)) {
     lb <- props$lambda_blood[props$gas == gases[k]]
-    uWeight[alvCol[k] + 0:(m - 1)] <- lb * (1 - gasShunt(body)) * Qco / (100 * ratio) *
+    uWeight[alvCol[k] + 0:(m - 1)] <- lb * (1 - gasShunt(body)) * Qco / (100 * lungRatio) *
       c(1, -gasTissueShares(body))
   }
 
@@ -923,7 +925,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     # Oxygen consumed shrinks the alveolar gas too, net of the carbon dioxide
     # that replaces it; a constant, added to the uptake of the other gases.
     uOxygen <- if (isTRUE(washout$oxygenUptake))
-      gasOxygenUptake(body) / ratio * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
+      gasOxygenUptake(body) / lungRatio * (1 - GAS_RESPIRATORY_QUOTIENT) / Va else 0
 
     # The fastest rate of the uptake coupling.  Its derivative is the make-up
     # (or displaced) gas, a gas's tension times the summed uptake per alveolar
@@ -936,7 +938,7 @@ gasCoupledRecovery <- function(washout, off, target, threshold, maxPoints = 120)
     tension <- vapply(seq_len(nG), function(k)
       max(abs(Y0[rows, alvCol[k] + 0:(m - 1)]), Fin[[k]]), numeric(1))
     lambdaBlood <- props$lambda_blood[match(gases, props$gas)]
-    coupling <- 2 * Qco / Va * sum(lambdaBlood * tension) / (100 * ratio) + uOxygen
+    coupling <- 2 * Qco / Va * sum(lambdaBlood * tension) / (100 * lungRatio) + uOxygen
 
     # Each step is the classical Runge-Kutta method's, as since 2026-10-05,
     # while it is within GAS_RECOVERY_ACCURATE_STEP (first hour) or

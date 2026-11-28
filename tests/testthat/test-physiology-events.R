@@ -316,7 +316,12 @@ test_that("a temperature step carries the agent in each tissue across, and MAC s
   expect_equal(gasStateCount(b0), 6L)
   before <- st$state$sevoflurane[i[1], ]
   after <- st$state$sevoflurane[i[2], ]
-  expect_equal(sum(after[3:6] * capacity(b1)), sum(before[3:6] * capacity(b0)), tolerance = 1e-12)
+  # The agent itself is kept: a tissue's capacity is a volume of gas at the
+  # body's temperature, so it is counted in litres at the machine
+  # (gasMachineLitres(); capacity x tension alone gained 1.6% at 32 C)
+  expect_equal(sum(after[3:6] * capacity(b1)) * gasMachineLitres(b1),
+               sum(before[3:6] * capacity(b0)) * gasMachineLitres(b0), tolerance = 1e-12)
+  expect_equal(gasMachineLitres(b0) / gasMachineLitres(b1), 305.15 / 310.15)
   # The alveoli keep their partial pressure; a cooled tissue holds the same
   # agent at a lower one.  The ideal circuit holds no gas: its entry, the
   # inspired gas, follows the uptake of the new body (CodeRabbit on PR #864),

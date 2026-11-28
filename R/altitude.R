@@ -171,6 +171,32 @@ gasPressureRatio <- function(body)
   pressureRatio(body$altitude)
 }
 
+#' The dry gas pressure in the lungs as a fraction of sea level's
+#'
+#' What turns an amount of gas (a partial pressure times a volume, in the
+#' engine's sea-level unit) into the volume it takes up in the lungs: the
+#' amount over this.  Alveolar gas is saturated, so its dry gases share
+#' P_B - 47 Torr, which over sea level's 713 is the pressure ratio times
+#' \code{gasHumidityRatio()}.  Until 2026-11-28 the uptake, the oxygen
+#' consumed and the exhaled carbon dioxide were divided by the pressure ratio
+#' alone, P_B / 760, which at sea level is the same thing.  Once the fresh gas
+#' was counted in the lungs' litres (\code{gasFreshGasExpansion()}), which
+#' carries the humidity, the two no longer matched at altitude: at 5000 m with
+#' 0.5 L/min of oxygen the alveolar gases summed to 25.6\% of a sea-level
+#' atmosphere where the dry pressure there is 52.3\%, and the alveolar oxygen
+#' read 131 mmHg (Devin's review of PR 1013, 2026-11-28, reproduced).  A body
+#' whose volumes are taken as stated keeps the pressure ratio.
+#'
+#' @param body the gas body
+#' @returns the fraction; exactly 1 at sea level
+#' @keywords internal
+gasLungPressureRatio <- function(body)
+{
+  ratio <- gasPressureRatio(body)
+  if (is.null(body) || isTRUE(body$volumesAsStated)) return(ratio)
+  ratio * gasHumidityRatio(body)
+}
+
 #' Water vapour pressure in the airway at 37 C, Torr
 #' @keywords internal
 WATER_VAPOUR_PRESSURE <- 47

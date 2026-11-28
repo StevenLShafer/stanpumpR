@@ -125,3 +125,30 @@ test_that("the Visualizer shows the machine's flow and vapour, and its amounts b
   expect_true(all(held <= r$delivered + 1e-6))
   expect_gt(max(held / pmax(r$delivered, 1e-9)), 0.5)
 })
+
+test_that("at altitude the alveolar gases sum to the dry pressure there, at low flow too", {
+  # Devin's review of PR 1013: the uptake, the oxygen consumed and the exhaled
+  # carbon dioxide were turned into volumes by the pressure ratio alone,
+  # while the fresh gas carried the humidity, so at 5000 m with 0.5 L/min of
+  # oxygen the alveolar gases summed to 25.6% of a sea-level atmosphere where
+  # the dry pressure is 52.3%, and the oxygen read 131 mmHg, not 319.
+  for (altitude in c(0, 3000, 5000)) for (Q in c(0.5, 2)) {
+    sim <- simulateGases(volumeRows(list(0, "oxygen", Q), list(0, "sevoflurane", 0.5),
+                                    list(0, "ventilation", 5.7)),
+                         weight = 70, age = 40, maximum = 1440, altitude = altitude)
+    b <- sim$body
+    last <- function(g) utils::tail(sim$state[[g]][, 2], 1)
+    co2 <- 100 * GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(b) / (5.7 * (1 - GAS_DEAD_SPACE_FRACTION))
+    expect_equal(last("oxygen") + last("nitrogen") + last("sevoflurane") + co2,
+                 100 * gasPressureRatio(b) * gasHumidityRatio(b), tolerance = 1e-4,
+                 info = paste(altitude, "m,", Q, "L/min"))
+    expect_equal(gasLungPressureRatio(b), gasPressureRatio(b) * gasHumidityRatio(b))
+  }
+  high <- simulateGases(volumeRows(list(0, "oxygen", 0.5), list(0, "sevoflurane", 0.5),
+                                   list(0, "ventilation", 5.7)),
+                        weight = 70, age = 40, maximum = 1440, altitude = 5000)
+  expect_gt(utils::tail(high$state$oxygen[, 2], 1) / 100 * GAS_ALVEOLAR_TORR, 300)
+  # Litre for litre, as GasMan would have it, the pressure ratio alone
+  asStated <- getGasBody(70); asStated$altitude <- 5000; asStated$volumesAsStated <- TRUE
+  expect_equal(gasLungPressureRatio(asStated), gasPressureRatio(asStated))
+})
