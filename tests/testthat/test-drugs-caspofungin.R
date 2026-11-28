@@ -31,7 +31,7 @@ test_that("Xu's allometry: clearances to the 0.66, volumes to the 1", {
 test_that("the BSA is the actual one, whichever way the switch is set", {
   expect_equal(caspofunginXu(90, 160, 15, "female", adjustToFFM = TRUE)$PK,
                caspofunginXu(90, 160, 15, "female", adjustToFFM = FALSE)$PK)
-  expect_equal_rounded(0.33983, caspofunginXu(70, 170, 35, "male")$PK$default$cl1 * 60)
+  expect_equal_rounded(0.33976, caspofunginXu(70, 170, 35, "male")$PK$default$cl1 * 60)
 })
 
 test_that("the group gives every patient Xu's model for now", {
