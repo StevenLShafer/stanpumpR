@@ -219,9 +219,11 @@ sources** (see *Comparing sources* in `AGENTS.md`).
 Then no refit of this kind is possible -- but that is a statement about *parameters*, not about data.
 Look for a published mean concentration-time curve, or a figure, and fit the polyexponential to that
 instead (log-residual weighting). On de Groot the only real observations in the paper were the points
-in Figure 1, and digitising them both validated the closure (the closed model reproduced subject 1's
-own intravenous points at a median ratio of 1.044) and settled the absorption model. Never invent
-pseudo-subjects from mean +/- SD: the correlations are unknown, which is the very problem.
+in Figure 1, and digitising them both checked the closure against the data the authors fitted (the
+closed model reproduced subject 1's own intravenous points at a median ratio of 1.044) and let the
+absorption input be estimated at all -- as a choice among the candidate shapes described below, not
+as a settled fact. Never invent pseudo-subjects from mean +/- SD: the correlations are unknown, which
+is the very problem.
 
 If nothing can be fitted, use the means and **say in the drug's header and help page that they are a
 two-stage average, and which parameter is most likely distorted**. Be careful with direction: a
@@ -240,16 +242,19 @@ with the disposition. Say what that estimate rests on: with sparse samples the i
 identified uniquely** -- infinitely many input profiles reproduce a finite set of concentrations --
 so the recovery is only as good as the family it is drawn from. Fit a small set of candidate input
 shapes with the disposition held fixed, choose between them on a criterion that charges for
-parameters, and report the winner as conditional on that family and sampling. On de Groot, seven
-oral points from one subject were fitted with four shapes (first-order, zero-order, Weibull, two
-parallel first-order), and zero-order won on AIC by 12 points over first-order at equal parameter
-count, with the Weibull no better for its extra parameter and the parallel paths collapsing to one.
-That is strong for those four; it is not a proof that no other shape fits. On de Groot the published absorption half-lives implied first-order ka of 3.0 to
-69.3 /h -- one of them a 36-second absorption half-life for a tablet taken after breakfast -- while
-deconvolving the closed UDF out of the digitised oral points showed the input is **zero-order**, over
-55 minutes after a 15-minute lag. The bioavailability, which is model-independent, was right; the
-input's kind was wrong. Check whether a published absorption rate is a measurement or a compensation
-before carrying it into a model.
+parameters, and report the winner as conditional on that family and sampling.
+
+On de Groot the published absorption half-lives imply first-order ka of 3.0 to 69.3 /h, one of them
+a 36-second absorption half-life for a tablet taken after breakfast. Deconvolving the closed UDF out
+of seven digitised oral points from one subject, with four candidate shapes (first-order,
+zero-order, Weibull, two parallel first-order), **selected a zero-order input** released over 55
+minutes after a 15-minute lag: it won on AIC by 12 points over first-order at equal parameter count,
+the Weibull was no better for its extra parameter, and the two parallel paths collapsed to one. That
+is strong evidence against the published first-order ka among the shapes tried; it is not a proof
+that no other shape fits, and seven points from one subject cannot make it one. The bioavailability,
+which is model-independent, was right -- it is the input's kind the published fit got wrong. Check
+whether a published absorption rate is a measurement or a compensation before carrying it into a
+model.
 
 ## 1. The model — `R/drugs_<name>.R`
 

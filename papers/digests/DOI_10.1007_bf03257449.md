@@ -190,7 +190,10 @@ concentrations:
 | lagged Weibull (4p) | 0.0548 | -25.95 | 8.40% | 56 min | 1.275 |
 | two parallel first-order (5p) | 0.3145 | -11.72 | 9.48% | 44 min | 0.941 |
 
-**The input is zero-order: F 105.4%, released over 55 min after a 15.4 min lag.** F carries the
+**Among those four, a zero-order input wins: F 105.4%, released over 55 min after a 15.4 min lag.**
+That is a selection within the family tried, on seven points from one subject, not a proof that no
+other shape fits; what it does establish is that the published first-order ka is not supported by
+the data. F carries the
 digitisation's scale uncertainty -- the IV arm of the same figure reads about 10% high against the
 delivered dose -- so it is consistent with anything from roughly 96 to 105%, which brackets Table
 IV's own 103.6% for this subject. The SHAPE does not depend on that scale. It reaches Cmax 1.404
