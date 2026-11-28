@@ -160,6 +160,7 @@ plasmaOnly <- c(
     "immunoglobulin",
     "antithrombin",
     "antithrombinAlfa",
+    "vonicogAlfa", "factorVIIIvwf",
     "antithrombinIlias",
     "antithrombinMoffett",
     "thrombomodulinAlfa",
@@ -357,7 +358,10 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
     }
-    expect_match(html, "Volumes and clearances", fixed = TRUE, info = drug)
+    # except a curve computed from its parent's model (factorVIIIvwf), whose
+    # PK set is a placeholder the page does not show
+    if (!isTRUE(helpDrugModelOutput(drug, helpReferencePatients()[1, ])$pkPlaceholder))
+      expect_match(html, "Volumes and clearances", fixed = TRUE, info = drug)
     expect_match(html, "About this model", fixed = TRUE, info = drug)
     expect_match(html, 'data-help-page="drugs/index"', fixed = TRUE, info = drug)
   }

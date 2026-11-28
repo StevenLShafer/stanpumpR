@@ -986,6 +986,26 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       results$"Effect Site" <- PK$endogenousActivity + results$"Effect Site"
   }
 
+  # The factor VIII a VWF concentrate protects (R/vwfFactorVIII.R), from the
+  # VWF:RCo the patient now has, drawn as the drug its block names
+  if (!is.null(PK$factorVIIIResponse))
+    metaboliteSeries <- data.frame(
+      Time = results$Time,
+      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, PK$factorVIIIResponse),
+      Ce   = NA_real_
+    )
+  if (!is.null(PK$factorVIIIResponse))
+  {
+    # Not linear in the VWF:RCo: not to be added to another parent's, and
+    # with no states for a time until threshold (foldMetabolites()); its
+    # pre-dose level, the steady state on the patient's own VWF:RCo, is what
+    # normalisation subtracts, as for a factor concentrate
+    r <- PK$factorVIIIResponse
+    attr(metaboliteSeries, "nonlinear") <- TRUE
+    attr(metaboliteSeries, "baseline") <-
+      r$baseline / (1 - r$imax * r$vwfBaseline / (r$ic50 + r$vwfBaseline))
+  }
+
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results
   out$metaboliteSeries <- metaboliteSeries
