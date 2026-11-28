@@ -156,6 +156,8 @@ Also supplied and read in full (2026-11-27; the text layer is broken, so the num
 - **Bicarbonate**: it does not change the CO₂ stores, and it behaves as the other sliders do (physiology events, the bookmark, the settings box).
 - **Not named in the message**, so proceeding on the recommendation unless he says otherwise: the pH-stat box is shown only while the temperature is off 37 °C, and is saved in the bookmark.
 
+**The mathematics, drafted for his review** (2026-11-28): `docs/gas-engine-expansion-mathematics.md`. It applies the decisions on this page and lists eight points it had to choose that no decision covers, the first being that the engine's oxygen consumption is an STPD volume subtracted without conversion to body temperature and pressure. No code is written until he has reviewed it.
+
 **The order of work** (2026-11-27): the sources are read first; then the mathematics is drafted for his review; then the expansion is built, one pull request per piece; then the help page and the LaTeX statement; then he runs Gemini's round-2 audit ("I will run that after this work is done"), which needs a new prompt and bundle, `PROMPT-2.md` being pinned to a commit from before the expansion; the letter goes after that.
 
 **Still open**, beside decisions 1 to 5 above:
