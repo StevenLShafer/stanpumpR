@@ -105,14 +105,45 @@
 # difference is a hypothesis, not a finding.  de Groot's specific assay and
 # intravenous data are followed here.
 #
+# HOW WELL V1 IS KNOWN
+# ====================
+# Poorly.  The model closes the women's MEANS.  A prints no individual values
+# for them, so the refit that is possible for the men (each man's model from his
+# own four values, then a fit to the six curves) is not possible here.
+#   - A closure of means can be badly biased.  The men's gives V1 32.6 L,
+#     against 18.3 L from a fit to the median of their six individual closures
+#     (B's card, papers/digests/DOI_10.1007_bf03257449.md, pull request 1004,
+#     which puts V1 no closer than about 30%): one man's long distribution
+#     half-life raised the mean.
+#   - V1 is sensitive to the values closed.  The distribution half-life 1 SD
+#     either way (0.06 to 0.14 h), the others fixed, moves it from 9.0 to
+#     17.6 L.  That range shows spread in one value and nothing about bias.
+#   - A, Figure 1, right panel, plots one woman (no. 3).  Her intravenous
+#     points were read on 2026-11-27 as a check, NOT FITTED INTO THE MODEL; the
+#     same reading of the man in the left panel agrees with his own published
+#     values (B, Table III) to a median of 4%.  For 152 mcg over 1 minute the
+#     model is 1.8 to 2.2 times her first sample (3 or 5 minutes), 1.4 times at
+#     10 minutes, within 15% at 20 and 30 minutes, and 0.65 to 0.75 of her
+#     levels from 1 hour on.  A two-compartment fit to her points gives V1 30
+#     to 33 L, CL 18.5 L/h, Vss 53 L and half-lives of 0.11 to 0.13 and 2.1 h
+#     (the figure prints 2.1).
+# So the model's concentrations in the first minutes may be about twice too
+# high.  The men's bias argues for a smaller V1 than the model's and this woman
+# for a larger one; which holds for women is not known.  She is one subject, and
+# her area, about 8 mcg.h/L, is more than six values with mean 6.02 and SD 0.63
+# can include (7.4 at most), so Figure 1 and Table 1 disagree somewhere.
+#
 # WHAT DISAGREES WITHIN THE SOURCES
 # =================================
 # - The women's dose / AUC is 0.152 / 6.02 = 25.2 L/h against the printed CL of
 #   22.2, which agrees with the printed Vss / MRT (50.8 / 2.31 = 22.0).  The
 #   printed CL is used, so the model's intravenous AUC is 6.85 mcg.h/L, 14%
 #   above the measured 6.02.
-# - The injection solution held 93.3 (6.5) % of its stated content.  No
-#   correction is made.
+# - The injection solution held 93.3 (6.5) % of its stated content, which may
+#   be part of that gap.  CL x AUC, here the product of the women's means, is
+#   133.6 mcg, 87.9% of the nominal 152 (in five of the six men it is 90.8 to
+#   96.8%).  For 93.3% of 152 mcg the model's AUC is 6.39, 6% above the
+#   measured 6.02.  No correction is made: a dose is entered as labelled.
 # - The men's CL is 32.2 (11.8) L/h in the tables of both papers, but 33.2 in
 #   the abstract of A and 34.1 (9.7) in the summary of B.  Their Vss / MRT,
 #   71.5 / 2.25 = 31.8, supports 32.2.  The text of A swaps the sexes' Vss per
@@ -127,7 +158,10 @@
 # reference man 1.341 and 1.246 times them; with it off everyone receives the
 # published values.  As a check, not a fit: scaled to the typical man of the
 # same study, the women's model predicts CL 29.7 L/h and Vss 74.8 L, against
-# the men's measured 32.2 (11.8) and 71.5 (25.9).
+# the men's measured 32.2 (11.8) and 71.5 (25.9).  Its V1 there is 20.2 L
+# (18.3 L in the median fit above), and for 152 mcg over 1 minute its curve is
+# 12% below to 26% above the GEOMETRIC MEAN of the six men's individual curves
+# from 3 minutes to 6 hours.
 #
 # PREGNANCY (R/pregnancy.R)
 # =========================
