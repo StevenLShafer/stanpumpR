@@ -84,9 +84,9 @@
 # because the patients' normal group cleared less.  Their Cmax (20 700
 # nmol/L with normal kidneys) was sampled 10-30 min after the second of two
 # infusions up to 15 min apart, so it is not compared with the model's peak.
-# [decision] for Shafer: keep the line, with this check on its help page, or
-# refit it to these patients (which would make the volunteers' fit 15-20%
-# too fast with normal kidneys).
+# [decided] by Shafer, 2026-11-28: the line is kept, with this check on its
+# help page, rather than refitted to these patients (which would make the
+# volunteers' fit 15-20% too fast with normal kidneys).
 #
 # DOSE BASIS: grams of idarucizumab, as labelled (5 g, two 2.5 g vials).
 # Glund reports concentrations in nmol/L; they are plotted here in mcg/mL
