@@ -11,11 +11,12 @@ digest_by: Claude (unattended digest_run.py), 2026-11-26; reworked by hand on 20
 checked_against: stanpumpR master 8e491545 (re-checked against 6a5bff47 on 2026-11-27 -- still no methylergonovine model)
 verification: not-applicable
 open_questions:
+- '[check] Table II''s mean AUC for the six men, 4.82 ug/L*h, is NOT the mean of Table III''s six values (4.74, 8.11, 2.96, 4.07, 4.05, 3.63), which is 4.5933. Its printed SD of 1.82 IS their sample SD (1.8195) to the digit, so the six values and the SD agree with each other and the mean does not -- which points at the printed mean rather than at the individuals. de Groot 1995 prints 4.59 for the same six men (27.56/6), supporting that reading (found by the methylergonovine session, 2026-11-27). Use the Table III values; treat Table II''s 4.82 as suspect. Note the consequence for the over-determination check below: dose/AUC is 33.09 L/h on the Table III mean, not the 31.54 that 4.82 gives.'
 - '[check] Table II''s footnote b (Model-independent) marks t_abs and footnote c (1-compartment model) marks MAT. Footnote b is contradicted by the paper''s own numbers: t_abs reproduces the printed tmax through the 1-compartment formula tmax = tlag + ln(ka/k)/(ka-k) to three decimals (subject 1, 0.995 against 0.99; subject 4, 0.401 against 0.40), so it is the fitted absorption half-life, not a model-independent quantity. Footnote c is right, and MAT is 1-compartment-derived through MRT_po. Do not take t_abs as a model-free input parameter on the strength of that footnote.'
 - '[check] The dose each subject actually received is recoverable as CL x AUC from Table III, and for five of six gives 138.0 to 147.1 ug (mean 143.4, 94.3% of the nominal 152), matching the paper''s own measurement of the IV solution at 93.3 +/- 6.5% of claimed content. Subject 5 gives 87.1 ug, 57% of nominal and 5.6 SD from the others, so one of his printed CL 21.5 L/h and AUC 4.05 ug/L*h must be in error; Vss = CL x MRT holds for him as for all six, which ties the error to the AUC rather than the clearance. The unit-disposition refits above are unaffected, being in unit-dose coefficients.'
 - '[check] The abstract (PDF p1) gives CL 34.1 ± 9.7 L/h after IV, but Table II (PDF p4, printed 348) and the Results text (p5) give 32.2 ± 11.80 L/h, and the mean of the six Table III values is 32.2. Which is printed in error cannot be settled from this PDF; use the table value.'
 - '[check] RESOLVED 2026-11-27 by digitising Figure 1. Subject 1''s 60-minute oral point reads 1.417 ug/L on the figure, against the text''s 1.2 and Table IV''s 1.00. Table IV''s value is not an observation: the paper''s own 1-compartment fit, run at the printed ka and k, predicts tmax 60 min and Cmax 1.033, which is what Table IV prints to rounding. So the table gives the model''s peak, the text gives something closer to the measured one, and both understate the figure. Digitisation uncertainty, measured on the IV arm of the same figure, is about 10%, which covers the text''s 1.2 but not the table''s 1.00.'
-- '[check] The printed mean set is over-determined and does not agree with itself. Dose/AUC gives CL 31.54 L/h (152 ug / 4.82 ug/L*h), Table II gives 32.2, the abstract 34.1, and Vss/MRT 31.78; and CL x MRT = 72.45 L against the printed Vss 71.5 L. Expected of means taken parameter by parameter over six individual fits, but it means no four of the printed means are mutually consistent.'
+- '[check] The printed mean set is over-determined and does not agree with itself. Dose/AUC gives CL 31.54 L/h on Table II''s mean AUC of 4.82 and 33.09 on Table III''s own mean of 4.5933 (see the AUC check above, which makes 4.82 the suspect figure), Table II gives 32.2, the abstract 34.1, and Vss/MRT 31.78; and CL x MRT = 72.45 L against the printed Vss 71.5 L. Expected of means taken parameter by parameter over six individual fits, but it means no four of the printed means are mutually consistent.'
 - '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, with its grid starting at the study''s first observation: V1 18.32, V2 58.56, Vss 76.88 L, CL 32.45 L/h, Q 123.7 L/h, t1/2 4.05 min and 1.903 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), because the grid''s start is the simulated study''s first sample time and V1 is fixed by the first sample after a bolus. No candidate determines V1 to better than about 30%, and none supports a claim about the DIRECTION of any error in it; CL is firm at 32.3-32.9 L/h across every candidate and method, and is the parameter to stand behind. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
 ---
 
@@ -147,13 +148,20 @@ recovered as CL x AUC, the paper having measured its solution at 93.3 +/- 6.5% o
 (the methylergonovine session's point, 2026-11-27; at the NOMINAL 152 the agreement reads better,
 1.044 and 9.5%, but the delivered dose is the right basis and is what the authors' own CL and AUC
 imply). Either way the closure is confirmed to about 10%, which is the digitisation's own accuracy.
-So the closed-form V1 recovery is confirmed against observations, not only against arithmetic -- which
-is what licenses the deconvolution below.
+So the closed-form V1 recovery reproduces the measured points, not merely the arithmetic it came from.
 
-**A second, independent check** was supplied by the methylergonovine session on 2026-11-27, and is
-stronger than the first because nothing in it came from the source the closure used. de Groot 1995,
-the companion paper, plots man no. 6 of these same six. Closing his Table III row here gives V1
-10.50 L, and reading that figure against it gives a median read/model ratio of 0.98 and MDAPE 3.7%.
+**What this check is and is not.** It is not independent data. Figure 1 plots the very samples that
+subject 1's Table III values were fitted to, so the comparison asks whether the closure recovers the
+authors' own fitted model, mediated by their own data -- the ~10% is digitisation error plus the
+rounding of the printed summaries, not a model validated against anything new. That is exactly what
+is needed to license the deconvolution below, which only requires subject 1's own disposition to be
+right. It says nothing about the model's fitness beyond these six men.
+
+A **second check of the same kind** was supplied by the methylergonovine session on 2026-11-27: de
+Groot 1995, the companion, plots man no. 6 of these same six, and reading that figure against his
+closure from Table III (V1 10.50 L, this card's arithmetic, not read off the figure) gives a median
+read/model ratio of 0.98 and MDAPE 3.7%. The session was right to say this is not independent data
+either, for the same reason -- 1995 plots the samples those 1994 values were fitted to.
 Note that 1995's men ARE these men -- identical demographics and table values -- so the two papers
 are not independent studies of the drug, and a clearance agreeing between them is not a cross-check
 (a mistake this card's author made and the methylergonovine session caught).

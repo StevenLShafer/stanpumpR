@@ -103,8 +103,16 @@ section *What this paper actually supports*, which carries every number below).
 
 1. **Close each subject.** A two-compartment model needs four non-redundant quantities per subject;
    CL, Vss and both half-lives are the common case, and
-   `V1 = CL / ((alpha+beta) - alpha*beta*Vss/CL)`, which is linear in 1/V1 and so has a unique
-   admissible root. Before writing that a model cannot be closed, count the non-redundant parameters.
+   `V1 = CL / ((alpha+beta) - alpha*beta*Vss/CL)`, which is linear in 1/V1 and so has a unique root.
+   Before writing that a model cannot be closed, count the non-redundant parameters.
+   **Unique is not the same as physical: check the result before simulating it.** Four quantities
+   that each look reasonable can close to a model that is not, because nothing in the arithmetic
+   constrains the denominator. Require V1 > 0, V2 = Vss - V1 > 0 and k10, k12, k21 all positive, and
+   round-trip the eigenvalues back to the printed half-lives. CL = 1, Vss = 1.2, alpha = 2, beta = 1
+   gives V1 = 1.667 against a Vss of 1.2, so V2 is negative; a source whose printed values do that
+   is inconsistent with a two-compartment model and must be reported, not simulated. (All six of
+   de Groot's men and the 1995 women's mean set are admissible; the check costs nothing and the
+   failure is silent.)
 2. **Simulate each subject** on his own closed model, in the form the study actually used -- a short
    infusion is not a bolus when the distribution half-life is minutes.
 3. **Take the MEDIAN at each time**, not the mean and not the whole cloud. Least squares over the
@@ -126,7 +134,10 @@ section *What this paper actually supports*, which carries every number below).
 
 ### Where the grid starts is the largest single choice
 
-Spacing barely matters; the START does. **Begin the grid at the study's first observation.** Earlier
+Spacing barely matters; the START does. **Begin the grid at the study's first POSITIVE post-dose
+observation**, not at time zero: a predose baseline, or time zero itself for an oral or infused
+dose, gives a simulated concentration of zero, and step 4 fits logs. If any median comes out
+non-positive, exclude it and record which times were dropped. Earlier
 than that, the individual models are extrapolated into a region where the study has no data, which is
 exactly where subjects differ most. On de Groot, moving the start from 1 to 5 minutes moved V1 by 32%
 and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
@@ -198,8 +209,16 @@ no model: a clinician with neither has only the label.
 
 A paper that fitted the wrong disposition structure will have absorbed the error into its absorption
 parameters, so **its ka, lag or absorption half-life are not measurements either**. Once a unit
-disposition function is in hand, the input is identified separately and can be recovered by
-deconvolution. On de Groot the published absorption half-lives implied first-order ka of 3.0 to
+disposition function is in hand, the input can be estimated separately instead of being entangled
+with the disposition. Say what that estimate rests on: with sparse samples the input is **not
+identified uniquely** -- infinitely many input profiles reproduce a finite set of concentrations --
+so the recovery is only as good as the family it is drawn from. Fit a small set of candidate input
+shapes with the disposition held fixed, choose between them on a criterion that charges for
+parameters, and report the winner as conditional on that family and sampling. On de Groot, seven
+oral points from one subject were fitted with four shapes (first-order, zero-order, Weibull, two
+parallel first-order), and zero-order won on AIC by 12 points over first-order at equal parameter
+count, with the Weibull no better for its extra parameter and the parallel paths collapsing to one.
+That is strong for those four; it is not a proof that no other shape fits. On de Groot the published absorption half-lives implied first-order ka of 3.0 to
 69.3 /h -- one of them a 36-second absorption half-life for a tablet taken after breakfast -- while
 deconvolving the closed UDF out of the digitised oral points showed the input is **zero-order**, over
 55 minutes after a 15-minute lag. The bioavailability, which is model-independent, was right; the
