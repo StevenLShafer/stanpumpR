@@ -3146,6 +3146,28 @@ registry <- rbind(
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=dc5241be-4b85-4f04-8553-9819603373b8",
       to_obtain = "",
       notes = "Micafungin is more than 99% bound to albumin and cleared by metabolism (arylsulfatase, then catechol-O-methyltransferase) and excreted mainly in the faeces, not by the kidneys, so the rise in filtration of pregnancy does not reach it. The fall in albumin in pregnancy may raise its total clearance, as a low albumin did in Jullien 2017's ICU patients; nothing is quantified."),
+  row("teicoplanin", "Antibiotics", "applied",
+      finding = "No pharmacokinetic study of teicoplanin in pregnancy was found (PubMed, 2026-11-27: teicoplanin pharmacokinetics pregnancy, 3 records, none a pharmacokinetic study). Teicoplanin is predominantly cleared by renal elimination (Abdul-Aziz 2020, read in full).",
+      applied = "eGFR x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy), on the adult model (Kim 2024); the children's model (Zhang 2020) does not read it.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Abdul-Aziz MH et al. Intensive Care Med 2020;46:1127-1153 (renal elimination)",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "Teicoplanin has no US label. Its high albumin binding (over 90%) means the fall in albumin of pregnancy may change its total concentrations; nothing is quantified."),
+  row("teicoplaninZhang", "Antibiotics", "not_applicable",
+      finding = "A children's model (Zhang 2020, 0.2-14 years). No pregnancy data.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = NA, confidence = "high",
+      evidence_read = "none",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = ""),
   row("clozapine", "Antipsychotics", "unquantified",
       finding = "Westin 2018 (Clin Pharmacol Ther 103:477-484, Norwegian TDM data linked to the birth registry): clozapine in 4 pregnancies of 4 women, 10 measurements in pregnancy and 114 at baseline, dose-adjusted to 300 mg/day: baseline 418.6 ng/mL, week 34 322.1 ng/mL (-23%, 95% CI -46% to +9%), no p-value with fewer than 10 pregnancies. Case reports go the other way (Tsukiji 2025: concentration-to-dose ratio 2.35 the day before delivery against 0.79 at 14 months postpartum; Aoki 2024: concentrations rose through pregnancy).",
       applied = "",
@@ -3564,6 +3586,17 @@ registry <- rbind(
       source_url = "https://doi.org/10.1111/jog.15813",
       to_obtain = "",
       notes = "Unbound serum evolocumab plotted (Kuchimanchi 2018). Lipid-lowering therapy is usually stopped before conception (Lewek 2024, Eur Heart J Open, abstract read); the PCSK9 antibodies are options before and after pregnancy rather than during it. Nothing to apply."),
+  row("tocilizumab", "Other", "unknown",
+      finding = "No pharmacokinetics of tocilizumab in pregnancy (a clearance or volume, or concentrations against the same women before pregnancy) were found (PubMed searched 2026-11-28: tocilizumab pregnancy with concentration, pharmacokinetics, placental or cord; 27 hits, every pregnancy-related one checked). van Gendt 2024's systematic review of monoclonal antibodies in pregnancy (abstract read) found five tocilizumab reports, all of serum concentrations only, and for every antibody but infliximab concentrations similar to or modestly below those before pregnancy. Saito 2021 (abstract read): tocilizumab stopped at the end of the first trimester was undetectable in maternal serum before delivery, cord blood and infant serum. Saito 2019, Tada 2019 and Moriyama 2020 (letters, no abstracts; titles read) report maternal, cord and infant levels and a placental transfer lower than for whole IgG. The Actemra label (read, section 8.1) says monoclonal antibodies are actively transported across the placenta in the third trimester.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = "all (case reports; review)", comparator = "none",
+      design = "systematic review of case reports and series; case reports", n = NA_integer_, confidence = "low",
+      evidence_read = "abstract",
+      source = "van Gendt J, Emaus R, Visschedijk MC, et al. Pharmacokinetics of monoclonal antibodies throughout pregnancy: a systematic literature review. Clin Pharmacokinet 2024;63:589-622 PMID 38583128; Saito J et al. Obstet Med 2021;14:260-262 PMID 34880942; Saito J et al. Rheumatology (Oxford) 2019;58:1505-1507 PMID 30945743; Tada Y et al. Rheumatology (Oxford) 2019;58:1694-1695 PMID 31329987; Moriyama M et al. Scand J Rheumatol 2020;49:165-166 PMID 31436129; Actemra prescribing information (Genentech, revised 12/2025), section 8.1",
+      source_url = "https://doi.org/10.1007/s40262-024-01370-7",
+      to_obtain = "van Gendt 2024 (Clin Pharmacokinet, PMID 38583128), full text: its tocilizumab table, to see whether any report gives concentrations in pregnancy against the same women before it",
+      notes = "Plasma tocilizumab plotted (Moes 2022, adults in the ICU with COVID-19). COVID-19 in pregnancy is the setting where the drug would meet this model's population; no pregnant woman was in Moes's cohort. Nothing to apply."),
   row("mirabegron", "Other", "unknown",
       finding = "No human pregnancy pharmacokinetic study found (PubMed 2026-11-19, 'mirabegron pregnancy': six records, all reviews, in vitro myometrium studies of mirabegron as a tocolytic, or a drug bulletin). The Myrbetriq label (8.1) states there are no studies in pregnant women; animal data only (skeletal variations in rats at 22-fold and lower fetal weight in rabbits at 14-fold the human AUC at 50 mg).",
       applied = "",
@@ -3816,7 +3849,9 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              # the ciprofol group's candidates (2026-11-26)
              ciprofolLiu = "ciprofol", ciprofolWang = "ciprofol",
              # the micafungin group's candidates (2026-11-27)
-             micafunginJullien = "micafungin", micafunginWasmann = "micafungin")
+             micafunginJullien = "micafungin", micafunginWasmann = "micafungin",
+             # the teicoplanin group's adult candidates (2026-11-27)
+             teicoplaninKim = "teicoplanin")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)
