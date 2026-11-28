@@ -17,7 +17,7 @@ open_questions:
 - '[check] The abstract (PDF p1) gives CL 34.1 ± 9.7 L/h after IV, but Table II (PDF p4, printed 348) and the Results text (p5) give 32.2 ± 11.80 L/h, and the mean of the six Table III values is 32.2. Which is printed in error cannot be settled from this PDF; use the table value.'
 - '[check] RESOLVED 2026-11-27 by digitising Figure 1. Subject 1''s 60-minute oral point reads 1.417 ug/L on the figure, against the text''s 1.2 and Table IV''s 1.00. Table IV''s value is not an observation: the paper''s own 1-compartment fit, run at the printed ka and k, predicts tmax 60 min and Cmax 1.033, which is what Table IV prints to rounding. So the table gives the model''s peak, the text gives something closer to the measured one, and both understate the figure. Digitisation uncertainty, measured on the IV arm of the same figure, is about 10%, which covers the text''s 1.2 but not the table''s 1.00.'
 - '[check] The printed mean set is over-determined and does not agree with itself. Dose/AUC gives CL 31.54 L/h on Table II''s mean AUC of 4.82 and 33.09 on Table III''s own mean of 4.5933 (see the AUC check above, which makes 4.82 the suspect figure), Table II gives 32.2, the abstract 34.1, and Vss/MRT 31.78; and CL x MRT = 72.45 L against the printed Vss 71.5 L. Expected of means taken parameter by parameter over six individual fits, but it means no four of the printed means are mutually consistent.'
-- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, with its grid starting at the study''s first observation: V1 18.32, V2 58.56, Vss 76.88 L, CL 32.45 L/h, Q 123.7 L/h, t1/2 4.05 min and 1.903 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), because the grid''s start is the simulated study''s first sample time and V1 is fixed by the first sample after a bolus. No candidate determines V1 to better than about 30%, and none supports a claim about the DIRECTION of any error in it; CL is firm at 32.3-32.9 L/h across every candidate and method, and is the parameter to stand behind. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
+- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, its grid anchored at the model''s own t = 0 intercept and then running from the study''s first observation: V1 16.88, V2 58.87, Vss 75.75 L, CL 32.28 L/h, Q 127.2 L/h, t1/2 3.70 min and 1.886 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), because the grid''s start is the simulated study''s first sample time and V1 is fixed by the first sample after a bolus. No candidate determines V1 to better than about 30%, and none supports a claim about the DIRECTION of any error in it; CL is firm at 32.3-32.9 L/h across every candidate and method, and is the parameter to stand behind. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
 ---
 
 # de Groot 1994: oral methylergometrine bioavailability in men
@@ -116,11 +116,17 @@ dependence -- it is the dose over the AUC -- which is why CL sits at 32.3 to 32.
 candidate set and fitting method tried here while V1 ranges 16 to 33, and why **no direction should
 be claimed for a bias in V1**. See *Comparing sources: only clearance is real* in `AGENTS.md`.
 
-**Recommended, with the grid starting at the study's first observation (3 min): CL 32.45 L/h,
-V1 18.32, V2 58.56, Vss 76.88 L, Q 123.7 L/h, t1/2 4.05 min and 1.903 h.** CL lands on the paper's
-printed 32.2, and V1 lands near the mean of the six individual closures (20.34 L) rather than below
-all but two of them. Do not simulate before the first observation: nothing constrains the model
-there.
+That start-dependence largely dissolves once the grid carries **the model's own concentration at time
+zero** (Steven L. Shafer, 2026-11-27): for a bolus that is dose/V1, the intercept the curve
+extrapolates back to. It is not a physical concentration, but it is intrinsic to the mammillary model
+being fitted and it is where V1 lives. Anchored that way, V1 runs 16.03 to 16.88 L over starts of 1 to
+10 minutes -- a 5% spread against 31% without it -- and settles on the median of the six subjects'
+own V1 (16.35 L), which is what anchoring to the median intercept must give.
+
+**Recommended: CL 32.28 L/h, V1 16.88, V2 58.87, Vss 75.75 L, Q 127.2 L/h, t1/2 3.70 min and 1.886 h**
+(k10 1.9120, k12 7.5363, k21 2.1613 /h; admissible, and MDPE -1.29% with MDAPE 3.26% against the
+median curve). The grid is t = 0 at the model's intercept, then the study's first observation at
+3 min, 1.5-fold to 540 min. CL lands on the paper's printed 32.2.
 
 Scored by Varvel, Donoho and Shafer 1992 (PMID 1588504, `papers/digests/PMID_1588504.md`),
 PE = 100 (measured - predicted) / predicted, against all six subjects' simulated concentrations:

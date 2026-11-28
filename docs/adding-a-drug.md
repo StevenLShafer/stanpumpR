@@ -134,10 +134,28 @@ section *What this paper actually supports*, which carries every number below).
 
 ### Where the grid starts is the largest single choice
 
-Spacing barely matters; the START does. **Begin the grid at the study's first POSITIVE post-dose
-observation**, not at time zero: a predose baseline, or time zero itself for an oral or infused
-dose, gives a simulated concentration of zero, and step 4 fits logs. If any median comes out
-non-positive, exclude it and record which times were dropped. Earlier
+**Include the model's own concentration at time zero, where the model has one.** For an intravenous
+bolus that is `dose / V1`, the intercept the curve extrapolates back to. It is not a physical
+concentration -- at time zero the drug has not left the injection site -- but it is intrinsic to the
+mammillary model with injection into the central compartment, which is the model being fitted, and it
+is where V1 lives. Including it anchors the fit to the median of the subjects' own intercepts and
+makes the grid's start almost irrelevant. On de Groot, over starts of 1 to 10 minutes:
+
+| grid start | V1 without t = 0 | V1 with t = 0 |
+|---|---|---|
+| 1 min | 16.57 | 16.33 |
+| 3 min | 18.98 | 16.88 |
+| 5 min | 21.71 | 16.77 |
+| 10 min | 21.12 | 16.03 |
+| **spread** | **31%** | **5%** |
+
+and the anchored answer sits on 16.35 L, the median of the six subjects' individual V1, which is what
+anchoring to the median intercept must give.
+
+**Where the model has no intercept, the start matters and must be chosen.** An oral dose, an infusion
+or any absorption input has a true C(0) of zero, so there is nothing to include and `log(0)` would
+stop the fit in step 4. Then **begin at the study's first POSITIVE post-dose observation**, exclude
+any non-positive median, and record which times were dropped. Earlier
 than that, the individual models are extrapolated into a region where the study has no data, which is
 exactly where subjects differ most. On de Groot, moving the start from 1 to 5 minutes moved V1 by 32%
 and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
@@ -175,6 +193,13 @@ Three consequences for a two-stage refit:
 - **Stand behind clearance.** When a header must say what the model does and does not determine, CL
   is the quantity to quote with confidence and V1 the one to qualify.
 
+None of that makes V1 dispensable. A mammillary model with injection into the central compartment is
+a deliberate simplification -- its time-zero intercept is a construct, and the price of it is paid in
+the first minutes after a bolus -- but the simplicity is worth the model error for the dosing
+questions stanpumpR answers, and the intercept is how the model is fitted and visualised. The
+practical consequence is the one above: give the refit that intercept so the number it reports is the
+subjects' own, not an artifact of where you chose to start sampling them.
+
 ### What de Groot's numbers looked like
 
 | | V1 | Vss | CL | t1/2alpha | t1/2beta |
@@ -182,6 +207,7 @@ Three consequences for a two-stage refit:
 | printed means, closed | 32.60 | 71.50 | 32.20 | 11.4 min | 1.85 h |
 | mean of the six individual closures | 20.34 | 71.52 | 32.16 | 5.5 min | 1.84 h |
 | refit, grid from the first observation | 18.32 | 76.88 | 32.45 | 4.05 min | 1.903 h |
+| refit anchored at t = 0 | 16.88 | 75.75 | 32.28 | 3.70 min | 1.886 h |
 
 Against the geometric mean of the six, the printed means sit -30% at 3 min and +28% at 20 min. CL,
 Vss and t1/2beta survived averaging to within 3, 3.5 and 4%; t1/2alpha did not, and took V1 with it.
