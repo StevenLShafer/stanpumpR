@@ -54,6 +54,8 @@ factorVIIIvwf <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "https://doi.org/10.2147/JBM.S395845")
 
   list(PK = PK, tPeak = 0, MEAC = 0,
+       # the help page shows no parameter table for it (R/help-drugs.R)
+       pkPlaceholder = TRUE,
        typical = 100, upperTypical = 100, lowerTypical = 80,
        reference = reference)
 }

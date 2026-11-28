@@ -115,3 +115,36 @@ test_that("a factorVIIIResponse block is checked", {
   expect_error(validateFactorVIIIResponse(modifyList(ok, list(imax = 1)), "d"), "below 1")
   expect_error(validateFactorVIIIResponse(modifyList(ok, list(kout = NA)), "d"), "kout")
 })
+
+# Devin's review of PR #1019 (2026-11-28), each failing before its fix
+test_that("factor VIII does not depend on the length of the plot's grid", {
+  dt <- data.frame(Drug = "vonicogAlfa", Time = 0, Dose = 50, Units = "IU/kg")
+  run <- function(max) simulateDrugsWithCovariates(dt, noEvents, 75, 175, 35, "male", max,
+                                                    FALSE, adjustToFFM = FALSE)$factorVIIIvwf$wide
+  short <- run(96 * 60)
+  year <- run(365 * 1440)
+  t <- year$Time[year$Time > 60 & year$Time < 90 * 60]
+  expect_equal(year$Plasma[match(t, year$Time)], approx(short$Time, short$Plasma, t)$y,
+               tolerance = 1e-3)
+})
+
+test_that("normalised factor VIII starts at zero, and its time until threshold is unavailable", {
+  dt <- data.frame(Drug = "vonicogAlfa", Time = 60, Dose = 50, Units = "IU/kg")
+  o <- simulateDrugsWithCovariates(dt, noEvents, 75, 175, 35, "male", 600, TRUE,
+                                   adjustToFFM = FALSE,
+                                   factorBaselines = list(vonWillebrandFactorBaseline = 20))
+  r <- o$factorVIIIvwf$results
+  norm <- r$Y[r$Site == "CpNormCp" & r$Time < 60]
+  expect_true(length(norm) > 0)
+  expect_equal(norm, rep(0, length(norm)))
+  expect_true(all(is.na(o$factorVIIIvwf$wide$Recovery)))
+})
+
+test_that("the help pages: Vonvendi is not a prodrug, factor VIII names its parent and no PK table", {
+  dd <- getDrugDefaultsGlobal()
+  expect_identical(helpParentDrugs("factorVIIIvwf", dd), "vonicogAlfa")
+  expect_false(grepl("prodrug", helpIvDrugPageHTML("vonicogAlfa", getDrugDefaults("vonicogAlfa"), dd)))
+  page <- helpIvDrugPageHTML("factorVIIIvwf", getDrugDefaults("factorVIIIvwf"), dd)
+  expect_true(grepl("placeholder that nothing simulates", page))
+  expect_false(grepl("Volumes and clearances", page))
+})

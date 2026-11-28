@@ -97,7 +97,9 @@ helpParentDrugs <- function(drug, drugDefaults = getDrugDefaultsGlobal()) {
     # The closed-form metabolite route, or a transit chain's (enalaprilat,
     # dihydroartemisinin)
     identical(X$metabolite$name, drug) ||
-      identical(X$transitChain$metabolite$name, drug)
+      identical(X$transitChain$metabolite$name, drug) ||
+      # the factor VIII a VWF concentrate protects (R/vwfFactorVIII.R)
+      identical(X$factorVIIIResponse$name, drug)
   }, iv)
 }
 
@@ -1331,6 +1333,16 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
       )
     }
   }
+
+  # A drug whose curve is computed from its parent's model (the factor VIII
+  # a VWF concentrate protects) carries a PK set only because every drug
+  # does; its volumes and half-lives describe nothing that is drawn.
+  if (isTRUE(modelOut$pkPlaceholder))
+    paramsHTML <- paste0(
+      "<p>None: this curve is not a compartmental model. It is computed from the ",
+      "model of the drug that forms it, described in the notes below, and the ",
+      "compartmental parameters the library holds for it are a placeholder that ",
+      "nothing simulates.</p>")
 
   narrative <- helpMarkdownToHTML(helpReadMarkdown(paste0("drugs/", drug)))
 

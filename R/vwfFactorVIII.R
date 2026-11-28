@@ -77,9 +77,17 @@ vwfFactorVIIISeries <- function(time, vwf, response)
       k1 <- rate(v1)
       steps <- max(1L, min(10000L, ceiling(abs(log(k1 / k0)) / 1e-3)))
       h <- dt / steps
+      # The excess over the patient's own VWF:RCo decays as a sum of
+      # exponentials, so it is interpolated geometrically where it is
+      # positive at both ends: linear interpolation across the long intervals
+      # of a long plot overstated it and moved factor VIII with the grid
+      e0 <- v0 - response$vwfBaseline
+      e1 <- v1 - response$vwfBaseline
+      geometric <- e0 > 0 && e1 > 0
       for (s in seq_len(steps))
       {
-        v <- v0 + (v1 - v0) * (s - 0.5) / steps
+        u <- (s - 0.5) / steps
+        v <- if (geometric) response$vwfBaseline + e0 * (e1 / e0)^u else v0 + (v1 - v0) * u
         k <- rate(v)
         css <- kin / k
         f <- css + (f - css) * exp(-k * h)
