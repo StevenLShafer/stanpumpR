@@ -49,7 +49,7 @@ A patient with complicated intra-abdominal infection has a larger central volume
 
 The line is free ceftolozane at 4 mg/L, the susceptible breakpoint for *Pseudomonas aeruginosa* in both the CLSI and EUCAST guidelines. Ceftolozane is about 20% bound to plasma proteins (the label gives 16% to 21%), so the line is drawn at 5 mg/L of total ceftolozane. In 1,209 *P. aeruginosa* isolates from 35 US hospitals, half were inhibited at 0.5 mg/L and 90% at 2 mg/L.
 
-No shaded band is drawn. stanpumpR's antibiotic band marks the expected bactericidal concentrations (MBC) of the common pathogens. No MBC distribution for ceftolozane against a population of isolates has been found. Time-kill studies of single strains show that ceftolozane kills *P. aeruginosa* at concentrations near its MIC.
+No shaded band is drawn. stanpumpR's antibiotic band marks the expected bactericidal concentrations (MBC) of the common pathogens. No MBC distribution for ceftolozane against a population of isolates has been found. Time-kill studies of single strains show that ceftolozane kills *P. aeruginosa* at concentrations near its MIC. Steven Shafer decided on 28 November 2026 that Zerbaxa is drawn without a band, as cefepime is.
 
 ### Pregnancy
 
