@@ -1184,7 +1184,10 @@ physiologyPanel <- function()
             "carry is a larger share of a smaller capacity, so an anaemic",
             "patient desaturates more: with half the output shunted, on pure",
             "oxygen the arterial saturation is about 69% at 7 g/dL and 87%",
-            "at 17 g/dL. It changes the arterial oxygen only."),
+            "at 17 g/dL. It also sets the haematocrit, at three times the",
+            "haemoglobin, and diluted blood dissolves less of a volatile",
+            "anesthetic (Zhou 2002), so in anaemia end-tidal and the brain",
+            "rise a little faster."),
       placement = "right"
     )
     ),

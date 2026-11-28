@@ -611,8 +611,9 @@ shown with the Shunt fraction slider. The oxygen the shunted half fails to carry
 of millilitres per decilitre whatever the haemoglobin, so it is a larger share
 of a smaller capacity, and an anaemic patient desaturates more: on pure oxygen
 the SaO2 is 68% at 7 g/dL and 87% at 17 g/dL, on air 48% and 77%. A physiology
-event records it, so a transfusion or a bleed can be followed. It changes the
-arterial oxygen only, and at a shunt of 0% nothing the plot shows.
+event records it, so a transfusion or a bleed can be followed. It also sets
+the haematocrit, which moves each volatile agent's blood:gas coefficient
+(*Haematocrit changes solubility too*, above), at any shunt.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air

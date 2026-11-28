@@ -34,14 +34,25 @@ test_that("a body in GasMan's mode runs on GasMan's coefficients", {
   expect_identical(gasPropertiesOf(NULL), getGasProperties())
   body$volumesAsStated <- TRUE
   expect_identical(gasPropertiesOf(body), getGasProperties(gasMans = TRUE))
-  # Through the engine: GasMan's mode is the engine handed GasMan's table
-  a <- simulateGases(solubilityTable(), weight = 70, age = 40, maximum = 20,
-                     volumeConversion = FALSE)
-  b <- simulateGases(solubilityTable(), weight = 70, age = 40, maximum = 20)
-  expect_gt(solubilityAt(a, "Alveolar", 20), solubilityAt(b, "Alveolar", 20))
-  semi <- simulateGases(solubilityTable(), weight = 70, age = 40, maximum = 20,
-                        circuit = "semi-closed")
-  expect_true(isTRUE(semi$body$volumesAsStated))
+  # Through the solver, with nothing else changed (Devin's review of PR 1028:
+  # comparing GasMan's mode with the default changed the shunt and the
+  # volumes too).  With the table that ignores gasMans, so that GasMan's mode
+  # is handed Esper's coefficients, a run in GasMan's mode changes, on the
+  # ideal circuit and the semi-closed; a default run does not.
+  run <- function(...) {
+    sim <- simulateGases(solubilityTable(), weight = 70, age = 40, maximum = 20, ...)
+    solubilityAt(sim, "Alveolar", 20)
+  }
+  asGasMan <- run(volumeConversion = FALSE)
+  semi <- run(circuit = "semi-closed")
+  usual <- run()
+  esperOnly <- getGasProperties
+  testthat::local_mocked_bindings(
+    getGasProperties = function(gasMans = FALSE) esperOnly(gasMans = FALSE))
+  # More soluble blood carries more from the lungs: end-tidal lower
+  expect_lt(run(volumeConversion = FALSE), asGasMan - 0.01)
+  expect_lt(run(circuit = "semi-closed"), semi - 0.01)
+  expect_identical(run(), usual)
 })
 
 test_that("Esper's coefficients slow end-tidal and the brain (the help page's numbers)", {
