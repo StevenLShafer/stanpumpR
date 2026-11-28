@@ -361,6 +361,7 @@ aprocitentan,ng,,,,,#9575CD,0,0,0,0,0,IV,
 levothyroxine,ng,mcg,,mcg PO qd,"mcg PO qd,mcg PO,mcg,mcg qd",#0097A7,0,0,0,0,0,IV,Other
 liothyronine,ng,mcg,,mcg PO tid,"mcg PO tid,mcg PO bid,mcg PO qd,mcg PO,mcg",#3E7C87,0,0,0,0,0,IV,Other
 tafenoquine,ng,,,mg PO,"mg PO,mg PO qd",#7B5EA7,0,0,0,0,0,IV,Other
+maraviroc,ng,,,mg PO bid,"mg PO,mg PO bid",#00897B,0,0,0,0,0,IV,Other
 tecovirimat,ng,,,mg PO bid,"mg PO,mg PO bid,mg PO tid",#5D4037,0,0,0,0,0,IV,Other
 Coartem,ng,,,tablet PO,"tablet PO,tablet PO bid",#2E7D32,0,0,0,0,0,IV,Other
 artemether,ng,,,,,#43A047,0,0,0,0,0,IV,
