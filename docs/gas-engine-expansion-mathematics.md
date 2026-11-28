@@ -12,13 +12,21 @@ Oxygen consumption and CO₂ production are STPD volumes by convention (0 °C, 7
 
     kappa(T) = (760 / 713) (273.15 + T) / 273.15          1.2103 at 37 °C
 
-The engine today subtracts `VO2 = 0.0035 × weight` L/min from the alveolar gas with no conversion (kappa = 1). On room air at 70 kg and 4 L/min of alveolar ventilation it gives an alveolar oxygen of about 106 mmHg where the alveolar gas equation gives 100. With CO₂ as a state the same omission would give an alveolar CO₂ of 35 mmHg where the classical `PACO2 = 0.863 VCO2 / VA` gives 42.3. **[for decision 1]** Recommended: 3.5 mL/kg/min is STPD, and the sink becomes `kappa(T) VO2`. GasMan has no oxygen, so its validation does not move; the oxygen panel and the arterial oxygen under a shunt do, by this amount.
+The engine today subtracts `VO2 = 0.0035 × weight` L/min from the alveolar gas with no conversion (kappa = 1). On room air at 70 kg and 4 L/min of alveolar ventilation it gives an alveolar oxygen of 107 mmHg where the alveolar gas equation gives 99 (measured in code, 2026-11-28; this draft first said 106 and 100). With CO₂ as a state the same omission would give an alveolar CO₂ of 35 mmHg where the classical `PACO2 = 0.863 VCO2 / VA` gives 42.3. **[for decision 1]** Recommended: 3.5 mL/kg/min is STPD, and the sink becomes `kappa(T) VO2`. GasMan has no oxygen, so its validation does not move; the oxygen panel and the arterial oxygen under a shunt do, by this amount.
 
 For CO₂, written in mmHg and mL STPD, the same conversion is
 
     gamma(T) = 1000 × 273.15 / ((273.15 + T) × 760)       1.1588 mL STPD per L per mmHg at 37 °C
 
 and 1 / gamma(37) is the 0.863 of the textbooks.
+
+### 1a. The fresh gas too (decided 2026-11-28)
+
+Converting the oxygen consumption alone breaks the closed circuit: the fresh gas is a volume at the flowmeters, dry and at room temperature, and it too was taken litre for litre. On its way to the alveoli it warms and is humidified:
+
+    e(T, P_B) = (P_B / (P_B - PH2O)) (273.15 + T) / (273.15 + 20)      1.1277 at 37 °C and sea level
+
+and every fresh gas flow `Q` in the equations below is `e` times the flowmeters' reading. "Convert both, assuming 20 degrees C at the flowmeter." Rebreathing then stops at a flowmeter reading of `(MV + u+) / e`, and oxygen at 0.25 L/min on the flowmeter is 0.233 L/min STPD.
 
 ## 2. Metabolism
 

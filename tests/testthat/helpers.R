@@ -173,3 +173,9 @@ cohortFactorsIndependent <- function(cohort) {
 shinyUploadDirName <- function() {
   paste(sample(c(0:9, letters[1:6]), 24, replace = TRUE), collapse = "")
 }
+
+
+# The gas engine with every volume taken litre for litre, as it was until
+# 2026-11-28 and as GasMan takes them: for tests of the circuit's algebra,
+# whose numbers are in the engine's own litres (gasFreshGasExpansion()).
+gasAsStated <- function(...) advanceClosedFormGas(..., volumeConversion = FALSE)

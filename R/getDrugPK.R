@@ -1429,6 +1429,18 @@ getDrugPK <- function(
   # infused activity: simCpCe() adds this baseline to the plasma column after
   # the engines have run.  See R/factorBaselines.R.
   out$endogenousActivity <- validateEndogenousActivity(X[["endogenousActivity", exact = TRUE]], drug)
+  # A VWF concentrate draws the factor VIII it protects as a drug of its own
+  # (R/vwfFactorVIII.R): simCpCe() integrates the response on the VWF:RCo
+  # curve and hands it on as the metabolite series of the drug it names.
+  out$factorVIIIResponse <- validateFactorVIIIResponse(X$factorVIIIResponse, drug)
+  if (!is.null(out$factorVIIIResponse))
+  {
+    if (!is.null(out$metaboliteName))
+      stop(drug, ": a factorVIIIResponse cannot sit beside a metabolite")
+    if (is.null(out$endogenousActivity))
+      stop(drug, ": a factorVIIIResponse needs the drug's endogenousActivity")
+    out$metaboliteName <- out$factorVIIIResponse$name
+  }
   # A drug reported in millimoles per litre (Concentration.Units "mmol":
   # intravenous calcium, plotted as the change in ionized calcium) carries
   # the grams of the product as dosed per mole of what is plotted, which

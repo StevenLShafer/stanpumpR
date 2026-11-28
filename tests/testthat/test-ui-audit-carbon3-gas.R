@@ -83,7 +83,9 @@ test_that("H2.1: a closed circuit creates no gas, and conserves every gas exactl
   for (o2 in c(0.1, 0.2)) {
     DT <- carbon3Rows(list(0, "sevoflurane", 2), list(0, "ventilation", 4.6), list(0, "oxygen", o2))
     sim <- simulateGases(DT, weight = 70, age = 40, maximum = 240)
-    delivered <- o2 * 0.02 * sim$timeLine
+    # (the oxygen in the lungs' litres, as the amounts are counted:
+    # gasFreshGasExpansion(), 2026-11-28)
+    delivered <- o2 * gasFreshGasExpansion(sim$body) * 0.02 * sim$timeLine
     held <- carbon3Amount(sim, "sevoflurane")
     expect_true(all(held <= delivered * (1 + 1e-9) + 1e-12), info = paste("oxygen", o2))
     closed <- sim$state$oxygen[, 2] > 0
@@ -98,8 +100,9 @@ test_that("H2.1: a closed circuit creates no gas, and conserves every gas exactl
                     list(0, "ventilation", 4.6), list(0, "sevoflurane", 2))
   sim <- simulateGases(DT, weight = 70, age = 40, maximum = 60)
   carrier <- 1 - 2 / 100
-  expect_true(all(carbon3Amount(sim, "nitrousOxide") <= carrier * 0.3 * sim$timeLine + 1e-9))
-  expect_true(all(carbon3Amount(sim, "sevoflurane") <= 0.6 * 0.02 * sim$timeLine + 1e-12))
+  e <- gasFreshGasExpansion(sim$body)
+  expect_true(all(carbon3Amount(sim, "nitrousOxide") <= carrier * 0.3 * e * sim$timeLine + 1e-9))
+  expect_true(all(carbon3Amount(sim, "sevoflurane") <= 0.6 * e * 0.02 * sim$timeLine + 1e-12))
 })
 
 

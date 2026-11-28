@@ -38,9 +38,13 @@ test_that("in partial pressures, the kinetics do not depend on the pressure", {
   # altitude, but for the humidification of the inspired gas: the whole
   # patient side is w times the sea-level curve
   dt <- gasTable(c("oxygen", "sevoflurane", "ventilation"), c(2, 2, 5))
-  sea <- simulateGases(dt, maximum = 60, uptakeEffect = FALSE, oxygenUptake = FALSE)
+  # (volumeConversion = FALSE: a litre of dry fresh gas takes up more room
+  # in the lungs the lower the pressure, P_B / (P_B - 47), which is tested
+  # with the conversion itself)
+  sea <- simulateGases(dt, maximum = 60, uptakeEffect = FALSE, oxygenUptake = FALSE,
+                       volumeConversion = FALSE)
   high <- simulateGases(dt, maximum = 60, uptakeEffect = FALSE, oxygenUptake = FALSE,
-                        altitude = 7000)
+                        altitude = 7000, volumeConversion = FALSE)
   w <- gasHumidityRatio(high$body)
   expect_equal(high$state$sevoflurane[, -1], w * sea$state$sevoflurane[, -1],
                tolerance = 1e-12)

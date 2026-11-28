@@ -117,8 +117,13 @@ test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine
     a$SaO2[which.min(abs(a$Time - 30))]
   }
   s <- vapply(c(0, 3000, 5000), sat, 0)
-  # (75.2, 68.0 and 47.0 at 760 Torr per 100%, until 2026-11-24)
-  expect_equal(s, c(74.7, 66.5, 43.2), tolerance = 0.002)
+  # (75.2, 68.0 and 47.0 at 760 Torr per 100%, until 2026-11-24; 74.7, 66.5
+  # and 43.2 until 2026-11-28, when the oxygen consumed, an STPD volume, was
+  # converted to the lungs' conditions: the alveolar oxygen had read about
+  # 9 mmHg high at sea level, and more at altitude, gasStpdFactor())
+  # (26.4 at 5000 m until the uptake's volume took the humidity there,
+  # gasLungPressureRatio(), the same day)
+  expect_equal(s, c(74.1, 62.1, 26.7), tolerance = 0.002)
 })
 
 test_that("the Visualizer carries the arterial saturation only where a tube shunts", {
