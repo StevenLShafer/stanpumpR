@@ -15,6 +15,10 @@ stanpumpR holds 2 published models of micafungin. You do not choose between them
 
 At 70 kg the two models' clearances are 1.2 L/h (Jullien) and 0.69 L/h (Wasmann). The intensive-care patients cleared micafungin faster than the healthy volunteers, as their low albumin would predict for a drug more than 99% bound to it. The label's patients, 0.20 to 0.36 mL/min/kg, about 0.8 to 1.5 L/h at 70 kg, lie between and above.
 
+### Entering a dose
+
+The label says micafungin is given "by intravenous infusion only" and infused over one hour; faster infusions bring more histamine-mediated reactions. So stanpumpR offers only rates: 100 mg is entered as 100 mg/hr from 0 to 60 minutes, and each day's dose as its own one-hour infusion. A dose per kilogram is entered the same way in mg/kg/hr.
+
 ### Target concentrations
 
 No band is drawn. Both sources judge exposure by the ratio of the daily area under the curve to the organism's MIC (above 5000 for most *Candida*, above 285 for *C. parapsilosis*), not by a concentration. The label gives no therapeutic range.
