@@ -282,9 +282,13 @@ valproate <- function(weight, height, age, sex, adjustToFFM = TRUE,
   if (isTRUE(pregnant)) {
     reference <- paste0(reference, "; ", pregnancyReference(
       paste0("total clearance x ", VALPROATE_PREGNANCY_CL_FACTOR,
-             " (the free fraction doubles; the unbound level does not fall)"),
-      paste0("Nau H, Krauer B, J Clin Pharmacol 1986;26:215-221. ",
-             "https://doi.org/10.1002/j.1552-4604.1986.tb02937.x")))
+             " (the measured total ratios, 1.49 to 1.86; unbound drug changes",
+             " far less, and its third-trimester direction is unresolved)"),
+      paste0("Johannessen Landmark C et al, Epilepsy Res 2018;141:31-37. ",
+             "https://doi.org/10.1016/j.eplepsyres.2018.02.004",
+             "; Nau H, Krauer B, J Clin Pharmacol 1986;26:215-221. ",
+             "https://doi.org/10.1002/j.1552-4604.1986.tb02937.x",
+             " (the binding note)")))
   }
 
   list(
