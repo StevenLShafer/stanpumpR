@@ -196,7 +196,7 @@ time-course companions to this static two-population split.
 A deliberate caution: Olofsen fixed `α_F = 1` with no variability, i.e. apnea occurs at
 infinite fentanyl concentration in both populations. Tolerance in this model raises the
 *concentration* needed (C50,F) and blunts buprenorphine; it does not give the full agonist
-a ceiling. That is the respiratory-safety asymmetry — buprenorphine has a ceiling, fentanyl
+a ceiling. That is the ventilatory-safety asymmetry — buprenorphine has a ceiling, fentanyl
 does not — and it is the model's central safety message.
 
 ---
@@ -208,7 +208,7 @@ scalar, while this is a *time-varying competition for one shared receptor pool*.
 built on **fractional occupancy**, with MEAC demoted to a derived readout. Two validated potency scales
 are kept separate (decision #1, §8), bridged only by `ρ_bup`:
 
-- The **occupancy competition and the respiratory panel** run on the **binding scale** — Olofsen's
+- The **occupancy competition and the ventilatory panel** run on the **binding scale** — Olofsen's
   ventilatory `C50` for the full agonists and buprenorphine's binding constants. This is the only
   physically consistent choice: an analgesic MEAC is a minimum-effective concentration, not a binding
   constant, and cannot enter the competitive denominator `1 + Σφ`.
@@ -221,8 +221,8 @@ the opioid–MAC and antiseizure toggles; shared panels below the drug panels, a
    (stacked), any antagonist's, and free `ρ_0` on top. The agonism/antagonism graph — it *shows*
    blockade (buprenorphine holding 70–90% while an added agonist reaches only the free sliver),
    displacement, and the slow (37-min `k_off`) washout of blockade after buprenorphine is stopped.
-2. **Two effect curves** (shared panel): the **analgesia** transducer and the **respiratory-depression**
-   transducer over time. The respiratory one shows the **ceiling** (buprenorphine alone plateaus; an
+2. **Two effect curves** (shared panel): the **analgesia** transducer and the **ventilatory-depression**
+   transducer over time. The ventilatory one shows the **ceiling** (buprenorphine alone plateaus; an
    added agonist on a high-occupancy background barely moves it — safety made visible); the analgesia one
    shows whether the patient is actually comfortable. Their gap is buprenorphine's clinical character.
 3. **Available-drive line** `Ũ = (1 − ρ_bup)·U`, drawn on the `% MEAC` panel beside the nominal `U` when
@@ -366,7 +366,7 @@ to `U` at low occupancy.*
 **Remaining open:**
 
 - **norbuprenorphine** (μ/ORL-1 active) — out of scope until it is a PK species in the library; a future
-  addition, flagged in the respiratory narrative.
+  addition, flagged in the ventilatory narrative.
 - **Slow antagonists.** Naltrexone and nalmefene join the slow set on the same engine once `k_on`/`k_off`
   are taken from binding-kinetics sources; buprenorphine, fentanyl and naloxone are the first citizens.
   κ/δ and ORL-1/NOP (the bell-shaped high-dose effect) remain excluded (μ-only scope, §6.2).

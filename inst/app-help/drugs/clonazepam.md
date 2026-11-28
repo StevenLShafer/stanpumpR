@@ -24,4 +24,4 @@ The shaded band, 15 to 80 ng/mL, 10 hours after a dose, is the reference range f
 
 ### Where to be careful
 
-Clonazepam's long half-life means it takes a week or more to reach steady state, and as long to wash out. It adds to the sedation and respiratory depression of opioids and other sedatives. The model describes young healthy men taking tablets; women, the elderly and hepatic disease are not represented.
+Clonazepam's long half-life means it takes a week or more to reach steady state, and as long to wash out. It adds to the sedation and ventilatory depression of opioids and other sedatives. The model describes young healthy men taking tablets; women, the elderly and hepatic disease are not represented.

@@ -24,4 +24,4 @@ The shaded band, 80 to 200 ng/mL, is the therapeutic reference range for sleep d
 
 ### Where to be careful
 
-The model was fitted to 30 young healthy adults after a single fasting dose. Food delays and lowers the peak; CYP3A4 inhibitors raise concentrations; hepatic impairment slows clearance. Zolpidem adds to the sedation and respiratory depression of opioids and other sedatives. Kim's DSST and reaction-time models found impairment at half its maximum near 205 and 282 ng/mL, far above the driving threshold: laboratory tests are less sensitive than driving to the impairment zolpidem causes.
+The model was fitted to 30 young healthy adults after a single fasting dose. Food delays and lowers the peak; CYP3A4 inhibitors raise concentrations; hepatic impairment slows clearance. Zolpidem adds to the sedation and ventilatory depression of opioids and other sedatives. Kim's DSST and reaction-time models found impairment at half its maximum near 205 and 282 ng/mL, far above the driving threshold: laboratory tests are less sensitive than driving to the impairment zolpidem causes.
