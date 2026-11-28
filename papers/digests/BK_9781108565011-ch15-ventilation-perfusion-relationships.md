@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch15-ventilation-perfusion-relationships.pdf
+---
+file: BK_9781108565011-ch15-ventilation-perfusion-relationships.pdf
 citation: 'Chapter 15, Ventilation-Perfusion Relationships, Section 2 Respiratory Physiology, printed pp. 68-70. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []

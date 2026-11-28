@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch18-alveolar-gas-equation.pdf
+---
+file: BK_9781108565011-ch18-alveolar-gas-equation.pdf
 pmid: none
 doi: 10.1017/9781108565011.021
 citation: 'Chapter 18, Alveolar Gas Equation, Section 2 Respiratory Physiology, printed pp. 77-79. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'

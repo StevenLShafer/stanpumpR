@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch09-carbon-dioxide-transport.pdf
+---
+file: BK_9781108565011-ch09-carbon-dioxide-transport.pdf
 pmid: none
 doi: 10.1017/9781108565011.012
 citation: 'Chapter 9, Carbon Dioxide Transport, Section 2 Respiratory Physiology, printed pp. 37-39. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'

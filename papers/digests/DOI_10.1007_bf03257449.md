@@ -1,4 +1,5 @@
----file: DOI_10.1007_bf03257449.pdf
+---
+file: DOI_10.1007_bf03257449.pdf
 pmid: none
 doi: 10.1007/BF03257449
 citation: de Groot ANJA, Vree TB, Hekster YA, van den Biggelaar-Martea M, van Dongen PWJM, van Roosmalen J. Variation in bioavailability of oral methylergometrine in healthy male volunteers. Drug Investigation 1994;8(6):345-351.

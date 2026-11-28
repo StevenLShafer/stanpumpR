@@ -1,4 +1,5 @@
----file: BK_9781108565011-ch19-oxygen-cascade.pdf
+---
+file: BK_9781108565011-ch19-oxygen-cascade.pdf
 pmid: null
 doi: 10.1017/9781108565011.022
 citation: 'Chapter 19, Oxygen Cascade, Section 2 Respiratory Physiology, printed pp. 80-81. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
