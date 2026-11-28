@@ -139,10 +139,19 @@ test_that("the MIC line is free ceftazidime at 8 mg/L, with no band", {
 
 test_that("pinned: the reference man with the switch off, a woman of 120 kg with it on", {
   X <- ceftazidime(70, 170, 35, "male", adjustToFFM = FALSE)
-  expect_equal_rounded(X$PK$default, list(v1 = 11.2, v2 = 6.52, v3 = 1,
-                                          cl1 = 0.13437016, cl2 = 0.088833333, cl3 = 0))
-  expect_equal(c(X$tPeak, X$MEAC, X$typical, X$upperTypical, X$lowerTypical), rep(0, 5))
-  expect_match(X$reference, "Franzese", fixed = TRUE)
+  expected <- list(
+    PK = list(default = list(v1 = 11.2, v2 = 6.52, v3 = 1,
+                             cl1 = 0.13437016, cl2 = 0.088833333, cl3 = 0)),
+    tPeak = 0, MEAC = 0, typical = 0, upperTypical = 0, lowerTypical = 0,
+    reference = paste0(
+      "Franzese RC, McFadyen L, Watson KJ, et al., Clin Pharmacol Ther 2022;111:635-645, ",
+      "Table S2 and the Supplementary Methods (adults and children): two compartments, ",
+      "CL = 7.75 L/h x (WT/70)(53.5 + 70)/(53.5 + WT) x renal term, Vc 11.2 L x WT/70, ",
+      "Q 5.33 L/h x (WT/70)^0.67, Vp 6.52 L x WT/70; Cockcroft-Gault x 1.73/BSA NCrCL ",
+      "108 mL/min/1.73 m2 (assumed normal serum creatinine 0.9 mg/dL); infection: None ",
+      "(healthy); race not applied. Drawn for Avycaz (2.5 g = 2 g ceftazidime + 0.5 g ",
+      "avibactam); avibactam not drawn. https://doi.org/10.1002/cpt.2460"))
+  expect_equal_rounded(expected, X)
   on <- ceftazidime(120, 170, 50, "female", creatinine = 0.8)$PK$default
   expect_equal_rounded(on, list(v1 = 12.232717, v2 = 7.1211886, v3 = 1,
                                 cl1 = 0.12771248, cl2 = 0.094241076, cl3 = 0))
