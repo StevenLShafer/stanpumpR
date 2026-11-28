@@ -1,6 +1,6 @@
 # Gas engine expansion: the mathematics, for review
 
-A draft for Steven L. Shafer's review, written before any code (the order of work in `docs/gas-engine-expansion.md`, which holds the decisions this draft applies). Drafted by Claude Code, 2026-11-28. Nothing here is built. Where the draft had to choose something no decision covers, the choice is marked **[for decision]** and collected in section 12.
+Reviewed and accepted by Steven L. Shafer on 2026-11-28 (section 12). A draft for his review, written before any code (the order of work in `docs/gas-engine-expansion.md`, which holds the decisions this draft applies). Drafted by Claude Code, 2026-11-28. Nothing here is built. Where the draft had to choose something no decision covers, the choice is marked **[for decision]** and collected in section 12.
 
 The notation is the engine's own (`R/advanceClosedFormGas.R`, *The equations*): tensions `F` in % of a sea-level atmosphere, flows in L/min, `MV` the ventilation, `VA` the alveolar ventilation, `Qco` the cardiac output, `d` the dead-space fraction, `u` the summed uptake.
 
@@ -204,6 +204,8 @@ The starting state is the steady state of the settings at time 0 with the patien
 - The semi-closed circuit refuses all of it (`gasNotGasMansBody()`).
 
 ## 12. For decision
+
+**Decided, 2026-11-28**: "Yes to all eight, and yes to the pH-stat default not appearing unless temperature changes from 37 degrees celsius." Each recommendation below is therefore the decision; item 7 remains a reading task, with no decision needed unless the sources disagree.
 
 1. Oxygen consumption is STPD and is converted (× 1.21 at 37 °C) before it leaves the alveolar gas. This corrects the engine as it stands. Recommended: yes.
 2. The default ventilation stays where it is, so the default patient with 2 L/min of fresh gas sits at a PaCO₂ of about 38. Recommended: yes.
