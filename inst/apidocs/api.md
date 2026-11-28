@@ -154,7 +154,7 @@ df = pd.read_csv(io.StringIO(r.text))   # columns: Drug, Time, Plasma, EffectSit
 | Method | Path | Returns |
 |---|---|---|
 | `POST` | `/simulate` | A simulation (see [The request](#the-request) and [The response](#the-response)). Query parameters: `format` (`json`, `csv`, `xlsx`, `xml`) and `layout` (`long`, `wide`). |
-| `GET` | `/drugs` | The drugs a request can dose. For each drug: its category, its concentration units and the dose units it accepts (`Units`, always an array in JSON; comma-separated in CSV). An active metabolite that cannot be dosed itself, such as `desmetramadol`, is not listed; it appears in a result as a `drugs` row with `Dosed` false. `?format=csv` returns CSV. `?allowIllicitDrugs=true` adds the opt-in illicit-drug research models. |
+| `GET` | `/drugs` | The drugs a request can dose. For each drug: its category, its concentration units and the dose units it accepts (`Units`, always an array in JSON; comma-separated in CSV). An active metabolite that cannot be dosed itself, such as `desmetramadol`, is not listed; it appears in a result as a `drugs` row with `Dosed` false. Where the library holds several published models of one drug, only the drug is listed (for example `etoposide`); the model is chosen for the patient, and a request naming one of the models (`etoposideKroghMadsen`) is refused. `?format=csv` returns CSV. `?allowIllicitDrugs=true` adds the opt-in illicit-drug research models. |
 | `GET` | `/health` | `{"status": "ok", "apiVersion": "1", "stanpumpRVersion": "...", "build": "<commit>"}` (`build` is `null` when the installation did not record its commit) |
 | `GET` | `/__docs__/` | Plumber's interactive (Swagger) page, only when the service was started with `run_api(docs = TRUE)`. It can try the endpoints but does not specify them: this guide is the specification. |
 
@@ -270,7 +270,7 @@ an empty array or an object); anything else is refused (400).
 | `infection` | no | `none` (default), `cUTI` (complicated urinary tract infection), `cIAI` (complicated intra-abdominal infection), `pneumonia` (not ventilated), `pneumoniaVentilated` (mechanically ventilated) or `other`. Only the antibiotic models fitted separately in each kind of infection read it; none does yet. `none` gives the healthy volunteers' pharmacokinetics. |
 | `creatinine` | no | 0.2–15 mg/dL. If it is omitted, each renally cleared model assumes the normal value for the patient's age and sex. |
 | `gestationalAge` | no | 22–44 weeks, the gestational age at birth. If it is omitted, the birth is taken as at term (40 weeks). Only the neonatal models (`dobutamineNeonatal`) read it, with the age, as the postmenstrual age. |
-| `albumin` | no | 0.5–6 g/dL, the serum albumin. If it is omitted, each model that reads it holds its own reference value. Only the models with an albumin term read it: `methotrexate` (Ibarra 2023, clearance × (albumin/4)^0.594) and `methotrexatePediatric` (Taylor 2023, the severe-hypoalbuminaemia factors on Q2 and Q3 at 2.5 g/dL or less). |
+| `albumin` | no | 0.5–6 g/dL, the serum albumin. If it is omitted, each model that reads it holds its own reference value. Only the models with an albumin term read it, among them `methotrexate`, whose adult model (Ibarra 2023) takes clearance × (albumin/4)^0.594 and whose children's model (Taylor 2023) the severe-hypoalbuminaemia factors on Q2 and Q3 at 2.5 g/dL or less. |
 | `ast` | no | 1–5000 U/L, the serum aspartate aminotransferase. If it is omitted, each model that reads it holds its own reference value (a normal AST, 20 U/L). Only the models with an AST term read it: `epirubicin` (Ralph 2003), whose clearance falls with the logarithm of the AST, the AST held within the 7–815 U/L the study covered. |
 | `osmolality` | no | 200–400 mOsm/kg. The default is 280. |
 | `cyp2d6`, `cyp2c19`, `cyp2c9`, `cyp2b6` | no | The values listed above. The default is the normal phenotype (`*1/*1` for CYP2C9). Only the models that use a phenotype read it. |
@@ -294,7 +294,9 @@ be an object of equal-length columns:
 - **Drug.** Use the drug's name as it appears in `GET /drugs` (for example
   `propofol`, `fentanyl`, `remifentanil`). An active metabolite that cannot
   be dosed itself (`desmetramadol`, `enalaprilat`, which `GET /drugs` does
-  not list) is refused (400); dose its parent instead.
+  not list) is refused (400); dose its parent instead. So is one of the
+  published models of a drug the library chooses between (`etoposideKroghMadsen`):
+  dose the drug (`etoposide`), and the model is chosen for the patient.
 - **Units.** Each drug accepts only its own units, which `GET /drugs` lists.
   Every dose needs one: a missing, empty or `null` unit is refused (400).
   - A **bolus** is a mass (`mg`, `mcg/kg`).

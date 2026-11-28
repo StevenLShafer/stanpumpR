@@ -389,6 +389,11 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
     if (is.na(row)) {
       apiError("`doses` row ", i, ": unknown drug '", drug, "'. GET /drugs lists the drugs.")
     }
+    if (drug %in% modelCandidates()) {
+      apiError("`doses` row ", i, ": ", drug, " is one of the published models of ",
+               modelCandidateGroup(drug), "; dose '", modelCandidateGroup(drug),
+               "', and the model is chosen for the patient. GET /drugs lists the drugs.")
+    }
     if (isGasDrug(drug)) {
       apiError("`doses` row ", i, ": ", drug, " is an inhaled agent; the API does not ",
                "simulate inhaled agents yet.")
@@ -921,7 +926,10 @@ apiDrugCatalog <- function(allowIllicit = FALSE) {
   # A metabolite-only entry (desmetramadol, salicylate) has no dose units:
   # it cannot be dosed and appears in a result only as its parent's metabolite.
   doseable <- vapply(dd$Units, function(u) any(!is.na(u) & nzchar(u)), logical(1))
-  keep <- doseable & !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd))
+  # A model group's candidate is not listed: its group is, and the model is
+  # chosen for the patient (R/modelSelection.R).
+  keep <- doseable & !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd)) &
+    !dd$Drug %in% modelCandidates()
   dd <- dd[keep, ]
   out <- data.frame(
     Drug               = dd$Drug,

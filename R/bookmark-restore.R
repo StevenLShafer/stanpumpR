@@ -58,7 +58,9 @@ restoredDoseTable <- function(x, drugDefaults)
   for (i in seq_len(nrow(table))) {
     row <- table[i, ]
     drug <- row$Drug
-    if (!nzchar(drug) || !drug %in% drugDefaults$Drug) {
+    # A model group's candidate is not offered for dosing (visibleDrugNames()),
+    # so a link or a grid row naming one is read as an unknown drug.
+    if (!nzchar(drug) || !drug %in% drugDefaults$Drug || drug %in% modelCandidates()) {
       # No drug, or one the library does not have: the row is empty
       if (any(nzchar(unlist(row)))) changed <- TRUE
       table[i, ] <- ""
