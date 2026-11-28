@@ -466,6 +466,9 @@ test_that("exactly the plasma-only drugs have no effect site", {
     "liothyronine",
     # tafenoquine (Thakkar 2018, 2026-11-20): plasma only
     "tafenoquine",
+    # tecovirimat (Leeds 2013), maraviroc (Chan 2008), quinine and its
+    # candidates (Kloprogge 2014, Le Jouan 2005), 2026-11-28: plasma only
+    "tecovirimat", "maraviroc", "quinine", "quinineKloprogge", "quinineLeJouan",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only
