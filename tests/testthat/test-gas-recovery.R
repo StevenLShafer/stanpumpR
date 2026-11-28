@@ -53,8 +53,7 @@ lastCrossing <- function(time, y, threshold, t) {
 bruteGas <- function(gasDose, weight, age, t, gas, threshold, off = gas,
                      flush = TRUE, horizon = 240) {
   if (identical(off, "MAC")) off <- potentAgents()
-  b <- advanceClosedFormGas(turnedOff(gasDose, t, off, flush), weight = weight, age = age,
-                            body = gasShuntBody(weight),
+  b <- gasFlushEngine(turnedOff(gasDose, t, off, flush), t, weight, age = age,
                             maximum = t + horizon,
                             resolution = round((t + horizon) * 10) + 1)
   if (gas == "MAC") {
