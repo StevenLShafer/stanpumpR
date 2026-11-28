@@ -521,7 +521,7 @@ it changes nothing the plot shows.
 
 **Altitude.** The arterial oxygen starts from the alveolar oxygen, which falls
 with the barometric pressure, so the hypoxaemia deepens with altitude. On air
-the SaO2 is 74% at sea level, 62% at 3000 m and 26% at 5000 m; on oxygen 85%,
+the SaO2 is 74% at sea level, 62% at 3000 m and 27% at 5000 m; on oxygen 85%,
 81% and 80%. (The ventilation is what was set: the model does not
 hyperventilate at altitude as an awake person does.)
 

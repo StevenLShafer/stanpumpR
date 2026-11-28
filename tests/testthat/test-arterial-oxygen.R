@@ -121,7 +121,9 @@ test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine
   # and 43.2 until 2026-11-28, when the oxygen consumed, an STPD volume, was
   # converted to the lungs' conditions: the alveolar oxygen had read about
   # 9 mmHg high at sea level, and more at altitude, gasStpdFactor())
-  expect_equal(s, c(74.1, 62.1, 26.4), tolerance = 0.002)
+  # (26.4 at 5000 m until the uptake's volume took the humidity there,
+  # gasLungPressureRatio(), the same day)
+  expect_equal(s, c(74.1, 62.1, 26.7), tolerance = 0.002)
 })
 
 test_that("the Visualizer carries the arterial saturation only where a tube shunts", {
