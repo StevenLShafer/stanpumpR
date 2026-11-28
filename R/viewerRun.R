@@ -737,7 +737,8 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   # delivered is in sea-level millilitres, as the amounts are
   settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
                                                       gasPressureRatio(bodyAt(k)),
-                                                      gasFreshGasExpansion(bodyAt(k))))
+                                                      gasFreshGasExpansion(bodyAt(k)),
+                                                      gasInspiratoryFraction(bodyAt(k))))
   # `flow` is what the flowmeters read: the engine takes the fresh gas in the
   # lungs' litres (gasFreshGasExpansion()), but the Visualizer shows the
   # setting, and counts every amount of vapour in litres at the machine

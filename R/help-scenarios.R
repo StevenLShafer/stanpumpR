@@ -1538,6 +1538,7 @@ applyHelpScenario <- function(session, s, doseTable, eventTable, timeApi = NULL,
   # oxygen of every gas run, not only one with the tube (Devin's review of
   # PR 1022)
   updateSliderInput(session, "physiology_haemoglobin", value = ARTERIAL_OXYGEN_HAEMOGLOBIN)
+  updateSelectInput(session, "physiology_ie", selected = GAS_IE_DEFAULT)
   # Blank, a term birth, unless the scenario names a gestational age: sent
   # explicitly, as the creatinine is, so a previous patient's does not survive
   if (is.null(p$gestationalAge)) {

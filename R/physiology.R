@@ -1190,6 +1190,25 @@ physiologyPanel <- function()
             "rise a little faster."),
       placement = "right"
     )
+    ,
+    # The I:E ratio (Shafer, 2026-11-27 and 2026-11-28): one setting for the
+    # whole run; the fresh gas's inspiratory share adds to the ventilation
+    fieldHelp(
+      selectInput(
+        inputId = "physiology_ie",
+        label = "I:E ratio",
+        choices = stats::setNames(unname(GAS_IE_RATIOS), names(GAS_IE_RATIOS)),
+        selected = GAS_IE_DEFAULT
+      ),
+      paste("Inspiration to expiration, for the whole run. The fresh gas that",
+            "enters the circuit during inspiration goes to the patient with",
+            "the ventilator's breath, so the ventilation delivered is the",
+            "ventilation set plus the inspiratory share of the fresh gas",
+            "flow: a third of it at 1:2, half at 1:1, a fifth at 1:4. At high",
+            "fresh gas flows that is a good deal more ventilation than was",
+            "set."),
+      placement = "right"
+    )
     ),
     actionLink("physiologyReset", "Reset to normal"),
     # Physiology events (R/physiologyEvents.R): these settings recorded in
@@ -1285,7 +1304,7 @@ physiologyFromInputs <- function(values)
 physiologyCovariateRows <- function(physiology, temperature = NULL,
                                     altitude = NULL, endobronchial = FALSE,
                                     events = NULL, haemoglobin = NULL,
-                                    shunt = NULL)
+                                    shunt = NULL, ieRatio = NULL)
 {
   # With physiology events (R/physiologyEvents.R) the simulation ran at
   # normal physiology from time 0 and each event's settings from its time;
@@ -1312,7 +1331,8 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                            "Altitude (m), inhaled anesthetics",
                            "Endobronchial intubation, inhaled anesthetics",
                            "Shunt fraction (%), inhaled anesthetics",
-                           "Haemoglobin (g/dL), arterial oxygen"),
+                           "Haemoglobin (g/dL), arterial oxygen",
+                           "I:E ratio, inhaled anesthetics"),
              Value = c(unname(value), if (is.null(t)) "unreadable" else format(t),
                        if (is.null(h)) "unreadable" else
                          sprintf("%s (%.0f Torr)", format(h), barometricPressure(h)),
@@ -1321,7 +1341,8 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
                          s <- tryCatch(checkShunt(shunt, isTRUE(endobronchial)), error = function(e) NULL)
                          if (is.null(s)) "unreadable" else format(round(100 * s, 1))
                        },
-                       format(haemoglobinFromInput(haemoglobin))),
+                       format(haemoglobinFromInput(haemoglobin)),
+                       paste0("1:", format(ieRatioFromInput(ieRatio)))),
              stringsAsFactors = FALSE)
 }
 

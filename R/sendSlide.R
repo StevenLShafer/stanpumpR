@@ -322,7 +322,8 @@ writeWorkbook <- function(values, allResults, plotResults, drugs, file) {
                                                          values$endobronchial,
                                                          values$physiologyEvents,
                                                          values$haemoglobin,
-                                                         values$shunt))
+                                                         values$shunt,
+                                                         values$ieRatio))
   covariates <- rbind(covariates, plotTimeSettings(values$maximum, timeUnit))
   outputComments("Writing covariates")
   openxlsx::addWorksheet(wb, "Covariates")

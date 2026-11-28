@@ -693,3 +693,82 @@ isGasDrug <- function(drug)
 {
   drug %in% gasDrugNames()
 }
+
+
+#' The I:E ratios the Physiology panel offers, as the expiratory part to one
+#' of inspiration (1:1, 1:1.5, 1:2, 1:3, 1:4), and the default, 1:2
+#'
+#' Steven L. Shafer, 2026-11-27: "I:E ratio should be a user input, default
+#' 1:2"; 2026-11-28: one setting for the whole run, in the Physiology
+#' settings.
+#' @keywords internal
+GAS_IE_RATIOS <- c("1:1" = 1, "1:1.5" = 1.5, "1:2" = 2, "1:3" = 3, "1:4" = 4)
+
+#' @rdname GAS_IE_RATIOS
+#' @keywords internal
+GAS_IE_DEFAULT <- 2
+
+#' An I:E ratio, checked
+#' @param x the expiratory part to one of inspiration, or NULL for the default
+#' @returns one of \code{GAS_IE_RATIOS}
+#' @keywords internal
+checkIERatio <- function(x)
+{
+  if (is.null(x)) return(GAS_IE_DEFAULT)
+  if (!is.numeric(x) || length(x) != 1 || !is.finite(x) ||
+      !any(abs(x - GAS_IE_RATIOS) < 1e-9))
+    stop("Invalid I:E ratio: ", format(x), " (the expiratory part to one of inspiration: ",
+         paste(unname(GAS_IE_RATIOS), collapse = ", "), ")")
+  unname(GAS_IE_RATIOS[which.min(abs(x - GAS_IE_RATIOS))])
+}
+
+#' The I:E choice of the Physiology panel, read: the default when unreadable
+#' (a link is untrusted)
+#' @param value \code{input$physiology_ie}
+#' @keywords internal
+ieRatioFromInput <- function(value)
+{
+  x <- suppressWarnings(as.numeric(if (length(value) == 1) value else NA))
+  tryCatch(checkIERatio(if (is.na(x)) NULL else x), error = function(e) GAS_IE_DEFAULT)
+}
+
+#' The share of the breath that is inspiration, I / (I + E)
+#'
+#' The fresh gas that enters the circuit during inspiration goes to the
+#' patient with the ventilator's tidal volume, so this share of the fresh gas
+#' flow adds to the delivered ventilation (\code{gasSettingsAt()}; Shafer,
+#' 2026-11-27: "Fresh gas adds to delivered ventilation").  Zero for a body
+#' that carries no I:E ratio (one handed to the engine directly) and in
+#' GasMan's mode, GasMan's ventilation being what is set.
+#'
+#' @param body a gas body
+#' @returns a fraction: a third at the default 1:2
+#' @keywords internal
+gasInspiratoryFraction <- function(body)
+{
+  if (is.null(body) || is.null(body$ieRatio) || isTRUE(body$volumesAsStated)) return(0)
+  1 / (1 + body$ieRatio)
+}
+
+#' The alveolar ventilation the time until threshold runs at
+#'
+#' The time until threshold turns the fresh gas up until nothing is rebreathed
+#' (Shafer, 2026-10-05).  With the fresh gas adding to the delivered
+#' ventilation, the least flow that does so is
+#' \code{Q* = (MVset + u+) / (1 - phi)}, at which the ventilation delivered is
+#' \code{(MVset + phi u+) / (1 - phi)}, 1.5 times the ventilator's setting at
+#' 1:2 (Shafer, 2026-11-27: "It should use the higher ventilation as well";
+#' the flow confirmed 2026-11-28).  The uptake's share, \code{phi u+}, is left
+#' out: during a washout the tissues give agent back, so the uptake is
+#' negative but for the oxygen consumed net of carbon dioxide, about 0.06
+#' L/min in 8.
+#'
+#' @param MVset the ventilator's setting, L/min
+#' @param deadSpace dead space as a fraction of the ventilation
+#' @param body a gas body
+#' @returns alveolar ventilation, L/min
+#' @keywords internal
+gasWashoutVentilation <- function(MVset, deadSpace, body)
+{
+  MVset / (1 - gasInspiratoryFraction(body)) * (1 - deadSpace)
+}
