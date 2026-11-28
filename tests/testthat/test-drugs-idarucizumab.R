@@ -96,3 +96,24 @@ test_that("idarucizumab is a reversal agent, plasma only, with no band", {
   expect_match(PK$reference, "not printed in the paper")
   expect_identical(therapeuticRange("idarucizumab")$band_status, "not_applicable")
 })
+
+test_that("the line is within 16% of Glund 2019's patients' AUC 0-24 h", {
+  # Glund 2019 Table 1, 5 g in RE-VERSE AD, by Cockcroft-Gault category;
+  # evaluated at an assumed category CrCl of 99, 65, 40 and 21 mL/min
+  auc24 <- function(crcl) {
+    scr <- (140 - 78) * 70 / (72 * crcl)
+    p <- idarucizumab(70, 170, 78, "male", adjustToFFM = FALSE, creatinine = scr)$PK$default
+    k10 <- p$cl1 / p$v1; k12 <- p$cl2 / p$v1; k21 <- p$cl2 / p$v2
+    A <- matrix(c(-(k10 + k12), k21, k12, -k21), 2, byrow = TRUE)
+    e <- eigen(A)
+    dose <- 5 / 47766 * 1e9                              # nmol
+    x0 <- solve(e$vectors, c(dose, 0))
+    # integral over 0-24 h of the central amount, analytically, per V1, in h
+    amt <- e$vectors %*% (x0 * (exp(e$values * 1440) - 1) / e$values)
+    amt[1] / p$v1 / 60
+  }
+  measured <- c(47100, 65000, 89700, 116000)
+  model <- vapply(c(99, 65, 40, 21), auc24, numeric(1))
+  expect_true(all(abs(model / measured - 1) < 0.16))
+  expect_equal(round(model / measured, 2), c(0.85, 0.88, 0.93, 1.08))
+})

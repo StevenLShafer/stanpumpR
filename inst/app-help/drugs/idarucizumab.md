@@ -11,9 +11,18 @@ The clearance line is **stanpumpR's own least-squares fit** through the seven gr
 
 Checks against the paper: the line gives 47.2 mL/min at the 5 g middle-aged group's 110 mL/min (measured 47.1; the label 47.0); the groups' initial half-lives come out 0.73 to 1.16 h (measured 0.78 to 1.16 h); and a 5 g infusion over 5 minutes in that group's typical man peaks at about 26,400 nmol/L (1260 mcg/mL), against the measured 25,000, falling to about 2% of the peak by 6 hours, as the paper describes.
 
-### Renal impairment below the studied range
+### Checked against patients
 
-The Praxbind label reports exposure in 347 patients (RE-VERSE AD), from a population analysis not yet available here: the area under the curve over 24 hours rose 38%, 90% and 146% in mild (creatinine clearance 50 to 80 mL/min), moderate (30 to 50) and severe (below 30) renal impairment. The line gives about 45%, 117% and 248% at 65, 40 and 21 mL/min. So in **severe renal impairment the model overstates the rise in exposure**: the patients' data imply a clearance of about 17 mL/min at a creatinine clearance of 21, the line 12. Whether to keep the line, adjust it to the label's patients, or wait for that population analysis (Glund 2019) is Steven L. Shafer's decision.
+Glund and colleagues (*J Thromb Haemost* 2019) measured idarucizumab in 347 patients of the RE-VERSE AD study (mean age 77) given 5 g to reverse dabigatran for bleeding or urgent surgery. That analysis is also non-compartmental, and the population model it mentions is unpublished. Its exposures over the first 24 hours, by creatinine clearance, are the check on the line, which was fitted to volunteers:
+
+| Renal function (creatinine clearance) | Measured AUC 0-24 h (nmol·h/L) | Model | Model / measured |
+|---|---|---|---|
+| Normal (80 mL/min or more) | 47,100 | 39,900 | 0.85 |
+| Mild impairment (50 to 80) | 65,000 | 57,100 | 0.88 |
+| Moderate impairment (30 to 50) | 89,700 | 83,200 | 0.93 |
+| Severe impairment (below 30) | 116,000 | 125,400 | 1.08 |
+
+The model is evaluated at creatinine clearances of 99, 65, 40 and 21 mL/min. The label gives the patients' medians as "21 to 99"; the middle two are assumed. The model is within 16% of the patients at every level of renal function. It underpredicts exposure by 15% with normal kidneys, where these older, ill patients cleared less than the volunteers (about 36 against 43 mL/min), and overpredicts it by 8% in severe impairment, below the range the volunteers covered. The label's rises in exposure (38%, 90% and 146% over normal) are the same numbers as ratios; against the patients' own normal group they look larger for the model (43%, 108% and 214%) mainly because that group cleared less. Whether to keep the line or refit it to these patients is Steven L. Shafer's decision.
 
 ### Covariates
 

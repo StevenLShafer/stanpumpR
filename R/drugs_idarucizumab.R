@@ -54,18 +54,39 @@
 # h (measured 5.8-10.8 h).  At the 5 g middle-aged group's 110.4 mL/min the
 # line gives CL 47.2 mL/min (measured 47.1; the label's 47.0).
 #
-# Against the PRAXBIND label (BLA 761025, revised 2/2024, 12.3), which is
-# not the source: exposure (AUC 0-24 h) in 347 PATIENTS rose by 38%, 90% and
-# 146% in mild (CrCl 50-80), moderate (30-50) and severe (below 30 mL/min)
-# renal impairment, "median CrCl 21 to 99 mL/min".  The line gives +45%,
-# +117% and +248% at 65, 40 and 21 mL/min against 99 (the band medians other
-# than 21 and 99 are not printed and are this header's assumption).  So below
-# the studied range the line OVERSTATES the rise in severe impairment: the
-# patients' data imply a clearance of about 17 mL/min at 21 mL/min, the line
-# 12.3.  [decision] for Shafer: keep the line as derived from Glund 2017,
-# or wait for Glund 2019 (the population model of the RE-VERSE AD patients,
-# PMID 31050868, papers/pending-work.csv), which the label's numbers come
-# from.
+# EXTERNAL CHECK, against patients the line was not fitted to: Glund S,
+# Coble K, Gansser D, et al. Pharmacokinetics of idarucizumab and its target
+# dabigatran in patients requiring urgent reversal of the anticoagulant
+# effect of dabigatran.  J Thromb Haemost 2019;17:1319-1328 (RE-VERSE AD,
+# read on the PDF Shafer supplied 2026-11-28).  Also non-compartmental: its
+# Table 1 gives the geometric mean AUC 0-24 h after 5 g in 347 bleeding or
+# surgical patients (mean age 76.6 years) by Cockcroft-Gault category.  The
+# population model it mentions (220 volunteers, 486 patients) is unpublished,
+# so there is no patient model to wait for.  Against it, a 5 g bolus with the
+# line and the shared distribution gives, at an assumed category CrCl of 99,
+# 65, 40 and 21 mL/min (the label, 12.3, prints "median CrCl 21 to 99"; the
+# middle two are this header's assumption):
+#
+#     category (CrCl)    measured AUC0-24    model    model/measured
+#     normal (>= 80)          47 100         39 900        0.85
+#     mild (50-80)            65 000         57 100        0.88
+#     moderate (30-50)        89 700         83 200        0.93
+#     severe (< 30)          116 000        125 400        1.08   (nmol h/L)
+#
+# The measured exposures imply clearances of 36.1, 25.7, 18.1 and 13.5
+# mL/min, against the line's 42.8, 29.5, 19.7 and 12.3.  So the line, fitted
+# to volunteers aged 45-80, is within 16% of the patients at every level of
+# renal function: it underpredicts exposure by 15% with normal kidneys (these
+# patients were older and ill, and cleared less than the volunteers) and
+# overpredicts by 8% in severe impairment, beyond the studied range.  The
+# label's percentages (+38%, +90%, +146% against normal) are these same
+# AUCs as ratios, and look worse against the line (+43%, +108%, +214%) only
+# because the patients' normal group cleared less.  Their Cmax (20 700
+# nmol/L with normal kidneys) was sampled 10-30 min after the second of two
+# infusions up to 15 min apart, so it is not compared with the model's peak.
+# [decision] for Shafer: keep the line, with this check on its help page, or
+# refit it to these patients (which would make the volunteers' fit 15-20%
+# too fast with normal kidneys).
 #
 # DOSE BASIS: grams of idarucizumab, as labelled (5 g, two 2.5 g vials).
 # Glund reports concentrations in nmol/L; they are plotted here in mcg/mL
