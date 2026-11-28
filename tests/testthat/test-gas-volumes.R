@@ -104,16 +104,24 @@ test_that("a closed circuit's oxygen: 0.25 L/min on the flowmeter is 0.233 L/min
   expect_gt(utils::tail(run(0.30)$state$oxygen[, 2], 1), 50)
 })
 
-test_that("the Visualizer shows the flowmeters' flow and counts the agent in the lungs' litres", {
+test_that("the Visualizer shows the machine's flow and vapour, and its amounts balance", {
   DT <- volumeRows(list(0, "sevoflurane", 2), list(0, "oxygen", 2), list(0, "ventilation", 5.7))
   sim <- simulateGases(DT, weight = 70, age = 50, maximum = 60)
   E <- gasDrugEntries(sim, DT, getDrugDefaultsGlobal(), 60, age = 50)
   r <- viewerGasRun(E$sevoflurane, 0, 60)
-  e <- gasFreshGasExpansion(sim$body)
+  # What the clinician set: 2 L/min of 2% for 60 min is 2.4 L of vapour
   expect_equal(unique(r$freshFlow), 2)
-  # 2 L/min x 2% x 60 min = 2.4 L of vapour at the flowmeters, e times it in
-  # the lungs' litres
-  expect_equal(utils::tail(r$delivered, 1), 10 * 2 * e * 2 * 60)
-  # ... and the same mass either way
-  expect_equal(r$greenhouse$kgPerLitre * e, gasGreenhouse("sevoflurane")$kgPerLitre)
+  expect_equal(unique(r$fresh), 2)
+  expect_equal(utils::tail(r$delivered, 1), 10 * 2 * 2 * 60)
+  expect_equal(r$greenhouse$kgPerLitre, gasGreenhouse("sevoflurane")$kgPerLitre)
+  # Every amount is in the machine's litres: the lungs' litres over the
+  # expansion, whatever the altitude
+  expect_equal(gasMachineLitres(sim$body) * gasFreshGasExpansion(sim$body), 1)
+  high <- sim$body; high$altitude <- 5000
+  expect_equal(gasMachineLitres(high), gasMachineLitres(sim$body))
+  # ... so the agent held never exceeds the agent delivered: below the
+  # rebreathing threshold some is vented, never made
+  held <- Reduce(`+`, lapply(names(r$capacity), function(k) r$amountScale * r$capacity[[k]] * r$p[[k]]))
+  expect_true(all(held <= r$delivered + 1e-6))
+  expect_gt(max(held / pmax(r$delivered, 1e-9)), 0.5)
 })

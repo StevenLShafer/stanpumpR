@@ -738,17 +738,18 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
   settings <- lapply(knots, function(k) gasSettingsAt(bySetting, k, deadSpace,
                                                       gasPressureRatio(bodyAt(k)),
                                                       gasFreshGasExpansion(bodyAt(k))))
-  # Fresh gas in the lungs' litres, as the engine takes it and as the amounts
-  # are counted (gasFreshGasExpansion()); `flow` is what the flowmeters read,
-  # for the settings shown
+  # `flow` is what the flowmeters read: the engine takes the fresh gas in the
+  # lungs' litres (gasFreshGasExpansion()), but the Visualizer shows the
+  # setting, and counts every amount of vapour in litres at the machine
+  # (gasMachineLitres(), the run's amountScale), so that the agent delivered
+  # is the flow times the vaporiser's setting, as a clinician reckons it
   expansion <- vapply(knots, function(k) gasFreshGasExpansion(bodyAt(k)), numeric(1))
-  flowInLungs <- vapply(settings, function(s) s$Q, numeric(1))
-  flow <- flowInLungs / expansion
+  flow <- vapply(settings, function(s) s$Q, numeric(1)) / expansion
   fresh <- vapply(settings, function(s) unname(s$Ffgf[[g]]), numeric(1))
   mv <- vapply(settings, function(s) s$MV, numeric(1))
   va <- vapply(settings, function(s) s$VA, numeric(1))
   # mL of vapour a minute: L/min x % / 100 x 1000 mL/L.
-  rate <- 10 * flowInLungs * fresh
+  rate <- 10 * flow * fresh
   i <- findInterval(times + 1e-9, knots)
   deliveredAtKnot <- c(0, cumsum(rate[-length(knots)] * diff(knots)))
   delivered <- deliveredAtKnot[i] + rate[i] * (times - knots[i])
@@ -761,7 +762,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
     category = if (length(category) == 1) category else NA_character_,
     typical = mac, mac = mac,
     units = list(conc = "%", amount = "mL", rate = "mL/min"),
-    amountScale = 10,
+    amountScale = 10 * gasMachineLitres(body),
     patient = list(weight = gr$weight, age = gr$age),
     # The physiology panel; altitude, intubation, temperature and cardiac
     # output as the gas engine ran (its body)
@@ -787,13 +788,7 @@ viewerGasRun <- function(entry, minimum, maximum, category = NA_character_,
                     else vapply(times, function(t) bodyAt(t)$Q_cardiac, 0),
     fresh = fresh[i], freshFlow = flow[i], ventilation = mv[i], alveolarVentilation = va[i],
     delivered = delivered,
-    # kg per litre of vapour as the amounts count it: gasGreenhouse()'s is
-    # per litre at the flowmeters, 20 C, so it is divided by the expansion
-    greenhouse = local({
-      gh <- gasGreenhouse(g)
-      if (!is.null(gh)) gh$kgPerLitre <- gh$kgPerLitre / expansion[1]
-      gh
-    }),
+    greenhouse = gasGreenhouse(g),
     source = "stanpumpR")
 }
 

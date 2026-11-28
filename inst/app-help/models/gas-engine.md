@@ -47,6 +47,8 @@ A litre of dry gas leaving a flowmeter at 20 °C warms to 37 °C, which expands 
 
 Until that date all three were taken litre for litre. The closed circuit's arithmetic came out even, and the alveolar oxygen read about 9 mmHg high on room air (107 mmHg where the alveolar gas equation gives 99, at an alveolar ventilation of 4 L/min), because the oxygen consumed was subtracted as too small a volume. In the equations below, Q is the fresh gas flow in the lungs' litres, 1.128 times the flowmeters' reading at 37 °C and sea level (more at altitude, where the same water vapour is a larger share of the pressure; less in a cold patient, whose lungs warm it less).
 
+None of this changes what you enter or read. The flowmeter and vaporizer settings are shown as you set them, and the Visualizer counts the vapour delivered as flow times setting, in millilitres at the machine: 2 L/min of 2 per cent for an hour is 2.4 L. The conversion happens inside the engine, where a flowmeter's litre meets a litre of ventilation.
+
 The circuit is the ideal circle system. With fresh gas flow Q, minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
 
 ```

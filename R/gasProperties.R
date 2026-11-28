@@ -477,6 +477,32 @@ gasFreshGasExpansion <- function(body)
     (273.15 + temperature) / (273.15 + GAS_FLOWMETER_TEMPERATURE)
 }
 
+#' Litres at the anaesthesia machine per litre in the lungs
+#'
+#' What the Visualizer counts vapour in.  A clinician reads the agent
+#' delivered as fresh gas flow times the vaporiser's setting, a volume at the
+#' machine (dry, \code{GAS_FLOWMETER_TEMPERATURE}, one atmosphere), so the
+#' Visualizer shows every amount of vapour in that volume: the engine's
+#' amounts, counted in the lungs' litres, times this (Steven L. Shafer,
+#' 2026-11-28: "show the flowmeter settings, and keep the actual delivered
+#' concentrations what the user set.  Otherwise clinicians will be confused
+#' and think it is a program bug").  It is the reciprocal of
+#' \code{gasFreshGasExpansion()} at sea level, 0.8867 at 37 C, and does not
+#' depend on the altitude: an amount is a number of molecules, and the
+#' humidity's share of the pressure cancels between the fresh gas's volume and
+#' its partial pressure.
+#'
+#' @param body the gas body
+#' @returns the factor; 1 for a body whose volumes are taken as stated
+#' @keywords internal
+gasMachineLitres <- function(body)
+{
+  if (isTRUE(body$volumesAsStated)) return(1)
+  temperature <- if (is.null(body$temperature)) 37 else body$temperature
+  (GAS_ALVEOLAR_TORR / SEA_LEVEL_PRESSURE) *
+    (273.15 + GAS_FLOWMETER_TEMPERATURE) / (273.15 + temperature)
+}
+
 #' Oxygen consumption as the gas engine's balance takes it
 #'
 #' \code{body$VO2} (L/min STPD) at body temperature, in the engine's unit of

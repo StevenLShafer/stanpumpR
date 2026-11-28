@@ -473,17 +473,18 @@ test_that("a gas run holds the plot's partial pressures, and its capacities are 
                c(lungs = body$V_alveolar, vrg = body$V_brain * sevo$tg_brain,
                  mg = body$V_muscle * sevo$tg_muscle, fg = body$V_fat * sevo$tg_fat))
   expect_equal(r$mac, macForAge(sevo$MAC40, 50))
-  expect_equal(r$amountScale, 10)
+  # mL of vapour at the machine per L of capacity and % (gasMachineLitres())
+  expect_equal(r$amountScale, 10 * gasMachineLitres(getGasBody(70)))
+  expect_equal(r$amountScale, 8.867, tolerance = 1e-4)
   # The settings in force, and the agent delivered: 6 L/min of 2% for 15 min,
-  # then 1 L/min, is 10 x (6 x 2 x 15 + 1 x 2 x 45) = 2700 mL of vapour at the
-  # flowmeters, and that times the expansion in the lungs' litres, in which
-  # the amounts are counted (gasFreshGasExpansion(), 2026-11-28); the flow
-  # shown is the flowmeters' own.
+  # then 1 L/min, is 10 x (6 x 2 x 15 + 1 x 2 x 45) = 2700 mL of vapour, as a
+  # clinician reckons it: the flow and the delivered agent are the machine's,
+  # whatever the engine makes of the fresh gas in the lungs (2026-11-28).
   expect_equal(r$freshFlow[r$t == 600], 6)
   expect_equal(r$freshFlow[r$t == 1200], 1)
   expect_equal(unique(r$fresh), 2)
   expect_equal(unique(r$ventilation), 6)
-  expect_equal(tail(r$delivered, 1), 2700 * gasFreshGasExpansion(getGasBody(70)), tolerance = 1e-9)
+  expect_equal(tail(r$delivered, 1), 2700, tolerance = 1e-9)
 })
 
 test_that("the agent adds up: nothing is vented that was not delivered, and each tissue takes what its blood brings", {
@@ -517,7 +518,7 @@ test_that("the agent adds up: nothing is vented that was not delivered, and each
     for (k in c("vrg", "mg", "fg")) {
       f <- c(vrg = body$f_brain, mg = body$f_muscle, fg = body$f_fat)[[k]]
       fromAmounts <- diff(amount(k)) / dt
-      physiology <- 10 * f * body$Q_cardiac * lb * (mid(r$p$lungs) - mid(r$p[[k]]))
+      physiology <- r$amountScale * f * body$Q_cardiac * lb * (mid(r$p$lungs) - mid(r$p[[k]]))
       expect_lt(max(abs(fromAmounts - physiology)[quiet]), 0.01 * max(abs(physiology)))
     }
   }
@@ -549,7 +550,7 @@ test_that("the blood: the mixed venous gradient carries the uptake, at the cardi
     dt <- diff(r$t) / 60
     mid <- function(v) (v[-1] + v[-n]) / 2
     taken <- diff(amount("vrg") + amount("mg") + amount("fg")) / dt
-    gradient <- 10 * r$cardiacOutput * lb * (mid(r$p$lungs) - mid(r$venous))
+    gradient <- r$amountScale * r$cardiacOutput * lb * (mid(r$p$lungs) - mid(r$venous))
     quiet <- vapply(r$t[-n] / 60, function(m) all(m < c(0, 15) | m > c(0, 15) + 5), logical(1))
     expect_lt(max(abs(taken - gradient)[quiet]), 0.01 * max(abs(gradient)))
   }
@@ -564,10 +565,7 @@ test_that("the blood: the mixed venous gradient carries the uptake, at the cardi
   expect_equal(unique(r$alveolarVentilation), 6 * (1 - GAS_DEAD_SPACE_FRACTION))
   # And the agent's greenhouse effect travels with it.
   expect_equal(r$greenhouse$gwp100, 130)
-  # (per litre in the lungs: the mass per litre at the flowmeters, 20 C,
-  # over the expansion)
-  expect_equal(r$greenhouse$kgPerLitre, gasMolecularWeight("sevoflurane") / 1000 / GAS_VAPOUR_MOLAR_VOLUME /
-                 gasFreshGasExpansion(getGasBody(70)))
+  expect_equal(r$greenhouse$kgPerLitre, gasMolecularWeight("sevoflurane") / 1000 / GAS_VAPOUR_MOLAR_VOLUME)
 })
 
 test_that("GasMan's own dead space of 0 makes the alveolar ventilation the row's", {
@@ -580,7 +578,7 @@ test_that("a gas run from Min time counts the agent delivered from time 0", {
   E <- gasPlot(WASHIN, 60)
   r <- viewerGasRun(E$sevoflurane, 10, 60)
   expect_equal(r$t[1], 600)
-  expect_equal(r$delivered[1], 10 * 6 * 2 * 10 * gasFreshGasExpansion(getGasBody(70)), tolerance = 1e-9)
+  expect_equal(r$delivered[1], 10 * 6 * 2 * 10, tolerance = 1e-9)
 })
 
 test_that("GasMan's semi-closed circuit holds agent, and is counted", {
