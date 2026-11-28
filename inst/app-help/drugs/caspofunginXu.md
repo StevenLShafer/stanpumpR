@@ -8,7 +8,7 @@ This is one of [two caspofungin models](help:drugs/caspofungin). stanpumpR uses 
 
 Doses are in mg of caspofungin, as CANCIDAS is labelled: a 50 mg vial holds caspofungin acetate equivalent to 50 mg of caspofungin. The label forbids an intravenous bolus, so a dose is entered as a rate and stopped after an hour. A rate runs until another row changes it, so a one-hour infusion is two rows: the rate at its start and 0 at 60 minutes. Children are dosed per m² (50 mg/m²/hr at 0, then 0 mg/m²/hr at 60) and adults as a total (50 mg/hr at 0, then 0 mg/hr at 60).
 
-**Not applied.** Xu found ECMO enlarged the central volume (a coefficient of 18.2, in a form the paper does not state, from four children). The Patient Profile has no ECMO field, so the curve is that of a child not on ECMO.
+**Not applied.** Xu found ECMO enlarged the central volume (a coefficient of 18.2, from four children, which the discussion calls an 18.2-fold increase in V1; the paper gives no equation for how it enters the model). The Patient Profile has no ECMO field, so the curve is that of a child not on ECMO.
 
 ### Comparison with the label
 

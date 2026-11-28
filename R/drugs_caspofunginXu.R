@@ -41,8 +41,9 @@
 # model and every adult received it.  Yang 2022 (step covariates at 70 kg and
 # 35 g/L albumin) was set aside on Shafer's decision.
 #
-# NOT APPLIED.  ECMO on V1 (18.2, a form the paper does not state; four
-# patients; the card's [check]): the Patient Profile has no ECMO field, so the
+# NOT APPLIED.  ECMO on V1 (18.2, which the discussion calls an "18.2-fold
+# increase in V1" but no equation states; four patients; the card's
+# [check]): the Patient Profile has no ECMO field, so the
 # curve is a child's without ECMO.
 #
 # BODY SIZE.  The model carries its own body-surface-area covariate on every
