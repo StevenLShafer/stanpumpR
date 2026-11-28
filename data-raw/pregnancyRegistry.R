@@ -3146,6 +3146,28 @@ registry <- rbind(
       source_url = "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=dc5241be-4b85-4f04-8553-9819603373b8",
       to_obtain = "",
       notes = "Micafungin is more than 99% bound to albumin and cleared by metabolism (arylsulfatase, then catechol-O-methyltransferase) and excreted mainly in the faeces, not by the kidneys, so the rise in filtration of pregnancy does not reach it. The fall in albumin in pregnancy may raise its total clearance, as a low albumin did in Jullien 2017's ICU patients; nothing is quantified."),
+  row("teicoplanin", "Antibiotics", "applied",
+      finding = "No pharmacokinetic study of teicoplanin in pregnancy was found (PubMed, 2026-11-27: teicoplanin pharmacokinetics pregnancy, 3 records, none a pharmacokinetic study). Teicoplanin is predominantly cleared by renal elimination (Abdul-Aziz 2020, read in full).",
+      applied = "eGFR x 1.5 when the serum creatinine is left blank (physiological: the rise in glomerular filtration of late pregnancy), on the adult model (Kim 2024); the children's model (Zhang 2020) does not read it.",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = 1.5,
+      trimester = "third", comparator = NA,
+      design = "physiological", n = NA, confidence = "low",
+      evidence_read = "abstract",
+      source = "Ansari J, Carvalho B, Shafer SL, Flood P. Anesth Analg 2016;122:786-804 (the rise in glomerular filtration of pregnancy); Abdul-Aziz MH et al. Intensive Care Med 2020;46:1127-1153 (renal elimination)",
+      source_url = "https://doi.org/10.1213/ANE.0000000000001143",
+      to_obtain = "",
+      notes = "Teicoplanin has no US label. Its high albumin binding (over 90%) means the fall in albumin of pregnancy may change its total concentrations; nothing is quantified."),
+  row("teicoplaninZhang", "Antibiotics", "not_applicable",
+      finding = "A children's model (Zhang 2020, 0.2-14 years). No pregnancy data.",
+      applied = "",
+      cl_factor = NA, v_factor = NA, f_factor = NA, gfr_factor = NA,
+      trimester = NA, comparator = NA,
+      design = "review", n = NA, confidence = "high",
+      evidence_read = "none",
+      source = "",
+      source_url = "",
+      to_obtain = "",
+      notes = ""),
   row("clozapine", "Antipsychotics", "unquantified",
       finding = "Westin 2018 (Clin Pharmacol Ther 103:477-484, Norwegian TDM data linked to the birth registry): clozapine in 4 pregnancies of 4 women, 10 measurements in pregnancy and 114 at baseline, dose-adjusted to 300 mg/day: baseline 418.6 ng/mL, week 34 322.1 ng/mL (-23%, 95% CI -46% to +9%), no p-value with fewer than 10 pregnancies. Case reports go the other way (Tsukiji 2025: concentration-to-dose ratio 2.35 the day before delivery against 0.79 at 14 months postpartum; Aoki 2024: concentrations rose through pregnancy).",
       applied = "",
@@ -3794,7 +3816,9 @@ renamed <- c(carboplatinDuffull = "carboplatin", doxorubicinJoerger = "doxorubic
              # the ciprofol group's candidates (2026-11-26)
              ciprofolLiu = "ciprofol", ciprofolWang = "ciprofol",
              # the micafungin group's candidates (2026-11-27)
-             micafunginJullien = "micafungin", micafunginWasmann = "micafungin")
+             micafunginJullien = "micafungin", micafunginWasmann = "micafungin",
+             # the teicoplanin group's adult candidates (2026-11-27)
+             teicoplaninKim = "teicoplanin")
 copies <- registry[match(renamed, registry$drug), ]
 copies$drug <- names(renamed)
 registry <- rbind(registry, copies)
