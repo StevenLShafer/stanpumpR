@@ -983,6 +983,15 @@ simCpCe <- function(dose, events, PK, maximum, plotRecovery)
       results$"Effect Site" <- PK$endogenousActivity + results$"Effect Site"
   }
 
+  # The factor VIII a VWF concentrate protects (R/vwfFactorVIII.R), from the
+  # VWF:RCo the patient now has, drawn as the drug its block names
+  if (!is.null(PK$factorVIIIResponse))
+    metaboliteSeries <- data.frame(
+      Time = results$Time,
+      Cp   = vwfFactorVIIISeries(results$Time, results$Plasma, PK$factorVIIIResponse),
+      Ce   = NA_real_
+    )
+
   out <- finishDrugSeries(results, PK, maximum, plotRecovery)
   out$wide             <- results
   out$metaboliteSeries <- metaboliteSeries

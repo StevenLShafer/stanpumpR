@@ -70,7 +70,7 @@ API_PATIENT_FIELDS <- c("weight", "height", "age", "sex", "weightUnit", "heightU
                         # lists together)
                         "factorVIIIBaseline", "factorIXBaseline",
                         "fibrinogenBaseline", "igGBaseline",
-                        "antithrombinBaseline")
+                        "antithrombinBaseline", "vonWillebrandFactorBaseline")
 API_OUTPUT_FIELDS  <- c("times", "interval", "recovery", "format", "layout")
 API_OPTIONS_FIELDS <- c("allowIllicitDrugs", "antiseizureInteractions", "unknownDoseFields")
 # What a dose-row field the service does not read does to the request: refuse
