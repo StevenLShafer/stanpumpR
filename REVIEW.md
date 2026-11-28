@@ -11,9 +11,16 @@ private paper archive, not in this repository; this file is unrelated to it.)
 
 Review by commenting. Do not push commits, open fix pull requests or change the branch under
 review, and do not approve or request changes: nothing here lets a reviewer approve or merge
-(Steven L. Shafer's rule for every automated reviewer, as for CodeRabbit). Auto-Fix should be
-off for this repository; that is an organisation setting in Devin (Settings > Devin >
-Pull requests), not something this file can enforce.
+(Steven L. Shafer's rule for every automated reviewer, as for CodeRabbit). The rule behind it is
+that **only Claude writes code** in this repository.
+
+So Auto-Fix must be off -- and it is set in TWO places: the organisation default
+(Settings > Devin > Pull requests) and each session owner's OWN personal setting, which
+overrides that default. Both have to be checked, and neither is something this file can
+enforce. Checking only the organisation default is not enough: Auto-Fix was found ON and
+turned off on 2026-11-27. CodeRabbit raised the personal override while reviewing the pull
+request that added this file (1016), which merged before the point could be applied; Shafer
+then checked, found Auto-Fix live, and turned it off.
 
 ## Ignore
 
@@ -26,5 +33,14 @@ and the digest pipeline, `test-digest-cards.R` and a human reading each batch's
 budget is spent on code. A pull request that changes only files under `papers/digests/`
 needs no review at all. A pull request that also changes anything else is reviewed for
 the rest of its files as usual.
+
+**Silence on GitHub does not show this is working.** A digests-only pull request with no
+comment on it is equally consistent with the exclusion being honoured and with a review
+having run, cost its budget, and found nothing worth saying -- and budget is the whole point
+of the exclusion, so the absence of a comment is not the thing to measure. Check the
+reviewer's own activity or usage for that pull request instead. (Devin raised this about
+itself while reviewing 1016, which merged before the point could be applied. CodeRabbit
+reports a skip explicitly, posting "Review skipped -- path filters", so for CodeRabbit the
+comment itself is the evidence; Devin posts nothing either way.)
 
 Everything else is reviewed.
