@@ -1,11 +1,10 @@
----
-file: BK_9781108565011-ch17-oxygen-delivery-and-demand.pdf
+---file: BK_9781108565011-ch17-oxygen-delivery-and-demand.pdf
 pmid: none
 doi: 10.1017/9781108565011.020
-citation: "Chapter 17, Oxygen Delivery and Demand, pp 74-76, in a Cambridge University Press physiology-for-anaesthesia textbook (ISBN 9781108565011), Section 2 Respiratory Physiology. Authors and editors not on the 3 archived pages."
+citation: 'Chapter 17, Oxygen Delivery and Demand, Section 2 Respiratory Physiology, printed pp. 74-76. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: other
 drugs: []
-source_read: "text layer (all 3 PDF pages, printed pp 74-76); no page image rendered"
+source_read: text layer (all 3 PDF pages, printed pp 74-76); no page image rendered
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

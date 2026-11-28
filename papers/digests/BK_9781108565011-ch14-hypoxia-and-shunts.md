@@ -1,15 +1,14 @@
----
-file: BK_9781108565011-ch14-hypoxia-and-shunts.pdf
+---file: BK_9781108565011-ch14-hypoxia-and-shunts.pdf
 doi: 10.1017/9781108565011.017
-citation: "Chapter 14, Hypoxia and Shunts. In: Section 2 Respiratory Physiology, Cambridge University Press (ISBN 9781108565011), pp. 63-67. Downloaded from Cambridge Core, Stanford University Libraries, 27 Nov 2026."
+citation: 'Chapter 14, Hypoxia and Shunts, Section 2 Respiratory Physiology, printed pp. 63-67. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer, all 5 pages; Figure 14.2 axes and the shunt-equation typography (garbled in the text layer) not checked on rendered images; no number from this chapter is used by the code as a parameter."
+source_read: text layer, all 5 pages; Figure 14.2 axes and the shunt-equation typography (garbled in the text layer) not checked on rendered images; no number from this chapter is used by the code as a parameter.
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable
 open_questions:
-  - "[source] The book's title and authors are not on the five archived pages (only the chapter header and the Cambridge Core download line). The authors and edition would settle the citation; the context file has no pubmed metadata and no repo location."
+- '[source] RESOLVED 2026-11-27. The book''s title and authors are not printed on the archived chapter pages, which carry only the chapter header and the Cambridge Core download line. They were supplied from the publisher''s own catalogue entry for ISBN 9781108565011: Chambers D, Huang C, Matthews G, Basic Physiology for Anaesthetists, 2nd edition, Cambridge University Press, 31 July 2019, doi 10.1017/9781108565011. Every chapter card of this book now carries that citation.'
 ---
 
 # Book chapter 14: Hypoxia and shunts (respiratory physiology primer)

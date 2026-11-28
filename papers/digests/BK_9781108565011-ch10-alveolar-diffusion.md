@@ -1,11 +1,10 @@
----
-file: BK_9781108565011-ch10-alveolar-diffusion.pdf
+---file: BK_9781108565011-ch10-alveolar-diffusion.pdf
 pmid: none
 doi: 10.1017/9781108565011.013
-citation: "Chapter 10, Alveolar Diffusion. In: Section 2 Respiratory Physiology, Cambridge University Press (ISBN 9781108565011), printed pp 40-44; textbook chapter, authors not named in the PDF."
+citation: 'Chapter 10, Alveolar Diffusion, Section 2 Respiratory Physiology, printed pp. 40-44. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer, all 5 pages; figures 10.1-10.3 are schematics with no numbers beyond axis ticks; no page images rendered"
+source_read: text layer, all 5 pages; figures 10.1-10.3 are schematics with no numbers beyond axis ticks; no page images rendered
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

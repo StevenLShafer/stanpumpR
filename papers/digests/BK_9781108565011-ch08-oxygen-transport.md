@@ -1,11 +1,10 @@
----
-file: BK_9781108565011-ch08-oxygen-transport.pdf
+---file: BK_9781108565011-ch08-oxygen-transport.pdf
 pmid: none
 doi: 10.1017/9781108565011.011
-citation: "Chapter 8, Oxygen Transport. In: Section 2 Respiratory Physiology, Cambridge University Press 2019 (ISBN 9781108565011), printed pp 30-36; textbook chapter, authors not named in the PDF."
+citation: 'Chapter 8, Oxygen Transport, Section 2 Respiratory Physiology, printed pp. 30-36. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer (PDF pages 1-7); no page images rendered"
+source_read: text layer (PDF pages 1-7); no page images rendered
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

@@ -1,11 +1,13 @@
----
-file: BK_9781108565011-ch22-control-of-ventilation.pdf
+---file: BK_9781108565011-ch22-control-of-ventilation.pdf
 pmid: null
 doi: 10.1017/9781108565011.025
-citation: "Control of Ventilation (Chapter 22), in a Cambridge University Press respiratory-physiology exam-revision text (book ISBN 9781108565011; Section 2 Respiratory Physiology), pp. 93-96. Authors and book title not in the extracted text."
+citation: 'Chapter 22, Control of Ventilation, Section 2 Respiratory Physiology, printed pp. 93-96. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: other
-drugs: [opioids, anaesthetic agents, doxapram]
-source_read: "text layer (all 4 PDF pages; Figure 22.1 axis labels scrambled in the text layer, no figure numbers used)"
+drugs:
+- opioids
+- anaesthetic agents
+- doxapram
+source_read: text layer (all 4 PDF pages; Figure 22.1 axis labels scrambled in the text layer, no figure numbers used)
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

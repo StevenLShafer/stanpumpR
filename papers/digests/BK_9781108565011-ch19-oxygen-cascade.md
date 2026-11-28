@@ -1,11 +1,10 @@
----
-file: BK_9781108565011-ch19-oxygen-cascade.pdf
+---file: BK_9781108565011-ch19-oxygen-cascade.pdf
 pmid: null
 doi: 10.1017/9781108565011.022
-citation: "Oxygen Cascade (Chapter 19), in a Cambridge University Press respiratory-physiology exam-revision text (book ISBN 9781108565011; Section 2 Respiratory Physiology), pp. 80-81. Authors and book title not in the extracted text."
+citation: 'Chapter 19, Oxygen Cascade, Section 2 Respiratory Physiology, printed pp. 80-81. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: other
 drugs: []
-source_read: "text layer (both PDF pages; Figure 19.1 labels are scrambled in the text layer, so values below are taken from the equations in the prose)"
+source_read: text layer (both PDF pages; Figure 19.1 labels are scrambled in the text layer, so values below are taken from the equations in the prose)
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

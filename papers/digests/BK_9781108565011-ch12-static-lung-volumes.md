@@ -1,16 +1,15 @@
----
-file: BK_9781108565011-ch12-static-lung-volumes.pdf
+---file: BK_9781108565011-ch12-static-lung-volumes.pdf
 pmid: none
 doi: 10.1017/9781108565011.015
-citation: "Chapter 12, Static Lung Volumes, in a Cambridge University Press anaesthesia physiology question-and-answer text (ISBN 9781108565011), Section 2 Respiratory Physiology, printed pp. 50-55. Authors and edition not shown on the chapter pages."
+citation: 'Chapter 12, Static Lung Volumes, Section 2 Respiratory Physiology, printed pp. 50-55. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: other
 drugs: []
-source_read: "text layer for all 6 PDF pages; rendered page images read for PDF pages 1-2 (printed 50-51), which hold the typical volumes and capacities. PDF pages 3-6 (printed 52-55: pre-oxygenation figures, gas dilution, plethysmography, N2 washout, closing capacity) text layer only."
+source_read: 'text layer for all 6 PDF pages; rendered page images read for PDF pages 1-2 (printed 50-51), which hold the typical volumes and capacities. PDF pages 3-6 (printed 52-55: pre-oxygenation figures, gas dilution, plethysmography, N2 washout, closing capacity) text layer only.'
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: partly-verified
 open_questions:
-  - "[decision] R/gasProperties.R:269 sets alveolar gas volume (FRC) to 2.5 L at 70 kg (GasMan's standard, comment at :212); this chapter gives FRC 3000 mL for a 70-kg man standing (PDF p.1, Fig 12.1) and about 2000 mL supine (printed p.52 text layer; PDF p.2 says supine lowers FRC by 1000 mL). The engine's patient is anaesthetised and supine, so which posture's FRC (and whether anaesthesia's further fall) should the default represent? The chapter gives no anaesthetised value."
+- '[decision] R/gasProperties.R:269 sets alveolar gas volume (FRC) to 2.5 L at 70 kg (GasMan''s standard, comment at :212); this chapter gives FRC 3000 mL for a 70-kg man standing (PDF p.1, Fig 12.1) and about 2000 mL supine (printed p.52 text layer; PDF p.2 says supine lowers FRC by 1000 mL). The engine''s patient is anaesthetised and supine, so which posture''s FRC (and whether anaesthesia''s further fall) should the default represent? The chapter gives no anaesthetised value.'
 ---
 
 # Static Lung Volumes (textbook chapter 12)

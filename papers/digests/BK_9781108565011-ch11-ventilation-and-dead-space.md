@@ -1,16 +1,15 @@
----
-file: BK_9781108565011-ch11-ventilation-and-dead-space.pdf
+---file: BK_9781108565011-ch11-ventilation-and-dead-space.pdf
 pmid: none
 doi: 10.1017/9781108565011.014
-citation: "Chapter 11, Ventilation and Dead Space. In: Section 2 Respiratory Physiology, Cambridge University Press (ISBN 9781108565011), printed pp 45-49; textbook chapter, authors not named in the PDF."
+citation: 'Chapter 11, Ventilation and Dead Space, Section 2 Respiratory Physiology, printed pp. 45-49. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer, all 5 pages; PDF pages 1 and 4 (printed 45 and 48) rendered and read, confirming 150 mL, 2 mL/kg, 7 mL/kg, VD/VT 0.2-0.35 and the Bohr equation"
+source_read: text layer, all 5 pages; PDF pages 1 and 4 (printed 45 and 48) rendered and read, confirming 150 mL, 2 mL/kg, 7 mL/kg, VD/VT 0.2-0.35 and the Bohr equation
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable
 open_questions:
-  - "[decision] The gas engine's dead-space fraction of 0.3 of minute ventilation (R/gasProperties.R:385) is attributed to Nunn and Hill 1960 in docs/gas-engine-expansion-mathematics.md:35. This chapter gives VD/VT 0.2-0.35 (PDF p4, printed 48), so 0.3 is inside it, but it is not the repo's source. Whether to record it as corroboration is for Shafer."
+- '[decision] The gas engine''s dead-space fraction of 0.3 of minute ventilation (R/gasProperties.R:385) is attributed to Nunn and Hill 1960 in docs/gas-engine-expansion-mathematics.md:35. This chapter gives VD/VT 0.2-0.35 (PDF p4, printed 48), so 0.3 is inside it, but it is not the repo''s source. Whether to record it as corroboration is for Shafer.'
 ---
 
 # Ventilation and Dead Space (textbook chapter 11)

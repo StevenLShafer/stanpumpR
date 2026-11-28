@@ -1,9 +1,8 @@
----
-file: BK_9781108565011-ch15-ventilation-perfusion-relationships.pdf
-citation: "Chapter 15: Ventilation-Perfusion Relationships. In: Section 2, Respiratory Physiology (book DOI prefix 10.1017/9781108565011; chapter DOI 10.1017/9781108565011.018). Cambridge University Press; printed pp. 68-70."
+---file: BK_9781108565011-ch15-ventilation-perfusion-relationships.pdf
+citation: 'Chapter 15, Ventilation-Perfusion Relationships, Section 2 Respiratory Physiology, printed pp. 68-70. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer (all 3 PDF pages = printed pp. 68-70); no page images rendered, none needed as no number in the chapter is used by stanpumpR (Figure 15.1 plot not read)"
+source_read: text layer (all 3 PDF pages = printed pp. 68-70); no page images rendered, none needed as no number in the chapter is used by stanpumpR (Figure 15.1 plot not read)
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

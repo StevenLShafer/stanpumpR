@@ -1,9 +1,8 @@
----
-file: BK_9781108565011-ch26-anaesthesia-and-the-lung.pdf
-citation: "Chapter 26: Anaesthesia and the Lung. In: Section 2, Respiratory Physiology (book DOI prefix 10.1017/9781108565011; chapter DOI 10.1017/9781108565011.029). Cambridge University Press; printed pp. 107-110."
+---file: BK_9781108565011-ch26-anaesthesia-and-the-lung.pdf
+citation: 'Chapter 26, Anaesthesia and the Lung, Section 2 Respiratory Physiology, printed pp. 107-110. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer (all 4 PDF pages = printed pp. 107-110); no page images rendered, none needed as the chapter contains no tables or numbers used by stanpumpR"
+source_read: text layer (all 4 PDF pages = printed pp. 107-110); no page images rendered, none needed as the chapter contains no tables or numbers used by stanpumpR
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable

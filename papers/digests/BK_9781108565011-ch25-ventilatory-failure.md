@@ -1,11 +1,10 @@
----
-file: BK_9781108565011-ch25-ventilatory-failure.pdf
+---file: BK_9781108565011-ch25-ventilatory-failure.pdf
 pmid: none
 doi: 10.1017/9781108565011.028
-citation: "Chapter 25: Ventilatory Failure. In: Section 2, Respiratory Physiology, of a Cambridge University Press textbook (ISBN 9781108565011); printed pp. 104-106. Authors and book title are not on the three archived pages."
+citation: 'Chapter 25, Ventilatory Failure, Section 2 Respiratory Physiology, printed pp. 104-106. In: Chambers D, Huang C, Matthews G. Basic Physiology for Anaesthetists. 2nd edition. Cambridge: Cambridge University Press, 2019. ISBN 9781108565011, doi 10.1017/9781108565011.'
 kind: review
 drugs: []
-source_read: "text layer, all 3 PDF pages (no page images rendered; the card records no number the repo uses)"
+source_read: text layer, all 3 PDF pages (no page images rendered; the card records no number the repo uses)
 digest_by: Claude (unattended digest_run.py), 2026-11-27
 checked_against: stanpumpR master d7801725
 verification: not-applicable
