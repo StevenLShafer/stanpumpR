@@ -14,6 +14,8 @@ test_that("every drug that can be dosed has a category the menu knows", {
                   "irinotecanSN38", "cisplatinBound", "gemcitabineDFDU", "capecitabine5FU",
                   "norclozapine", "doxorubicinLiposomalFree", "ACT333679", "M6SUZ",
                   "aprocitentan", "colistin", "MEGX", "norpethidine", "PPX", "OR1896",
+                  # the factor VIII a VWF concentrate protects (R/vwfFactorVIII.R)
+                  "factorVIIIvwf",
                   # the components of a combination product, given only in it
                   # (R/combination-products.R)
                   "artemether", "dihydroartemisinin", "lumefantrine", "ceftolozane",
