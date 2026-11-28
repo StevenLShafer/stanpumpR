@@ -29,6 +29,16 @@ pipeline moves originals to the Recycle Bin and logs them (`_build\recycled_log.
 trash a file in it by hand, with one exception: renaming a "needs a look" PDF to `PMID_<pmid>.pdf`
 (step 4), which is the manual filing the pipeline asks for.
 
+**The nlmixr2lib library is off limits to this skill and to the whole pipeline** (Steven L. Shafer, 2026-11-28). Its
+package, model files, vignettes and any copy or extract of them are never uploaded into
+`stanpumpRPapers`, filed, OCR'd, counted into the spreadsheet, queued or digested, and they never get
+a card. If one turns up in Downloads, leave it there and say so in the report (step 8); do not file
+it, even by hand. nlmixr2lib is used only by the repository's own cross-check
+(`data-raw/nlmixr2libCrossCheck.R`, `docs/nlmixr2lib/`), outside the archive. A drug or a reference
+of interest found through it is handled as a new drug or a new manuscript by the usual route: the
+paper itself is obtained from its publisher, under its own PMID, and goes through this pipeline
+like any other.
+
 ## 0. Is this a question, or a run?
 
 **A question about the archive is answered WITHOUT running anything.** Totals, what still needs a

@@ -11,6 +11,8 @@ The numbers themselves belong to the **authors of each paper**, who are named in
 
 **stanpumpR uses nlmixr2lib's data only, never its code.** `data-raw/nlmixr2libCrossCheck.R` parses the model files as text: it reads only literal values, refuses any other expression, and never sources or runs a file. No nlmixr2lib code is copied into stanpumpR. A number nlmixr2lib transcribed never enters a stanpumpR model directly. It is a lead, and it is read in the paper itself before anything changes (`AGENTS.md`). Where nlmixr2lib leads to a paper that becomes a stanpumpR model, that model's header names nlmixr2lib as how the paper was found.
 
+**nlmixr2lib never enters the paper archive** (Steven L. Shafer, 2026-11-28). Its package, model files and any extract of them are never uploaded into `stanpumpRPapers`, filed or digested, by the Paper Management session or the pipeline. A drug or a reference of interest found here is handled as a new drug or a new manuscript by the usual route: the paper is obtained from its publisher under its own PMID and goes through the pipeline like any other (`papers/README.md`, *nlmixr2lib never gets here*).
+
 ## What it is for
 
 There are three questions:
