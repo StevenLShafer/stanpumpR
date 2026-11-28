@@ -79,20 +79,26 @@
 # as a parallel system that takes only intravenous doses (routes = IV), as
 # meloxicam's ANJESO fit does; the SC system takes only SC doses.  The two
 # populations differ (children with autoinflammatory disease, SC, apparent;
-# adults after subarachnoid haemorrhage, IV, absolute): at 70 kg Urien's
-# CL/F is 6.24 L/h against Ogungbenro's 7.86 L/h, so with the label's SC
-# bioavailability of 95% the two clearances are within a quarter of each
-# other.  The help page says the IV source is subarachnoid haemorrhage, not
+# adults after subarachnoid haemorrhage, IV, absolute): for the 70 kg
+# reference man Urien's CL/F is 6.24 L/h, a systemic 5.93 L/h with the
+# label's SC bioavailability of 95%, against this model's 8.72 L/h (Ogungbenro's
+# 7.86 anchored at Galea's cohort), a third lower.  The help page says the IV source is subarachnoid haemorrhage, not
 # sepsis.
 #
-# BODY SIZE ANCHOR (intravenous): Ogungbenro prints no demographics; those
-# of 25 of its 31 patients are in Galea 2011 (J Cereb Blood Flow Metab,
-# PMID 20628399, not in the archive, papers/pending-work.csv), and
-# Gueorguieva's other 6 were a mean 51 years and 70 kg (2 men, 6 women
-# recruited, of whom 6 were fitted).  So the fixed values are anchored at
-# the 70 kg reference man and scaled by pkSizeFactors() (volumes by $volume,
-# clearances by $clearance); with the switch off they are the published
-# values whatever the patient.
+# BODY SIZE ANCHOR (intravenous): the fixed values are anchored at the
+# cohort (Shafer's rule of 2026-11-18, docs/weight-adjustment.md).  Ogungbenro
+# prints no demographics; Galea 2011 (J Cereb Blood Flow Metab 31:439-447,
+# PMID 20628399, read on the PDF) gives those of 25 of its 31 patients: 7 men
+# and 18 women, mean 53 years (37-76), mean 73.4 kg (58-110), Salford and
+# Cambridge, December 2007 to December 2008 (Table 1 and the text).  No height
+# is printed: each sex's is NCD-RisC's mean height at 18 for the United
+# Kingdom, birth cohort 1955 (2008 less 53; NCD Risk Factor Collaboration,
+# eLife 2016;5:e13410, the country file: 175.78 cm for men, 162.73 for
+# women), less the 0.2 cm (men) and 0.3 cm (women) a cohort loses per decade
+# after 18, 175.1 and 161.7 cm.  Gueorguieva's other 6 (a mean 51 years and
+# 70 kg, the sexes of the 6 fitted not printed) are left out; Galea's 25 are
+# 81% of the fit.  Volumes take $volume and clearances $clearance; with the
+# switch off the values are the published ones whatever the patient.
 #
 # PREGNANCY: no pharmacokinetic study (inst/extdata/pregnancyRegistry.csv).
 # Clearance is largely renal, but the model has no renal term to carry the rise
@@ -112,16 +118,30 @@
 # inside its range (sparse sampling in the source, mostly at the trough).
 # Neither is corrected.
 #
+# CHECKS (intravenous), sepsis: Fisher 1994 (Crit Care Med 22:12-21, PMID
+# 8124953, read on the page images), 99 adults with sepsis syndrome, mean 58
+# years and about 71 kg, given 100 mg IV then 17, 67 or 133 mg/h for 72 h:
+# mean plasma concentrations during the infusion 3540, 14800 and 25200 ng/mL
+# (Results), so a clearance (rate / concentration, as the paper estimates it)
+# of 4.8, 4.5 and 5.3 L/h, 0.52-0.61 of this model's 8.72 L/h for the 70 kg
+# reference man (the treated groups' mean weights 68-71 kg).  The
+# paper finds the clearance correlated with an estimated creatinine clearance
+# (p < .001, r2 = .51) but prints no equation (15 of its 74 treated
+# patients had acute renal dysfunction at entry, Table 4), so no renal term
+# follows from it.  The help page
+# says that in sepsis the concentration may run higher than drawn.
+#
 # CHECKS (intravenous): Yang 2003 (PMID 12844139, read on the PDF), 12
 # healthy men (median 82 kg) given 1 mg/kg IV, was not fitted here: its Table
-# III gives CL 137 mL/min (8.22 L/h), Vc 3.32 L and Vss 8.86 L; this model at
-# 70 kg gives 7.86 L/h, 5.74 L and 9.30 L.  Clearance, the one real
-# parameter, agrees to 4%; the central volume of a later, earlier-sampled
-# study is smaller, as expected.  At 70 kg the half-lives are 0.46 and 4.2 h
+# III gives CL 137 mL/min (8.22 L/h), Vc 3.32 L and Vss 8.86 L; this model
+# for the 70 kg reference man gives 8.72 L/h, 6.60 L and 10.7 L.  Clearance,
+# the one real parameter, agrees to 6%; the central volume of a later,
+# earlier-sampled study is smaller, as expected.  The half-lives are 0.48 and
+# 4.3 h
 # (Yang's terminal 2.64 h).  Gueorguieva 2008 prints no plasma concentrations in
 # its text, only that the plasma steady state was reached quickly; the
-# model's steady state for 100 mg then 2 mg/kg/h at 70 kg is 140 mg/h / 7.86
-# L/h = 17.8 mcg/mL.  Renal function, again, is not a covariate: Gueorguieva's
+# model's steady state for 100 mg then 2 mg/kg/h in the 70 kg reference man
+# is 140 mg/h / 8.72 L/h = 16.0 mcg/mL.  Renal function, again, is not a covariate: Gueorguieva's
 # one patient with renal impairment cleared 1.41 L/h against the others'
 # mean 6.96, and was fitted apart.
 #
@@ -146,6 +166,11 @@ ANAKINRA_IV_CL  <- 7.86     # L/h
 ANAKINRA_IV_V1  <- 5.74     # L
 ANAKINRA_IV_CLD <- 0.65     # L/h
 ANAKINRA_IV_V2  <- 3.56     # L
+# Galea 2011's 25 patients (see BODY SIZE ANCHOR): 7 men and 18 women, 73.4 kg,
+# 53 years, NCD-RisC's UK heights for the birth cohort 1955 less the loss to 53
+ANAKINRA_IV_COHORT <- list(groups = list(
+  list(weight = 73.4, height = 175.1, age = 53, men = 7, women = 0),
+  list(weight = 73.4, height = 161.7, age = 53, men = 0, women = 18)))
 
 #' Anakinra pharmacokinetics (subcutaneous)
 #'
@@ -175,7 +200,8 @@ anakinra <- function(weight, height, age, sex, adjustToFFM = TRUE)
 
   # Intravenous doses: Ogungbenro 2016 at the reference man, scaled
   ivSize <- pkSizeFactors(weight, height, age, sex, adjustToFFM,
-                          legacyVolume = 1, legacyClearance = 1)
+                          legacyVolume = 1, legacyClearance = 1,
+                          cohort = do.call(cohortSizeFactors, ANAKINRA_IV_COHORT))
   ivSet <- list(
     v1 = ANAKINRA_IV_V1 * ivSize$volume, v2 = ANAKINRA_IV_V2 * ivSize$volume, v3 = 1,
     cl1 = ANAKINRA_IV_CL / 60 * ivSize$clearance,
@@ -188,8 +214,8 @@ anakinra <- function(weight, height, age, sex, adjustToFFM = TRUE)
     "V/F 2.581 x weight^0.76 L, ka 0.38 /h; used at every age as the only ",
     "population model for subcutaneous doses; no renal term (normal renal function). ",
     "Intravenous doses: Ogungbenro 2016 (31 adults with subarachnoid haemorrhage), ",
-    "two compartments, CL 7.86 L/h, V1 5.74 L, CLD 0.65 L/h, V2 3.56 L at the 70 kg ",
-    "reference, scaled to the patient's fat-free mass. Concentration only. ",
+    "two compartments, CL 7.86 L/h, V1 5.74 L, CLD 0.65 L/h, V2 3.56 L ",
+    "in Galea 2011's cohort (7 men, 18 women, 73 kg), scaled to the patient's fat-free mass. Concentration only. ",
     "https://doi.org/10.1186/2050-6511-14-40 https://doi.org/10.1007/s10928-015-9450-0")
 
   list(

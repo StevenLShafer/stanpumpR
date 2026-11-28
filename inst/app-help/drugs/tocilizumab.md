@@ -32,7 +32,13 @@ stanpumpR scales every parameter by body size all the same, as it does for every
 
 ### Doses
 
-Actemra for COVID-19 is a single 60-minute intravenous infusion of 8 mg/kg (12 mg/kg below 30 kg), and no more than 800 mg per infusion. If the patient does not improve, one more infusion may be given at least 8 hours after the first. Enter it as a 1-hour infusion: 8 `mg/kg/hr` at time 0 and 0 at 60 minutes. A fixed dose, such as the RECOVERY trial's weight-tiered 400, 600 or 800 mg, which the label says gives similar exposure, is entered in `mg/hr` the same way.
+Actemra for COVID-19 is a single 60-minute intravenous infusion of 8 mg/kg (12 mg/kg below 30 kg), and no more than 800 mg per infusion. If the patient does not improve, one more infusion may be given at least 8 hours after the first. Enter it as a 1-hour infusion, with the rate at time 0 and 0 at 60 minutes:
+
+- from 30 to 100 kg, 8 `mg/kg/hr`;
+- below 30 kg, 12 `mg/kg/hr`;
+- above 100 kg, 800 `mg/hr`, since 8 mg/kg would exceed the 800 mg limit.
+
+stanpumpR converts the rate you enter and does not apply the label's limits itself: 8 `mg/kg/hr` for a 130 kg patient is drawn as 1040 mg. A fixed dose, such as the RECOVERY trial's weight-tiered 400, 600 or 800 mg, which the label says gives similar exposure, is entered in `mg/hr` the same way.
 
 Only the intravenous route is offered. Moes gave no subcutaneous doses, and the label does not approve the subcutaneous product for COVID-19.
 
