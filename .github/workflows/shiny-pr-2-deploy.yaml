@@ -178,7 +178,12 @@ jobs:
   # PR.  Nothing here can fail the run: an outage is a warning, and with no
   # DEVIN_QA_WEBHOOK_URL the step does nothing.  A notice for a commit the PR
   # has already moved past is not sent: the newer commit's deploy, waiting in
-  # the concurrency group, would cut that test off and sends its own.
+  # the concurrency group, would cut that test off and sends its own.  If that
+  # deploy then fails, the older preview stays up unannounced until a push
+  # that deploys (Devin Review on #1030): the PR has moved past it, so a test
+  # of it would report on code the PR no longer holds.  Only a 2xx answer is
+  # delivery.  A redirect is not followed, because curl would send the secret
+  # header on to wherever it points.
   notify-devin-qa:
     needs: deployment-pr
     runs-on: ubuntu-24.04
@@ -225,11 +230,18 @@ jobs:
           body=$(jq -cn --arg repo "$REPO" --argjson pr "$PR_NUMBER" \
                         --arg sha "$HEAD_SHA" --arg url "$PREVIEW_URL" \
                         '{repo: $repo, pr: $pr, sha: $sha, url: $url}')
-          if ! curl --fail --silent --show-error --max-time 30 \
+          if ! status=$(curl --fail --silent --show-error --max-time 30 \
                  --header 'Content-Type: application/json' \
                  --header "X-Webhook-Secret: $DEVIN_QA_WEBHOOK_SECRET" \
-                 --data "$body" --output /dev/null "$DEVIN_QA_WEBHOOK_URL"; then
+                 --data "$body" --output /dev/null --write-out '%{http_code}' \
+                 "$DEVIN_QA_WEBHOOK_URL"); then
             echo "::warning::The Devin QA webhook failed: the preview is live, but Devin QA was not told."
             exit 1
           fi
+          # --fail passes a 3xx; a redirect is not followed (see above)
+          case "$status" in
+            2??) ;;
+            *) echo "::warning::The Devin QA webhook answered HTTP $status, not 2xx: Devin QA was not told."
+               exit 1 ;;
+          esac
           echo "Devin QA notified: PR #$PR_NUMBER at ${HEAD_SHA:0:7}, $PREVIEW_URL"

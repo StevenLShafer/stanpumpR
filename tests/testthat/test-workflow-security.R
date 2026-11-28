@@ -72,6 +72,10 @@ test_that("the Devin QA notice runs no PR code and alone holds its webhook", {
   expect_false(any(grepl("${{", script, fixed = TRUE)))
   # the address is checked as comment-pr checks it
   expect_true(any(grepl("shinyapps\\.io/[A-Za-z0-9_]+/$", script, fixed = TRUE)))
+  # only a 2xx answer is delivery, and a redirect, which would carry the
+  # secret header on to wherever it points, is never followed
+  expect_true(any(grepl("%{http_code}", script, fixed = TRUE)))
+  expect_false(any(grepl("--location|(^|\\s)-L(\\s|$)", script)))
   # a webhook outage never fails the run
   expect_true(any(grepl("continue-on-error: true", notify, fixed = TRUE)))
 })
