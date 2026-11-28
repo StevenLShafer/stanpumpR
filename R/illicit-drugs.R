@@ -61,12 +61,18 @@ illicitRouteRegistry <- function() {
 #' @param showIllicit is the illicit-drug opt-in on?
 #' @param drugDefaults the drug library
 #' @returns the drug names to offer: every dosable drug when the opt-in is on,
-#'   every dosable non-illicit drug when it is off, in library order.  A drug
+#'   every dosable non-illicit drug when it is off, in library order, never a
+#'   model group's candidate (the group's name is offered instead).  A drug
 #'   with no dose units is a metabolite that is only ever formed (enalaprilat,
 #'   salicylate, norfluoxetine, ...) and is never offered for dosing.
 #' @noRd
 visibleDrugNames <- function(showIllicit, drugDefaults = getDrugDefaultsGlobal()) {
-  drugs <- drugDefaults$Drug[isDosableDrug(drugDefaults$Drug, drugDefaults)]
+  # A candidate model of a model group (etoposideKroghMadsen, caspofunginXu,
+  # ...) is never offered: the group's own name is, and the program chooses
+  # the candidate for the patient (R/modelSelection.R; Devin's review of PR
+  # #1032 found the candidates in the dose grid and Add a dose).
+  drugs <- drugDefaults$Drug[isDosableDrug(drugDefaults$Drug, drugDefaults) &
+                               !drugDefaults$Drug %in% modelCandidates()]
   if (isTRUE(showIllicit)) return(drugs)
   drugs[!isIllicitDrug(drugs, drugDefaults)]
 }

@@ -406,6 +406,13 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
       apiError("`doses` row ", i, ": ", drug, " is formed as a metabolite of another drug and ",
                "cannot be dosed itself. GET /drugs lists the drugs that can.")
     }
+    # A candidate of a model group (after the metabolite check, so that a
+    # metabolite's candidate, doxorubicinolPerezBlanco, says it is a metabolite)
+    if (drug %in% modelCandidates()) {
+      apiError("`doses` row ", i, ": ", drug, " is one of the published models of ",
+               modelCandidateGroup(drug), "; dose '", modelCandidateGroup(drug),
+               "', and the model is chosen for the patient. GET /drugs lists the drugs.")
+    }
     if (is.na(DT$Units[i]) || !nzchar(DT$Units[i])) {
       apiError("`doses` row ", i, ": `units` is missing. The units of ", drug, " are: ",
                paste(allowed, collapse = ", "), ".")
@@ -921,7 +928,10 @@ apiDrugCatalog <- function(allowIllicit = FALSE) {
   # A metabolite-only entry (desmetramadol, salicylate) has no dose units:
   # it cannot be dosed and appears in a result only as its parent's metabolite.
   doseable <- vapply(dd$Units, function(u) any(!is.na(u) & nzchar(u)), logical(1))
-  keep <- doseable & !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd))
+  # A model group's candidate is not listed: its group is, and the model is
+  # chosen for the patient (R/modelSelection.R).
+  keep <- doseable & !isGasDrug(dd$Drug) & (allowIllicit | !isIllicitDrug(dd$Drug, dd)) &
+    !dd$Drug %in% modelCandidates()
   dd <- dd[keep, ]
   out <- data.frame(
     Drug               = dd$Drug,
