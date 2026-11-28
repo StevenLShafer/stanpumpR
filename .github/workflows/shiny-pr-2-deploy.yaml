@@ -222,8 +222,14 @@ jobs:
             echo "::warning::Unexpected preview address $(jq -n --arg u "$PREVIEW_URL" '$u'): Devin QA not notified."
             exit 1
           fi
-          head=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha 2>/dev/null || true)
-          if [ -n "$head" ] && [ "$head" != "$HEAD_SHA" ]; then
+          # Fails open: if the head cannot be read, this commit is announced,
+          # since skipping would lose its only notice when it is the head.
+          # On an API error gh prints the error body to stdout, which must
+          # not be read as a head that moved on.
+          head=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq .head.sha 2>/dev/null) || head=""
+          if ! [[ "$head" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::warning::Could not read the PR's head; notifying Devin QA for ${HEAD_SHA:0:7} anyway."
+          elif [ "$head" != "$HEAD_SHA" ]; then
             echo "The PR has moved on to $head; that commit's deploy will notify Devin QA."
             exit 0
           fi
