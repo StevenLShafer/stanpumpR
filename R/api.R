@@ -389,11 +389,6 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
     if (is.na(row)) {
       apiError("`doses` row ", i, ": unknown drug '", drug, "'. GET /drugs lists the drugs.")
     }
-    if (drug %in% modelCandidates()) {
-      apiError("`doses` row ", i, ": ", drug, " is one of the published models of ",
-               modelCandidateGroup(drug), "; dose '", modelCandidateGroup(drug),
-               "', and the model is chosen for the patient. GET /drugs lists the drugs.")
-    }
     if (isGasDrug(drug)) {
       apiError("`doses` row ", i, ": ", drug, " is an inhaled agent; the API does not ",
                "simulate inhaled agents yet.")
@@ -410,6 +405,13 @@ apiDoses <- function(doses, unit, maximum, allowIllicit,
     if (length(allowed) == 0) {
       apiError("`doses` row ", i, ": ", drug, " is formed as a metabolite of another drug and ",
                "cannot be dosed itself. GET /drugs lists the drugs that can.")
+    }
+    # A candidate of a model group (after the metabolite check, so that a
+    # metabolite's candidate, doxorubicinolPerezBlanco, says it is a metabolite)
+    if (drug %in% modelCandidates()) {
+      apiError("`doses` row ", i, ": ", drug, " is one of the published models of ",
+               modelCandidateGroup(drug), "; dose '", modelCandidateGroup(drug),
+               "', and the model is chosen for the patient. GET /drugs lists the drugs.")
     }
     if (is.na(DT$Units[i]) || !nzchar(DT$Units[i])) {
       apiError("`doses` row ", i, ": `units` is missing. The units of ", drug, " are: ",
