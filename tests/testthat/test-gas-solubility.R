@@ -57,8 +57,10 @@ test_that("a body in GasMan's mode runs on GasMan's coefficients", {
 
 test_that("Esper's coefficients slow end-tidal and the brain (the help page's numbers)", {
   sim <- simulateGases(solubilityTable(), weight = 70, age = 40, maximum = 30)
-  expect_equal(round(solubilityAt(sim, "Alveolar", 30), 3), 1.726)
-  expect_equal(round(solubilityAt(sim, "Brain", 30), 3), 1.684)
+  # (1.726 and 1.684 until the fresh gas added its inspiratory share to the
+  # delivered ventilation, 2026-11-28)
+  expect_equal(round(solubilityAt(sim, "Alveolar", 30), 3), 1.775)
+  expect_equal(round(solubilityAt(sim, "Brain", 30), 3), 1.732)
   # More soluble blood carries more from the lungs: with the blood:gas
   # coefficient alone raised, end-tidal is lower at every time
   props <- getGasProperties()
@@ -102,8 +104,9 @@ test_that("the Haemoglobin slider reaches the agents through the body", {
                            haemoglobin = 7)
   # Diluted blood dissolves less, so less is carried from the lungs
   expect_gt(solubilityAt(anaemic, "Alveolar", 30), solubilityAt(usual, "Alveolar", 30))
-  expect_equal(round(solubilityAt(anaemic, "Alveolar", 30), 3), 1.771)
-  expect_equal(round(solubilityAt(anaemic, "Brain", 30), 3), 1.725)
+  # (1.771 and 1.725 at the ventilation as set, until 2026-11-28)
+  expect_equal(round(solubilityAt(anaemic, "Alveolar", 30), 3), 1.815)
+  expect_equal(round(solubilityAt(anaemic, "Brain", 30), 3), 1.769)
   # The time until threshold reads the same table
   d <- solubilityTable()
   w <- gasWashout(anaemic, d)

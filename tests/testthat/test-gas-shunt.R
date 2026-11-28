@@ -52,8 +52,12 @@ test_that("GasMan's mode has no shunt unless one is asked for", {
                "a shunt")
   # simulateGases(shunt = 0) is the engine handed GasMan's body
   a <- simulateGases(shuntTable(), weight = 70, age = 40, maximum = 20, shunt = 0)
+  # (the engine handed a body adds no fresh gas to the ventilation, so it is
+  # given the delivered one: the setting plus a third of the fresh gas)
+  delivered <- 6 + 6 * gasFreshGasExpansion(getGasBody(70)) / 3
   b <- advanceClosedFormGas(
-    data.frame(Time = 0, Drug = c("sevoflurane", "oxygen", "ventilation"), Dose = c(2, 6, 6)),
+    data.frame(Time = 0, Drug = c("sevoflurane", "oxygen", "ventilation"),
+               Dose = c(2, 6, delivered)),
     weight = 70, age = 40, maximum = 20)
   expect_equal(a$results$Y, b$results$Y, tolerance = 1e-12)
 })
@@ -69,12 +73,15 @@ test_that("the shunt delays the brain and leaves a little more in the alveoli", 
   # The help page's numbers (inst/app-help/models/physiology.md, gas-differences.md)
   # (1.50, 1.55, 1.71, 1.74, 1.753 and 1.748 with GasMan's blood:gas
   # coefficients, before Esper's)
-  expect_equal(round(at(ten, "Brain", 10), 2), 1.51)
-  expect_equal(round(at(none, "Brain", 10), 2), 1.55)
-  expect_equal(round(at(ten, "Brain", 30), 2), 1.68)
-  expect_equal(round(at(none, "Brain", 30), 2), 1.72)
-  expect_equal(round(at(ten, "Alveolar", 30), 3), 1.726)
-  expect_equal(round(at(none, "Alveolar", 30), 3), 1.721)
+  # (1.51, 1.55, 1.68, 1.72, 1.726 and 1.721 until the fresh gas, 6 L/min
+  # here, added its inspiratory share to the delivered ventilation, the
+  # same day: gasInspiratoryFraction())
+  expect_equal(round(at(ten, "Brain", 10), 2), 1.57)
+  expect_equal(round(at(none, "Brain", 10), 2), 1.62)
+  expect_equal(round(at(ten, "Brain", 30), 2), 1.73)
+  expect_equal(round(at(none, "Brain", 30), 2), 1.77)
+  expect_equal(round(at(ten, "Alveolar", 30), 3), 1.775)
+  expect_equal(round(at(none, "Alveolar", 30), 3), 1.771)
 })
 
 test_that("arterial blood is (1 - s) alveolar + s mixed venous for every gas", {
@@ -122,18 +129,22 @@ test_that("the arterial oxygen falls with the shunt (the help page's table)", {
     c(PaO2 = a$PaO2[nrow(a)], SaO2 = a$SaO2[nrow(a)])
   }
   oxygen <- shuntTable(); air <- shuntTable(oxygen = 0, air = 6)
-  expect_equal(round(ao(oxygen)[["PaO2"]]), 479)
-  expect_equal(round(ao(air)), c(PaO2 = 77, SaO2 = 95))
-  expect_equal(round(ao(oxygen, shunt = 0.2)[["PaO2"]]), 259)
-  expect_equal(round(ao(air, shunt = 0.03)), c(PaO2 = 91, SaO2 = 97))
-  expect_equal(round(ao(air, shunt = 0.3)), c(PaO2 = 54, SaO2 = 88))
+  # (479; 77 and 95; 259; 91 and 97; 54 and 88; then 93, 96, 84 and 48,
+  # until the fresh gas, 6 L/min here, added its inspiratory share to the
+  # delivered ventilation, 2026-11-28: more ventilation, less alveolar
+  # carbon dioxide, more alveolar oxygen, most of all at altitude)
+  expect_equal(round(ao(oxygen)[["PaO2"]]), 489)
+  expect_equal(round(ao(air)), c(PaO2 = 81, SaO2 = 96))
+  expect_equal(round(ao(oxygen, shunt = 0.2)[["PaO2"]]), 269)
+  expect_equal(round(ao(air, shunt = 0.03)), c(PaO2 = 97, SaO2 = 98))
+  expect_equal(round(ao(air, shunt = 0.3)), c(PaO2 = 55, SaO2 = 88))
   # No shunt, no arterial line: arterial is the alveolar
   expect_null(gasRunArterialOxygen(simulateGases(oxygen, maximum = 5, shunt = 0)))
   # Haemoglobin and altitude, on air at 10%
-  expect_equal(round(ao(air, haemoglobin = 7)[["SaO2"]]), 93)
+  expect_equal(round(ao(air, haemoglobin = 7)[["SaO2"]]), 94)
   expect_equal(round(ao(air, haemoglobin = 17)[["SaO2"]]), 96)
-  expect_equal(round(ao(air, altitude = 3000)[["SaO2"]]), 84)
-  expect_equal(round(ao(air, altitude = 5000)[["SaO2"]]), 48)
+  expect_equal(round(ao(air, altitude = 3000)[["SaO2"]]), 88)
+  expect_equal(round(ao(air, altitude = 5000)[["SaO2"]]), 68)
 })
 
 test_that("a physiology event records the shunt only away from its state's default", {

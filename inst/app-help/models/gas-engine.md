@@ -43,13 +43,21 @@ The engine counts gas in the lungs, at body temperature and saturated with water
 | Fresh gas, at the flowmeters | 20 °C, dry | 1.128 |
 | Oxygen consumed, carbon dioxide produced | 0 °C, dry, 760 mmHg (STPD) | 1.210 |
 
-A litre of dry gas leaving a flowmeter at 20 °C warms to 37 °C, which expands it by 310/293, 5.8 per cent, and takes up water vapour at 47 mmHg, which expands it by 760/713, 6.6 per cent: 12.8 per cent together. So rebreathing stops when the flowmeters read about 89 per cent of the minute ventilation, not 100, because that much gas fills the breath once it is warm and wet (89 per cent of the ventilation plus whatever is being taken up, as the equations below have it). Oxygen consumption, 3.5 mL/kg/min, is an STPD volume by convention, and is 21 per cent larger in the lungs. In a closed circuit, 0.25 L/min of oxygen on the flowmeter is 0.233 L/min STPD, 5 per cent short of the 0.245 L/min a 70 kg patient consumes.
+A litre of dry gas leaving a flowmeter at 20 °C warms to 37 °C, which expands it by 310/293, 5.8 per cent, and takes up water vapour at 47 mmHg, which expands it by 760/713, 6.6 per cent: 12.8 per cent together. So rebreathing stops when the flowmeters read about 89 per cent of the delivered minute ventilation, not 100, because that much gas fills the breath once it is warm and wet (89 per cent of the ventilation plus whatever is being taken up, as the equations below have it). Oxygen consumption, 3.5 mL/kg/min, is an STPD volume by convention, and is 21 per cent larger in the lungs. In a closed circuit, 0.25 L/min of oxygen on the flowmeter is 0.233 L/min STPD, 5 per cent short of the 0.245 L/min a 70 kg patient consumes.
 
 Until that date all three were taken litre for litre. The closed circuit's arithmetic came out even, and the alveolar oxygen read about 9 mmHg high on room air (107 mmHg where the alveolar gas equation gives 99, at an alveolar ventilation of 4 L/min), because the oxygen consumed was subtracted as too small a volume. In the equations below, Q is the fresh gas flow in the lungs' litres, 1.128 times the flowmeters' reading at 37 °C and sea level (more at altitude, where the same water vapour is a larger share of the pressure; less in a cold patient, whose lungs warm it less).
 
 None of this changes what you enter or read. The flowmeter and vaporizer settings are shown as you set them, and the Visualizer counts the vapour delivered as flow times setting, in millilitres at the machine: 2 L/min of 2 per cent for an hour is 2.4 L. The conversion happens inside the engine, where a flowmeter's litre meets a litre of ventilation.
 
-The circuit is the ideal circle system. With fresh gas flow Q, minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
+The fresh gas that enters the circuit during inspiration goes to the patient with the ventilator's breath, so the delivered minute ventilation is the ventilation set plus the inspiratory share of the fresh gas (since 28 November 2026; Steven Shafer, 27 November 2026, after Cicman 1993):
+
+```
+MV = MV_set + phi Q,   phi = I / (I + E)
+```
+
+phi is a third at the default I:E ratio of 1:2 (the Physiology panel offers 1:1 to 1:4), and Q is in the lungs' litres. Because the fresh gas enlarges the breath it must fill, rebreathing stops (Q >= MV + U, below) only when Q >= (MV_set + U) / (1 - phi): a flowmeter reading of 1.33 times the set ventilation at 1:2. The time until threshold runs at that flow, so at MV = MV_set / (1 - phi), 1.5 times the setting at 1:2 (no uptake is added, the tissues giving agent back during a washout). In GasMan's mode phi is 0. See *Fresh gas and the delivered ventilation* on the [physiology](help:models/physiology) page.
+
+The circuit is the ideal circle system. With fresh gas flow Q, delivered minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
 
 ```
 Q >= MV + U:  F_circuit = F_fresh                          no rebreathing
@@ -116,6 +124,8 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
+
+Cicman JH, Skibo VF, Yoder JM. Anesthesia systems. Part II: operating principles of fundamental components. *J Clin Monit* 1993;9:104-111.
 
 Esper T, Wehner M, Meinecke CD, Rueffert H. Blood/gas partition coefficients for isoflurane, sevoflurane, and desflurane in a clinically relevant patient population. *Anesth Analg* 2015;120:45-50. doi:10.1213/ANE.0000000000000516
 

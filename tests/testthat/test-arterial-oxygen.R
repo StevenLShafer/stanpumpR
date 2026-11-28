@@ -71,7 +71,9 @@ test_that("an endobronchial physiology event steps the arterial oxygen", {
   a <- gasArterialOxygen(sim)
   # Before the tube, the 10% shunt under anesthesia (above 600 mmHg with no
   # shunt, until 2026-11-28)
-  expect_equal(a$PaO2[which.min(abs(a$Time - 19))], 478, tolerance = 0.01)
+  # (478 until the fresh gas added its inspiratory share to the delivered
+  # ventilation, the same day)
+  expect_equal(a$PaO2[which.min(abs(a$Time - 19))], 489, tolerance = 0.01)
   expect_lt(a$PaO2[which.min(abs(a$Time - 30))], 60)
 })
 
@@ -129,7 +131,11 @@ test_that("altitude deepens the hypoxaemia: the arterial oxygen reads the engine
   # 9 mmHg high at sea level, and more at altitude, gasStpdFactor())
   # (26.4 at 5000 m until the uptake's volume took the humidity there,
   # gasLungPressureRatio(), the same day)
-  expect_equal(s, c(74.1, 62.1, 26.7), tolerance = 0.002)
+  # (74.1, 62.1 and 26.7 until 2026-11-28, when the fresh gas, 6 L/min of
+  # air here, added its inspiratory share to the delivered ventilation:
+  # at 5000 m that is 6 L/min set and 8.4 delivered, on the steep part of
+  # the dissociation curve)
+  expect_equal(s, c(74.75, 66.83, 45.97), tolerance = 0.002)
 })
 
 test_that("the Visualizer carries the arterial saturation only where blood is shunted", {

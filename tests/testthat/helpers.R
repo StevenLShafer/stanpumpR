@@ -205,3 +205,10 @@ gasFlushEngine <- function(d, t, weight, ..., ieRatio = GAS_IE_DEFAULT) {
   advanceClosedFormGas(d, weight = weight, body = before,
                        bodySteps = list(time = c(0, t), body = list(before, after)), ...)
 }
+
+# A gas run at the ventilation as set, without the fresh gas's inspiratory
+# share (gasInspiratoryFraction()), for a test of algebra that holds only then
+gasAtSetVentilation <- function(code)
+{
+  testthat::with_mocked_bindings(code, gasInspiratoryFraction = function(body) 0)
+}

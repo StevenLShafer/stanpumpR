@@ -70,7 +70,10 @@ test_that("on room air the alveolar oxygen is the alveolar gas equation's", {
   # nothing is rebreathed.  PACO2 = 0.863 VCO2 / VA; PAO2 = PIO2 - PACO2
   # (FIO2 + (1 - FIO2) / R) (Fenn, Rahn and Otis 1946).
   MV <- 4 / (1 - GAS_DEAD_SPACE_FRACTION)
-  sim <- simulateGases(volumeRows(list(0, "air", 12), list(0, "ventilation", MV)),
+  # The setting that delivers it: the delivered ventilation is the setting
+  # plus a third (I:E 1:2) of the fresh gas, in the lungs' litres
+  set <- MV - 12 * gasFreshGasExpansion(getGasBody(70)) / 3
+  sim <- simulateGases(volumeRows(list(0, "air", 12), list(0, "ventilation", set)),
                        weight = 70, age = 40, maximum = 60)
   PAO2 <- utils::tail(sim$state$oxygen[, 2], 1) / 100 * GAS_ALVEOLAR_TORR
   VCO2 <- GAS_RESPIRATORY_QUOTIENT * 245
@@ -138,7 +141,9 @@ test_that("at altitude the alveolar gases sum to the dry pressure there, at low 
                          weight = 70, age = 40, maximum = 1440, altitude = altitude)
     b <- sim$body
     last <- function(g) utils::tail(sim$state[[g]][, 2], 1)
-    co2 <- 100 * GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(b) / (5.7 * (1 - GAS_DEAD_SPACE_FRACTION))
+    delivered <- 5.7 + gasInspiratoryFraction(b) * Q * gasFreshGasExpansion(b)
+    co2 <- 100 * GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(b) /
+      (delivered * (1 - GAS_DEAD_SPACE_FRACTION))
     expect_equal(last("oxygen") + last("nitrogen") + last("sevoflurane") + co2,
                  100 * gasPressureRatio(b) * gasHumidityRatio(b), tolerance = 1e-4,
                  info = paste(altitude, "m,", Q, "L/min"))

@@ -62,8 +62,10 @@ test_that("water vapour takes its 47 Torr of the inspired gas at any altitude", 
   # humidified: without the uptake coupling the system is linear and starts
   # empty, so every tension is r x w times its sea-level value
   dt <- gasTable(c("oxygen", "nitrousOxide", "ventilation"), c(3, 7, 5))
-  run <- function(h) simulateGases(dt, maximum = 120, uptakeEffect = FALSE,
-                                   oxygenUptake = FALSE, altitude = h)
+  # (at the ventilation as set: the fresh gas's share of the delivered
+  # ventilation is a volume in the lungs, larger at altitude)
+  run <- function(h) gasAtSetVentilation(simulateGases(
+    dt, maximum = 120, uptakeEffect = FALSE, oxygenUptake = FALSE, altitude = h))
   s <- run(5000)
   expect_equal(s$state$nitrousOxide[, -1],
                pressureRatio(5000) * gasHumidityRatio(s$body) * run(0)$state$nitrousOxide[, -1],
