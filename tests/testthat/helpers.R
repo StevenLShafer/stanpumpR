@@ -195,8 +195,11 @@ gasShuntBody <- function(weight = 70) gasBodyEndobronchial(getGasBody(weight))
 # (1 - I/(I + E)) (gasWashoutVentilation()), on a body that adds no fresh gas
 # to it, so that the flush flow, whatever its size, changes nothing but the
 # rebreathing.
-gasFlushEngine <- function(d, t, weight, ..., ieRatio = GAS_IE_DEFAULT) {
+gasFlushEngine <- function(d, t, weight, ..., ieRatio = GAS_IE_DEFAULT, flush = TRUE) {
   before <- gasShuntBody(weight); before$ieRatio <- ieRatio
+  # Without the flush the fresh gas is as it was, and so is the ventilation
+  # it delivers (the rebreathing washout)
+  if (!flush) return(advanceClosedFormGas(d, weight = weight, body = before, ...))
   after <- gasShuntBody(weight)
   set <- settingAt(d[d$Drug == "ventilation", , drop = FALSE], t)
   d <- rbind(d, data.frame(Time = t, Drug = "ventilation",

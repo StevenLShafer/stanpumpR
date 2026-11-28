@@ -1190,9 +1190,14 @@ physiologyPanel <- function()
             "rise a little faster."),
       placement = "right"
     )
-    ,
+    ),
     # The I:E ratio (Shafer, 2026-11-27 and 2026-11-28): one setting for the
-    # whole run; the fresh gas's inspiratory share adds to the ventilation
+    # whole run; the fresh gas's inspiratory share adds to the ventilation.
+    # Shown while the dose table has a ventilation row, an anesthetic or not:
+    # it moves the oxygen curve of a run with oxygen alone (Devin's review of
+    # PR 1029)
+    relevantField(
+    "ventilation",
     fieldHelp(
       selectInput(
         inputId = "physiology_ie",
@@ -1312,11 +1317,14 @@ physiologyCovariateRows <- function(physiology, temperature = NULL,
   if (is.data.frame(events) && nrow(events) > 0)
     return(data.frame(
       Covariate = c("Physiology events",
-                    sprintf("Physiology from %s min", format(events$Time))),
+                    sprintf("Physiology from %s min", format(events$Time)),
+                    # not part of an event: one setting for the whole run
+                    "I:E ratio, inhaled anesthetics"),
       Value = c(sprintf("%d; normal physiology from time 0, the panel's settings not applied",
                         nrow(events)),
                 vapply(seq_len(nrow(events)), function(i)
-                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), "")),
+                  physiologyEventSummary(unlist(events[i, PHYSIOLOGY_EVENT_FIELDS])), ""),
+                paste0("1:", format(ieRatioFromInput(ieRatio)))),
       stringsAsFactors = FALSE))
   p <- tryCatch(checkPhysiology(physiology), error = function(e) NULL)
   value <- if (is.null(p)) rep("unreadable", length(PHYSIOLOGY_FACTORS)) else

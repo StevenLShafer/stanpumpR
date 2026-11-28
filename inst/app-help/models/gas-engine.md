@@ -55,7 +55,7 @@ The fresh gas that enters the circuit during inspiration goes to the patient wit
 MV = MV_set + phi Q,   phi = I / (I + E)
 ```
 
-phi is a third at the default I:E ratio of 1:2 (the Physiology panel offers 1:1 to 1:4), and Q is in the lungs' litres. Because the fresh gas enlarges the breath it must fill, rebreathing stops (Q >= MV + U, below) only when Q >= (MV_set + U) / (1 - phi): a flowmeter reading of 1.33 times the set ventilation at 1:2. The time until threshold runs at that flow, so at MV = MV_set / (1 - phi), 1.5 times the setting at 1:2 (no uptake is added, the tissues giving agent back during a washout). In GasMan's mode phi is 0. See *Fresh gas and the delivered ventilation* on the [physiology](help:models/physiology) page.
+Nothing is added while the ventilation set is 0. phi is a third at the default I:E ratio of 1:2 (the Physiology panel offers 1:1 to 1:4), and Q is in the lungs' litres. Because the fresh gas enlarges the breath it must fill, rebreathing stops (Q >= MV + U, below) only when Q >= (MV_set + U) / (1 - phi): a flowmeter reading of 1.33 times the set ventilation at 1:2. The time until threshold runs at that flow, so at MV = MV_set / (1 - phi), 1.5 times the setting at 1:2 (no uptake is added, the tissues giving agent back during a washout). In GasMan's mode phi is 0. See *Fresh gas and the delivered ventilation* on the [physiology](help:models/physiology) page.
 
 The circuit is the ideal circle system. With fresh gas flow Q, delivered minute ventilation MV (alveolar ventilation VA = 0.7 MV) and U the total uptake when it is positive (zero otherwise), the patient inspires MV + U and the circuit supplies it:
 

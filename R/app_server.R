@@ -1625,9 +1625,9 @@ app_server <- function(input, output, session) {
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(list(physiology(), altitude(), endobronchial(), shunt()), {
+  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio()), {
     if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
-        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA)
+        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT)
       session$sendCustomMessage("physiology_show", list())
   })
 

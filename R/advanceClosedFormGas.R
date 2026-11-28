@@ -888,7 +888,10 @@ gasSettingsAt <- function(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION,
   # 1993: the valve to the scavenger is shut through inspiration, so the
   # fresh gas entering then goes to the patient with the bellows' tidal
   # volume).  Both in the lungs' litres.
-  MV <- MVset + inspiratory * Q * expansion
+  # Only while the ventilator is cycling: before its first row, or with the
+  # ventilation set to 0, there is no inspiration for the fresh gas to join
+  # (Devin's review of PR 1029)
+  MV <- if (MVset > 0) MVset + inspiratory * Q * expansion else MVset
   VA <- MV * (1 - deadSpace)
 
   # Vapour displaces carrier gas.  At 2% sevoflurane this is a 2% correction;

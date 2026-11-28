@@ -64,6 +64,23 @@ test_that("the delivered ventilation is the setting plus the inspiratory share o
   }
 })
 
+test_that("no fresh gas joins a ventilation of 0 (Devin's review of PR 1029)", {
+  # Fresh gas from time 0, the ventilator from minute five: until then there
+  # is no inspiration for it to join
+  d <- data.frame(Drug = c("sevoflurane", "oxygen", "ventilation"), Time = c(0, 0, 5),
+                  Dose = c(2, 6, 6), stringsAsFactors = FALSE)
+  bySetting <- split(d, d$Drug)
+  early <- gasSettingsAt(bySetting, 2, inspiratory = 1 / 3)
+  expect_equal(c(early$MV, early$MVset, early$VA), c(0, 0, 0))
+  expect_equal(gasSettingsAt(bySetting, 6, inspiratory = 1 / 3)$MV, 8)
+  # ... so the run is the run at the ventilation as set until minute five
+  sim <- simulateGases(d, weight = 70, age = 40, maximum = 10)
+  plain <- gasAtSetVentilation(simulateGases(d, weight = 70, age = 40, maximum = 10))
+  early <- sim$timeLine < 5
+  expect_equal(sim$state$sevoflurane[early, ], plain$state$sevoflurane[early, ], tolerance = 1e-12)
+  expect_gt(max(abs(sim$state$sevoflurane[!early, 2] - plain$state$sevoflurane[!early, 2])), 0.01)
+})
+
 test_that("simulateGases() carries the I:E ratio, and GasMan's mode adds no fresh gas", {
   expect_equal(simulateGases(ventRows(), maximum = 5)$body$ieRatio, 2)
   expect_equal(simulateGases(ventRows(), maximum = 5, ieRatio = 4)$body$ieRatio, 4)
@@ -143,6 +160,18 @@ test_that("the panel offers the I:E ratio, and the workbook records it", {
   expect_equal(rows$Value[rows$Covariate == "I:E ratio, inhaled anesthetics"], "1:2")
   expect_equal(physiologyCovariateRows(PHYSIOLOGY_DEFAULT, ieRatio = 1.5)$Value[
     rows$Covariate == "I:E ratio, inhaled anesthetics"], "1:1.5")
+  # With physiology events the ratio is still recorded: it is no part of one
+  events <- data.frame(Time = 10)
+  for (f in PHYSIOLOGY_EVENT_FIELDS) events[[f]] <- physiologyEventNormal()[[f]]
+  withEvents <- physiologyCovariateRows(PHYSIOLOGY_DEFAULT, events = events, ieRatio = 4)
+  expect_equal(withEvents$Value[withEvents$Covariate == "I:E ratio, inhaled anesthetics"], "1:4")
+  # Shown with a ventilation row, an anesthetic or not (Devin's review of PR
+  # 1029): the ratio moves the oxygen curve of a run with oxygen alone
+  expect_match(html, 'id="field_ventilation"', fixed = TRUE)
+  expect_true(relevantFields(c("oxygen", "ventilation"))[["ventilation"]])
+  expect_true(relevantFields(c("sevoflurane", "oxygen", "ventilation"))[["ventilation"]])
+  expect_false(relevantFields(c("propofol"))[["ventilation"]])
+  expect_false(relevantFields(c("oxygen", "ventilation"))[["inhaledAgents"]])
   shiny::testServer(app_server, {
     expect_equal(ieRatio(), 2)
     session$setInputs(physiology_ie = "4")
