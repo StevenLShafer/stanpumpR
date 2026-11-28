@@ -6956,7 +6956,9 @@ function physiologyLine(ph) {
 function physiologyOff(ph) {
     if (!ph) return false;
     return ['liver', 'renal', 'cardiac', 'gi'].some(k => ph[k] != null && Math.abs(ph[k] - 1) >= 1e-9) ||
-        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true;
+        (ph.temperature != null && ph.temperature !== 37) || ph.altitude > 0 || ph.endobronchial === true ||
+        // a shunt away from the 10% under anesthesia (2026-11-28)
+        (ph.endobronchial === false && ph.shunt != null && ph.shunt !== 10);
 }
 
 // The drug's liquid colour, from the run.

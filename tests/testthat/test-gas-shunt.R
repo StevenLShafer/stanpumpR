@@ -160,6 +160,17 @@ test_that("the bodies of a run with physiology events carry each state's shunt",
   expect_equal(vapply(steps$body, gasShunt, 0), c(0.10, 0.5, 0.2))
 })
 
+test_that("with events GasMan's mode still has no shunt (Devin's review of PR 1022)", {
+  events <- physiologyEventsFrom(eventTableRows(
+    Time = c(10, 20), Event = PHYSIOLOGY_EVENT_NAME,
+    Settings = c(physiologyEventEncode(c(temperature = 36)), physiologyEventEncode(c(shunt = 0.2)))))
+  sim <- simulateGases(shuntTable(), maximum = 30, volumeConversion = FALSE,
+                       physiologyEvents = events)
+  expect_equal(vapply(sim$bodySteps$body, gasShunt, 0), c(0, 0, 0.2))
+  usual <- simulateGases(shuntTable(), maximum = 30, physiologyEvents = events)
+  expect_equal(vapply(usual$bodySteps$body, gasShunt, 0), c(0.1, 0.1, 0.2))
+})
+
 test_that("the Visualizer says the shunt only away from its state's default", {
   body <- simulateGases(shuntTable(), maximum = 5)$body
   expect_equal(viewerPhysiology(NULL, body)$shunt, 10)

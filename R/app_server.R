@@ -1914,7 +1914,9 @@ app_server <- function(input, output, session) {
     profileCode({
       ivChanged <- !physiologyIsNormal(physiology()) || nrow(physiologyEvents()) > 0
       gasChanged <- ivChanged || altitude() != ALTITUDE_DEFAULT || isTRUE(endobronchial()) ||
-        shunt() != GAS_SHUNT_ANESTHESIA
+        shunt() != GAS_SHUNT_ANESTHESIA ||
+        # which the arterial oxygen follows at any shunt (Devin, PR 1022)
+        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN
       if (!gasChanged) return(NULL)
       tryCatch({
         DT <- doseTableIV()

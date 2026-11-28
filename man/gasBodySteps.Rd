@@ -4,7 +4,12 @@
 \alias{gasBodySteps}
 \title{The bodies of a gas run with physiology events}
 \usage{
-gasBodySteps(weight, events, base = getGasBody(weight))
+gasBodySteps(
+  weight,
+  events,
+  base = getGasBody(weight),
+  anesthesiaShunt = GAS_SHUNT_ANESTHESIA
+)
 }
 \arguments{
 \item{weight}{patient weight, kg}
@@ -13,6 +18,11 @@ gasBodySteps(weight, events, base = getGasBody(weight))
 
 \item{base}{the patient's body before physiology (getGasBody()), by
 default GasMan's linear scaling of \code{weight}}
+
+\item{anesthesiaShunt}{the shunt of a state without the tube whose shunt
+is the default: 10\%, or 0 in GasMan's mode (Devin's review of PR 1022:
+with events the zero-shunt default reached only the body the events
+replace)}
 }
 \value{
 list(time, body): normal physiology from 0 and each event's from

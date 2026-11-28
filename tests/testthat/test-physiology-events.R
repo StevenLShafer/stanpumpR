@@ -278,7 +278,8 @@ test_that("a drug the sliders cannot switch during a run says so and keeps norma
 gasEventTable <- function(...) {
   # Through checkPhysiologyEvent(), as a decoded event is: a shunt not given
   # is the state's default, 50% with the tube (2026-11-28)
-  s <- checkPhysiologyEvent(unlist(list(...)))
+  over <- unlist(list(...))
+  s <- if (length(over) == 0) physiologyEventNormal() else checkPhysiologyEvent(over)
   ev <- data.frame(Time = 20)
   for (f in PHYSIOLOGY_EVENT_FIELDS) ev[[f]] <- s[[f]]
   ev
