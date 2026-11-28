@@ -4,12 +4,15 @@
 \alias{gasStateAcrossBodies}
 \title{The agent carried across a change of body temperature}
 \usage{
-gasStateAcrossBodies(state, from, to)
+gasStateAcrossBodies(state, from, to, molecules = 1)
 }
 \arguments{
 \item{state}{named list of state vectors, one per gas}
 
 \item{from, to}{gasPropertiesAt() tables of the two bodies}
+
+\item{molecules}{the old body's litres at the machine per litre in the
+lungs over the new body's; 1 where the temperature does not step}
 }
 \value{
 the state in the new body
@@ -34,5 +37,14 @@ ventilated lung's tension (R/endobronchial.R says the trapped gas is not
 modelled).  Oxygen and nitrogen's tissue coefficients do not change with
 temperature (gasPropertiesAt() changes the volatile agents' and nitrous
 oxide's), so for them nothing moves.
+}
+\details{
+The tissue's capacity is a volume of gas at the body's own temperature, so
+the same capacity times tension is fewer molecules in a warmer tissue.
+\code{molecules} carries that: the old body's \code{gasMachineLitres()}
+over the new one's, (273.15 + T_new) / (273.15 + T_old), which keeps the
+agent itself across a step in temperature (3\\% from 37 to 28 C).  Until
+2026-11-28 the capacity times tension was kept, and a cooled patient gained
+that 3\\% of every tissue's agent (Devin's review of PR 1013, reproduced).
 }
 \keyword{internal}

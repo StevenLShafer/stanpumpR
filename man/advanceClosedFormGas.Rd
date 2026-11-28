@@ -16,7 +16,8 @@ advanceClosedFormGas(
   circuit = c("ideal", "semi-closed"),
   deadSpace = GAS_DEAD_SPACE_FRACTION,
   oxygenUptake = TRUE,
-  bodySteps = NULL
+  bodySteps = NULL,
+  volumeConversion = TRUE
 )
 }
 \arguments{
@@ -86,6 +87,12 @@ the agent carried across (\code{gasStateAcrossBodies()},
 \code{gasStateAcrossPressure()}); the result
 then carries \code{bodySteps} and \code{bodyRow}, the body of each row
 (a step's time appears twice, before and after it)}
+
+\item{volumeConversion}{TRUE (the default) expands the fresh gas from the
+flowmeters' conditions to the lungs' and converts the oxygen consumed
+from STPD (\code{gasFreshGasExpansion()}, \code{gasStpdFactor()}); FALSE
+takes every volume litre for litre, as GasMan does and as this engine did
+until 2026-11-28.  The semi-closed circuit is always FALSE.}
 }
 \value{
 a list with \code{results}, a tidy data frame of

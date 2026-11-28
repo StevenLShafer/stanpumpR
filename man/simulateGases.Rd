@@ -23,7 +23,8 @@ simulateGases(
   shunt = NULL,
   height = NULL,
   sex = NULL,
-  adjustToFFM = TRUE
+  adjustToFFM = TRUE,
+  volumeConversion = TRUE
 )
 }
 \arguments{
@@ -82,6 +83,9 @@ GasMan's linear scaling in weight}
 
 \item{adjustToFFM}{FALSE for GasMan's linear scaling whatever is given
 (the Patient Profile's fat-free-mass switch)}
+
+\item{volumeConversion}{as in \code{advanceClosedFormGas()}; FALSE to compare
+with GasMan}
 }
 \value{
 \code{NULL} if the dose table contains no gases, otherwise the list

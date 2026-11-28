@@ -110,7 +110,10 @@ test_that("H9.1: a brain under the threshold and falling is followed back above 
   # back down through 0.6% 215.5 minutes later.  On 59094cf the time read 0.
   ref <- carbon4Engine(DT, 70, 185, "isoflurane", 0.6, horizon = 240, perMin = 10)
   expect_gt(max(ref$y), 0.89)
-  expect_equal(ref$cross, 215.51, tolerance = 1e-4)
+  # (215.51 until 2026-11-28, when the fresh gas was expanded to the lungs'
+  # conditions and the oxygen consumed converted from STPD: more agent is
+  # delivered at these flows, gasFreshGasExpansion())
+  expect_equal(ref$cross, 217.11, tolerance = 1e-4)
   raw <- gasCoupledRecovery(w, off = "isoflurane", target = carbon4BrainTarget(w, "isoflurane"),
                             threshold = 0.6, maxPoints = length(w$Time))
   expect_lt(abs(raw[at] - ref$cross), 0.01)
@@ -190,7 +193,7 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   app <- gasRecoveryTime(w, "desflurane", 0.6)
   change <- which(abs(w$Time - 195) < 1e-9)
   expect_equal(raw[change - 1], 0)
-  expect_equal(raw[change], 281.9, tolerance = 1e-4)
+  expect_equal(raw[change], 282.56, tolerance = 1e-4)   # 281.9 until 2026-11-28, as above
   expect_equal(app[change - 1], 0)
   expect_equal(app[change], raw[change])
   # Every interval's first and last points are integrated, not interpolated
@@ -231,12 +234,14 @@ test_that("H9.2: the time until threshold is not interpolated across a change of
   rawMac <- gasCoupledRecovery(w, off = intersect(potentAgents(), names(w$state)),
                                target = carbon4MacTarget(w, 40), threshold = GAS_MAC_THRESHOLD,
                                maxPoints = length(w$Time))
-  expect_equal(raw[at], c(9.2457258296, 10.1558887982, 11.9260224807), tolerance = 1e-10)
+  # (9.2457258296, 10.1558887982 and 11.9260224807 until 2026-11-28, as above)
+  expect_equal(raw[at], c(9.43029041304, 10.35483791027, 12.18253672647), tolerance = 1e-10)
   # (MAC's: 4.9887751535, 5.9116560370 and 7.7032597883 on the graded grid
   # with GasMan's MAC at 40, before Mapleson's was adopted the same day)
   # (5.7624362094, 6.8594149330 and 9.1592082535 at 30.011 and 60.007, before
   # the steps after the ramp were held to the plot's step)
-  expect_equal(rawMac[at], c(5.7588960545, 6.8524335446, 9.1592083224), tolerance = 1e-10)
+  # (5.7588960545, 6.8524335446 and 9.1592083224 until 2026-11-28, as above)
+  expect_equal(rawMac[at], c(5.95082403863, 7.06909300948, 9.47760467983), tolerance = 1e-10)
   expect_equal(gasRecoveryTime(w, "sevoflurane", thr)[at[3]], raw[at[3]])
   expect_equal(macRecoveryTime(w, 40, GAS_MAC_THRESHOLD)[at[3]], rawMac[at[3]])
 })
