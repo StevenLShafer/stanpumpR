@@ -2,6 +2,7 @@
 # See R/renalFunction.R.
 
 renalDrugs <- c("mycophenolate",  # Cockcroft-Gault on CL and V1 (van Hest 2005)
+                "idarucizumab",  # Cockcroft-Gault on CL (derived from Glund 2017)
                 "mannitol", "vancomycin", "vancomycinKidneyTransplant", "gentamicin", "cefazolin", "sugammadex",
                 "gabapentin", "pregabalin", "oxycodone", "hydrocodone", "meloxicam",
                 "lacosamide", "levetiracetam", "metformin", "ertugliflozin", "empagliflozin",
