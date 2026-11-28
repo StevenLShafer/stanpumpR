@@ -75,7 +75,7 @@
 #
 # THE TWO HALF-LIVES: the factor VIII curve uses this model's own Imax and
 # IC50, not the rVWF model's that the supplement's 11.5 h comes from
-# (Shafer's decision of 2026-11-28; see below).
+# (Shafer's decision of 2026-11-28; the factor VIII section above).
 #
 # CHECKS against the label (HUMATE-P prescribing information, BLA 103960,
 # revised 6/2020, 12.3, Table 9: subjects with types 1, 2 and 3 before
