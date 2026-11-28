@@ -82,9 +82,8 @@
 # =============================
 # The control stream's POP codes the indication: 2 cUTI, 3 cIAI, 4 HAP/VAP;
 # POP5 is "presence of ventilator", fitted in the phase III HAP/VAP trial.
-# The Patient Profile's categories map onto them as follows [decision for
-# Shafer, put to him 2026-11-25; docs/library-expansion/plan.csv, row
-# Avycaz]:
+# The Patient Profile's categories map onto them as follows (put to Shafer
+# 2026-11-25, accepted by him 2026-11-28):
 #     none                 the healthy reference
 #     cUTI                 Vc x 1.49
 #     cIAI                 CL x 1.33, Vc x 1.83
