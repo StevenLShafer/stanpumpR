@@ -34,4 +34,4 @@ Both ceftazidime and avibactam are removed by hemodialysis, so on dialysis days 
 
 ### Set the infection
 
-The model's clearance and central volume depend on the infection (see [ceftazidime](help:drugs/ceftazidime)). Enter it in the Patient Profile's **Infection** field. The default, *None (healthy)*, gives a healthy participant's curve. In an infected patient the central volume is 1.49 to 2.20 times larger, so the default overstates the peak.
+The model's clearance and central volume depend on the infection (see [ceftazidime](help:drugs/ceftazidime)). Enter it in the Patient Profile's **Infection** field. The default, *None (healthy)*, gives a healthy participant's curve. For the infections the source modelled, the central volume is 1.49 to 2.20 times larger, so the default overstates the peak; *Other* gives the healthy curve, as the source fitted no other infection.

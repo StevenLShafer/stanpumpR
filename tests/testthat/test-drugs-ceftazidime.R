@@ -136,3 +136,14 @@ test_that("the MIC line is free ceftazidime at 8 mg/L, with no band", {
   expect_null(antibioticMbcBand("ceftazidime"))
   expect_true("ceftazidime" %in% antibioticNoBands()$Drug)
 })
+
+test_that("pinned: the reference man with the switch off, a woman of 120 kg with it on", {
+  X <- ceftazidime(70, 170, 35, "male", adjustToFFM = FALSE)
+  expect_equal_rounded(X$PK$default, list(v1 = 11.2, v2 = 6.52, v3 = 1,
+                                          cl1 = 0.13437016, cl2 = 0.088833333, cl3 = 0))
+  expect_equal(c(X$tPeak, X$MEAC, X$typical, X$upperTypical, X$lowerTypical), rep(0, 5))
+  expect_match(X$reference, "Franzese", fixed = TRUE)
+  on <- ceftazidime(120, 170, 50, "female", creatinine = 0.8)$PK$default
+  expect_equal_rounded(on, list(v1 = 12.232717, v2 = 7.1211886, v3 = 1,
+                                cl1 = 0.12771248, cl2 = 0.094241076, cl3 = 0))
+})
