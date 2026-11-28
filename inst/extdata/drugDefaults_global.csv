@@ -392,3 +392,5 @@ micafunginJullien,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7
 micafunginWasmann,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
 ciprofolLiu,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
 ciprofolWang,ng,mg,mg/kg/hr,mg/kg,"mg,mg/kg,mg/hr,mg/kg/hr",#7A4FA3,0,0,0,0,0,IV,
+caspofungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/m2,mg/m2 qd,mg/hr,mg/kg/hr,mg/m2/hr",#117A65,0,0,0,0,0,IV,Other
+caspofunginXu,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/m2,mg/m2 qd,mg/hr,mg/kg/hr,mg/m2/hr",#117A65,0,0,0,0,0,IV,

@@ -169,6 +169,16 @@ MODEL_GROUPS <- list(
     ageMin = c(29.9, 22), ageMax = c(92.7, 61),
     weightMin = c(48, 61.5), weightMax = c(141, 184),
     n = c(99, 24), year = c(2017, 2019)),
+  # Caspofungin (R/drugs_caspofungin*.R; Shafer, 2026-11-28): Xu 2026's
+  # critically ill children (Table 1: 0.33-16 years, 4.9-74 kg), read in full.
+  # Wurthwein 2013's adults join when its PDF arrives (papers/pending-work.csv);
+  # until then an adult receives Xu by the nearest rule.
+  caspofungin = data.frame(
+    model = "caspofunginXu",
+    source = "Xu 2026",
+    ageMin = 0.33, ageMax = 16,
+    weightMin = 4.9, weightMax = 74,
+    n = 29, year = 2026),
   doxorubicinol = data.frame(
     model = c("doxorubicinolJoerger", "doxorubicinolPediatric", "doxorubicinolPerezBlanco"),
     source = c("Joerger 2007", "Voller 2015", "Perez-Blanco 2016"),
@@ -487,3 +497,13 @@ antithrombin <- modelGroup("antithrombin")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 micafungin <- modelGroup("micafungin")
+
+#' Caspofungin: the model chosen for the patient
+#'
+#' Xu 2026 (29 critically ill children, 0.33-16 years, 4.9-74 kg), chosen by
+#' \code{selectModel()}; an adult receives it by the nearest rule until
+#' Wurthwein 2013's adult model is added.  See \code{R/modelSelection.R}.
+#' @inheritParams caspofunginXu
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+caspofungin <- modelGroup("caspofungin")
