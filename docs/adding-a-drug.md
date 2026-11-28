@@ -132,6 +132,38 @@ exactly where subjects differ most. On de Groot, moving the start from 1 to 5 mi
 and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
 damaged. Record the start in the header, and say what the refit does and does not determine.
 
+The reason is worth understanding, because it is not a numerical accident. **The grid's start is the
+first sample time of the simulated study**, and V1 is fixed by the first sample after a bolus. So
+moving the start is running a different experiment, and the refit will report the V1 that experiment
+would have found. Choosing the real study's first observation is choosing to reproduce the design that
+actually produced the data.
+
+### Why V1 is where the damage lands, and clearance is not
+
+**V1 is a fiction; clearance is real** (Steven L. Shafer, 2026-11-27). By its definition V1 is the
+dose over the concentration at time zero -- but at time zero the drug has not left the injection site,
+so the true concentration is zero and the true V1 infinite. What a study reports is where its own
+curve, measured from the first sample onward, extrapolates back to an intercept that does not exist.
+That extrapolation depends on **when the first sample was drawn**: a study sampling at one minute
+extrapolates to a higher intercept, and so a smaller V1, than one sampling at ten. Clearance has no
+such dependence. It is the dose over the AUC, it measures a real physiological process, and any
+reasonable sampling scheme captures it. This is the mechanism behind *Comparing sources: only
+clearance is real* in `AGENTS.md`, and behind the observation there that central volumes fall with
+publication date as sampling got earlier.
+
+Three consequences for a two-stage refit:
+
+- **Expect V1 to carry more variability than CL**, between subjects and between methods. In de
+  Groot's six men, individual V1 spans 3.7-fold and CL 2.8-fold; across every candidate set and
+  fitting method tried, CL stayed within 32.3-32.9 L/h while V1 ranged 16 to 33.
+- **Do not claim a direction for a bias in V1.** A mean-closure's V1 can be compared with a refit of
+  the same subjects, which is an estimator-against-population statement; it is not a prediction about
+  any individual, and a single subject cannot establish it -- five of de Groot's six men fall below
+  the mean-closure and one sits well above. Where a direction is asserted for a cohort, it needs a
+  population refit of that cohort, not one patient.
+- **Stand behind clearance.** When a header must say what the model does and does not determine, CL
+  is the quantity to quote with confidence and V1 the one to qualify.
+
 ### What de Groot's numbers looked like
 
 | | V1 | Vss | CL | t1/2alpha | t1/2beta |
@@ -155,9 +187,12 @@ own intravenous points at a median ratio of 1.044) and settled the absorption mo
 pseudo-subjects from mean +/- SD: the correlations are unknown, which is the very problem.
 
 If nothing can be fitted, use the means and **say in the drug's header and help page that they are a
-two-stage average, which parameter is most likely distorted and in which direction**, with the
-magnitude from a comparable cohort if one exists. A model carrying its own caveats is better than no
-model: a clinician with neither has only the label.
+two-stage average, and which parameter is most likely distorted**. Be careful with direction: a
+magnitude borrowed from a comparable cohort is an illustration of how large the error can be, not a
+prediction for this one, and for V1 it is not even a stable quantity to have a direction about (see
+above). Saying "the mean-closure can be badly wrong, and the volume is the parameter it falls on" is
+honest; "the volume is overestimated" usually is not. A model carrying its own caveats is better than
+no model: a clinician with neither has only the label.
 
 ### The same fault corrupts the input function
 

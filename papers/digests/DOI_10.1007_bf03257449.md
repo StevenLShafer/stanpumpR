@@ -16,7 +16,7 @@ open_questions:
 - '[check] The abstract (PDF p1) gives CL 34.1 ± 9.7 L/h after IV, but Table II (PDF p4, printed 348) and the Results text (p5) give 32.2 ± 11.80 L/h, and the mean of the six Table III values is 32.2. Which is printed in error cannot be settled from this PDF; use the table value.'
 - '[check] RESOLVED 2026-11-27 by digitising Figure 1. Subject 1''s 60-minute oral point reads 1.417 ug/L on the figure, against the text''s 1.2 and Table IV''s 1.00. Table IV''s value is not an observation: the paper''s own 1-compartment fit, run at the printed ka and k, predicts tmax 60 min and Cmax 1.033, which is what Table IV prints to rounding. So the table gives the model''s peak, the text gives something closer to the measured one, and both understate the figure. Digitisation uncertainty, measured on the IV arm of the same figure, is about 10%, which covers the text''s 1.2 but not the table''s 1.00.'
 - '[check] The printed mean set is over-determined and does not agree with itself. Dose/AUC gives CL 31.54 L/h (152 ug / 4.82 ug/L*h), Table II gives 32.2, the abstract 34.1, and Vss/MRT 31.78; and CL x MRT = 72.45 L against the printed Vss 71.5 L. Expected of means taken parameter by parameter over six individual fits, but it means no four of the printed means are mutually consistent.'
-- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, with its grid starting at the study''s first observation: V1 18.32, V2 58.56, Vss 76.88 L, CL 32.45 L/h, Q 123.7 L/h, t1/2 4.05 min and 1.903 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), so no candidate determines V1 to better than about 30%; CL is firm at 32.3-32.9 L/h across every candidate and method. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
+- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, with its grid starting at the study''s first observation: V1 18.32, V2 58.56, Vss 76.88 L, CL 32.45 L/h, Q 123.7 L/h, t1/2 4.05 min and 1.903 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), because the grid''s start is the simulated study''s first sample time and V1 is fixed by the first sample after a bolus. No candidate determines V1 to better than about 30%, and none supports a claim about the DIRECTION of any error in it; CL is firm at 32.3-32.9 L/h across every candidate and method, and is the parameter to stand behind. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
 ---
 
 # de Groot 1994: oral methylergometrine bioavailability in men
@@ -106,6 +106,15 @@ V1 moves 32% across that range and t1/2alpha 25%, while Vss moves 5% and CL 2% -
 quantities the two-stage averaging damaged, and for the same reason. So the refit does not determine
 V1 to better than about 30% either, and the card says so rather than quoting a single figure.
 
+The reason is not numerical (Steven L. Shafer, 2026-11-27). **V1 is a fiction and clearance is real.**
+At time zero the drug has not left the injection site, so the true concentration is zero and the true
+V1 infinite; what a study reports is where its own curve extrapolates back to an intercept that does
+not exist, and that depends on when it drew its first sample. The grid's start IS the first sample
+time of the simulated study, so moving it runs a different experiment. Clearance has no such
+dependence -- it is the dose over the AUC -- which is why CL sits at 32.3 to 32.9 L/h across every
+candidate set and fitting method tried here while V1 ranges 16 to 33, and why **no direction should
+be claimed for a bias in V1**. See *Comparing sources: only clearance is real* in `AGENTS.md`.
+
 **Recommended, with the grid starting at the study's first observation (3 min): CL 32.45 L/h,
 V1 18.32, V2 58.56, Vss 76.88 L, Q 123.7 L/h, t1/2 4.05 min and 1.903 h.** CL lands on the paper's
 printed 32.2, and V1 lands near the mean of the six individual closures (20.34 L) rather than below
@@ -140,6 +149,14 @@ recovered as CL x AUC, the paper having measured its solution at 93.3 +/- 6.5% o
 imply). Either way the closure is confirmed to about 10%, which is the digitisation's own accuracy.
 So the closed-form V1 recovery is confirmed against observations, not only against arithmetic -- which
 is what licenses the deconvolution below.
+
+**A second, independent check** was supplied by the methylergonovine session on 2026-11-27, and is
+stronger than the first because nothing in it came from the source the closure used. de Groot 1995,
+the companion paper, plots man no. 6 of these same six. Closing his Table III row here gives V1
+10.50 L, and reading that figure against it gives a median read/model ratio of 0.98 and MDAPE 3.7%.
+Note that 1995's men ARE these men -- identical demographics and table values -- so the two papers
+are not independent studies of the drug, and a clearance agreeing between them is not a cross-check
+(a mistake this card's author made and the methylergonovine session caught).
 
 ### The oral input is zero-order, and the paper's ka is an artifact
 Only F is model-independent in Table IV. The printed tmax values (59, 32, 35, 24, 54 and 40 min) are
