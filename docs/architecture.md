@@ -157,7 +157,7 @@ and display only (`R/utils-time.R`, the "Time units" block of `app_server()`).
   (`timeSliderRange()`: 0 to the unit's longest `MAX_TIMES` length, in `TIME_SLIDER_STEPS`), and
   `syncTimeSliders()` resets them on a change of unit, snapping the values (`snapMaximum()`,
   `snapMinimum()`); `plotInfo()` waits (`sliderPending()`) until the browser reports the snapped
-  values. The plot is lengthened past the last dose only up to the end of the slider. The axis
+  values. The plot is lengthened past the last dose only up to the end of the slider (`lengthenedPlot()`), and the slider is then moved to the length drawn (`lengthenedMaximum()`, 2026-11-28). The axis
   runs from `plotMinimum()` to `plotMaximum()`, ticked by `axisTimeStep()` (a `MAX_TIMES` length
   from 0 keeps its own ticks). Everything is simulated from 0; `processdoseTable(plotMinimum =)`
   refines the time lines inside the window (`withGridWindow()`), and `simulationPlot(xMinimum =)`

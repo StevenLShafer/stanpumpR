@@ -77,3 +77,4 @@ __pycache__/
 # bundle_repo.py writes its backups and lock beside the archive; running it or its
 # tests from the CHECKOUT makes papers/_backup here instead, which must never be committed.
 papers/_backup/
+tests/testthat/_problems/

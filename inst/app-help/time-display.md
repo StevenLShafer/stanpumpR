@@ -53,7 +53,7 @@ The length of the simulation is set by the **Max time** slider, in the Time pane
 
 Drag the handle, or click it and use the arrow keys to move one step at a time. Changing the unit keeps Max time, rounded up to the new unit's step and kept within its range: 24 hours becomes 1 day, and 365 days becomes 52 weeks (364 days).
 
-If a dose or an event falls near or after the end of the plot (within half an hour, for minutes and hours), the plot is lengthened to show it, in steps matching the axis, but never past the end of the slider (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit.
+If a dose or an event falls near or after the end of the plot (within half an hour, for minutes and hours), the plot is lengthened to show it, in steps matching the axis, but never past the end of the slider (24 hours, 365 days or 52 weeks). A dose beyond that brings a notification: choose a longer Max time or a larger time unit. The **Max time** slider then moves to the length drawn, so the slider and the plot always agree; set it below what the doses need and it returns to the shortest plot that shows them.
 
 ## Min time
 

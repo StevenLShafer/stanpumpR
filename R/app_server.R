@@ -1625,9 +1625,13 @@ app_server <- function(input, output, session) {
   # A link or a scenario that sets the physiology away from normal shows the
   # sliders, which otherwise wait behind physiologyIntro() (Shafer,
   # 2026-11-17): a changed slider is never hidden.
-  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio()), {
+  # (the haemoglobin too, which the simulation uses as restored: Devin's
+  # review of PR 1036)
+  observeEvent(list(physiology(), altitude(), endobronchial(), shunt(), ieRatio(),
+                    haemoglobin()), {
     if (!physiologyIsNormal(physiology()) || altitude() != ALTITUDE_DEFAULT ||
-        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT)
+        endobronchial() || shunt() != GAS_SHUNT_ANESTHESIA || ieRatio() != GAS_IE_DEFAULT ||
+        haemoglobin() != ARTERIAL_OXYGEN_HAEMOGLOBIN)
       session$sendCustomMessage("physiology_show", list())
   })
 
@@ -2041,21 +2045,11 @@ app_server <- function(input, output, session) {
                      na.rm = TRUE)
 
       # Lengthen the plot when the last dose or event comes within a margin of
-      # its end, using the ticks of the unit's next longer Max time (minutes
-      # and hours: 30 minutes, as always).  Never past the unit's longest Max
-      # time: a longer plot is a matter of choosing a larger unit.
-      margin <- TIME_EXTEND_MARGIN[[unit]]
-      longest <- slider$max
-      if ((maxTime + margin - 1) >= plotMaximum) {
-        steps <- maxTimes$steps[maxTimes$times >= (maxTime + margin)][1]
-        if (is.na(steps)) steps <- utils::tail(maxTimes$steps, 1)
-        plotMaximum <- ceiling((maxTime + margin)/steps) * steps
-        if (plotMaximum > longest) {
-          plotMaximum <- longest
-          steps <- utils::tail(maxTimes$steps, 1)
-        }
-        # A window that does not start at 0 is ticked for its own width
-        if (plotMinimum > 0) steps <- axisTimeStep(plotMinimum, plotMaximum, unit)
+      # its end (lengthenedPlot() in R/utils-time.R)
+      lengthened <- lengthenedPlot(requestedMaximum, maxTime, unit, plotMinimum, slider$max)
+      if (!is.null(lengthened)) {
+        plotMaximum <- lengthened$plotMaximum
+        steps <- lengthened$steps
       }
 
       # Doses and events the plot cannot reach (see the observer below)
@@ -2063,7 +2057,8 @@ app_server <- function(input, output, session) {
         doses = sum(doseTableClean()$Time >= plotMaximum),
         events = sum(as.numeric(eventTableClean()$Time) >= plotMaximum)
       )
-      list(plotMinimum = plotMinimum, plotMaximum = plotMaximum, steps = steps, beyond = beyond)
+      list(plotMinimum = plotMinimum, plotMaximum = plotMaximum, steps = steps, beyond = beyond,
+           requestedMaximum = requestedMaximum)
     }, name = "plotInfo() reactive")
   })
 
@@ -2072,6 +2067,53 @@ app_server <- function(input, output, session) {
   plotMinimum <- reactive(plotInfo()$plotMinimum)
   # Tick spacing, in minutes, for the current time unit
   steps       <- reactive(plotInfo()$steps)
+
+  # A plot lengthened past the Max time asked for moves the slider to the
+  # length drawn (Steven L. Shafer, 2026-11-28: "I would move the slider...
+  # There is some dissonance for the user if the slider shows 5 while the max
+  # time shows 150"; Devin's QA of PR 1029 took it for a defect).  The new
+  # value is the lengthened end, on the slider's step and within its range
+  # (snapMaximum()), which is at or past the last dose or event plus the
+  # margin, so plotInfo() does not lengthen the plot again from it; where the
+  # plot stopped at the unit's longest length the slider stops there too, and
+  # the next pass ends at the same place.  Only for the Max time the plot was
+  # computed from and the slider still shows: while a slider is being dragged
+  # the two differ, and the drag is the user's.  The plot stays as drawn while
+  # the browser reports the slider's new value, which then gives the same end.  `maximumLengthened` records
+  # the move, so that what follows the default settings (the repeating oral
+  # switch below) still sees them as the default.
+  maximumLengthened <- new.env()
+  observe({
+    info <- tryCatch(plotInfo(), error = function(e) NULL)
+    if (is.null(info)) return()  # waiting: leave things as they are
+    shown <- asScalarNumeric(isolate(input$maximum))
+    if (!is_valid_number(shown) || !isTRUE(shown == info$requestedMaximum)) return()
+    unit <- isolate(timeUnit())
+    target <- lengthenedMaximum(info$plotMaximum, shown, unit)
+    if (is.null(target)) return()
+    maximumLengthened$from <- if (isTRUE(maximumLengthened$to == shown)) maximumLengthened$from else shown
+    maximumLengthened$to <- target
+    # Not through syncTimeSliders(): that makes plotInfo() wait for the
+    # browser's report, and the plot, already drawn to this length, would
+    # blank until it came
+    updateSliderInput(session, "maximum", value = target)
+  })
+  # Any other Max time is the user's (or a scenario's, a link's): the record
+  # of the move is dropped, so that coming back to the number the app once
+  # set is a choice, not the default lengthened (Devin's review of PR 1036)
+  observeEvent(input$maximum, ignoreInit = TRUE, {
+    maximum <- asScalarNumeric(input$maximum)
+    if (!isTRUE(maximumLengthened$to == maximum)) {
+      maximumLengthened$from <- NULL
+      maximumLengthened$to <- NULL
+    }
+  })
+  # The Max time the user or the defaults set: the slider's, or what it was
+  # before the plot's lengthening moved it
+  chosenMaximum <- function() {
+    maximum <- suppressWarnings(as.numeric(isolate(input$maximum)))
+    if (isTRUE(maximumLengthened$to == maximum)) maximumLengthened$from else maximum
+  }
 
   # The length of a plot in words, as the Max time list says it ("14 days"),
   # or, for a plot lengthened past the last dose, as a duration
@@ -2176,7 +2218,9 @@ app_server <- function(input, output, session) {
     minimum <- suppressWarnings(as.numeric(isolate(input$minimum)))
     atDefault <- identical(isolate(timeUnit()), TIME_UNIT_DEFAULT) &&
       identical(isolate(input$timeMode), TIME_MODE_DEFAULT) &&
-      isTRUE(suppressWarnings(as.numeric(isolate(input$maximum))) == TIME_MAXIMUM_DEFAULT) &&
+      # (the slider's own value, or the one it had before a lengthened plot
+      # moved it: chosenMaximum())
+      isTRUE(chosenMaximum() == TIME_MAXIMUM_DEFAULT) &&
       (length(minimum) == 0 || isTRUE(minimum == 0))
     if (!atDefault) {
       # The user chose the time settings; the default no longer applies

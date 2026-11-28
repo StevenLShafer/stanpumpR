@@ -279,6 +279,46 @@ snapMaximum <- function(x, unit) {
   min(max(ceiling(x / r$step - 1e-9) * r$step, r$step), r$max)
 }
 
+# A plot lengthened to show what follows its last dose or event: when that
+# time, `maxTime`, comes within the unit's margin (TIME_EXTEND_MARGIN) of the
+# end asked for, the plot ends at the margin past it, rounded up to the ticks
+# of the unit's next longer Max time (minutes and hours: 30 minutes, as
+# always).  Never past `longest`, the unit's longest Max time: a longer plot
+# is a matter of choosing a larger unit.  NULL when the plot is long enough.
+lengthenedPlot <- function(requestedMaximum, maxTime, unit, plotMinimum = 0,
+                           longest = timeSliderRange(unit)$max) {
+  maxTimes <- MAX_TIMES[[unit]]
+  margin <- TIME_EXTEND_MARGIN[[unit]]
+  if (!is.finite(maxTime) || (maxTime + margin - 1) < requestedMaximum) return(NULL)
+  steps <- maxTimes$steps[maxTimes$times >= (maxTime + margin)][1]
+  if (is.na(steps)) steps <- utils::tail(maxTimes$steps, 1)
+  plotMaximum <- ceiling((maxTime + margin)/steps) * steps
+  if (plotMaximum > longest) {
+    plotMaximum <- longest
+    steps <- utils::tail(maxTimes$steps, 1)
+  }
+  # A window that does not start at 0 is ticked for its own width
+  if (plotMinimum > 0) steps <- axisTimeStep(plotMinimum, plotMaximum, unit)
+  list(plotMaximum = plotMaximum, steps = steps)
+}
+
+# The Max time (minutes) the slider should show for a plot lengthened to
+# `plotMaximum` while it shows `shown`: the lengthened end on the slider's
+# step and within its range, or NULL when the slider already shows at least
+# that (the plot was not lengthened, or stopped at the unit's longest length).
+# Where the lengthened end falls between the slider's steps (2.5 days on a
+# slider of whole days) the slider takes the next step, 3 days, and the plot
+# then runs to it: the slider cannot show 2.5, and a plot half a day longer
+# than the lengthening rule asked for is the price of the two agreeing
+# (Devin's review of PR 1036 raised it; kept).
+lengthenedMaximum <- function(plotMaximum, shown, unit) {
+  plotMaximum <- asScalarNumeric(plotMaximum)
+  shown <- asScalarNumeric(shown)
+  if (!is.finite(plotMaximum) || !is.finite(shown) || plotMaximum <= shown) return(NULL)
+  target <- snapMaximum(plotMaximum, unit)
+  if (target <= shown) NULL else target
+}
+
 # A Min time (minutes) the unit's slider can show, below `maximum`: x rounded
 # down to a whole step, from 0 to one step short of `maximum`.  NA or a
 # non-number is 0.
