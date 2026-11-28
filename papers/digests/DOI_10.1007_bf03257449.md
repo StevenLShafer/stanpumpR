@@ -8,7 +8,7 @@ drugs:
 source_read: 'page images (PDF pages 2, 4, 5 rendered and read: Tables I-IV, Fig 1, Table II; pages 4 and 5 re-rendered on 2026-11-27 at higher magnification to read Table II''s footnote markers, Table IV in full per subject, and Figure 1''s peak region -- the text layer interleaves the two-column table rows and offsets Table IV''s values by one row, so it must not be transcribed; remaining pages text layer)'
 edition: published
 digest_by: Claude (unattended digest_run.py), 2026-11-26; reworked by hand on 2026-11-27 at Steven L. Shafer's direction -- the closed form for V1, the median/log-OLS refit, the Figure 1 digitisation and the oral deconvolution
-checked_against: "stanpumpR master 8e491545 (re-checked against 6a5bff47 on 2026-11-27 -- still no methylergonovine model)"
+checked_against: stanpumpR master 8e491545 (re-checked against 6a5bff47 on 2026-11-27 -- still no methylergonovine model)
 verification: not-applicable
 open_questions:
 - '[check] Table II''s footnote b (Model-independent) marks t_abs and footnote c (1-compartment model) marks MAT. Footnote b is contradicted by the paper''s own numbers: t_abs reproduces the printed tmax through the 1-compartment formula tmax = tlag + ln(ka/k)/(ka-k) to three decimals (subject 1, 0.995 against 0.99; subject 4, 0.401 against 0.40), so it is the fitted absorption half-life, not a model-independent quantity. Footnote c is right, and MAT is 1-compartment-derived through MRT_po. Do not take t_abs as a model-free input parameter on the strength of that footnote.'
@@ -16,7 +16,7 @@ open_questions:
 - '[check] The abstract (PDF p1) gives CL 34.1 ± 9.7 L/h after IV, but Table II (PDF p4, printed 348) and the Results text (p5) give 32.2 ± 11.80 L/h, and the mean of the six Table III values is 32.2. Which is printed in error cannot be settled from this PDF; use the table value.'
 - '[check] RESOLVED 2026-11-27 by digitising Figure 1. Subject 1''s 60-minute oral point reads 1.417 ug/L on the figure, against the text''s 1.2 and Table IV''s 1.00. Table IV''s value is not an observation: the paper''s own 1-compartment fit, run at the printed ka and k, predicts tmax 60 min and Cmax 1.033, which is what Table IV prints to rounding. So the table gives the model''s peak, the text gives something closer to the measured one, and both understate the figure. Digitisation uncertainty, measured on the IV arm of the same figure, is about 10%, which covers the text''s 1.2 but not the table''s 1.00.'
 - '[check] The printed mean set is over-determined and does not agree with itself. Dose/AUC gives CL 31.54 L/h (152 ug / 4.82 ug/L*h), Table II gives 32.2, the abstract 34.1, and Vss/MRT 31.78; and CL x MRT = 72.45 L against the printed Vss 71.5 L. Expected of means taken parameter by parameter over six individual fits, but it means no four of the printed means are mutually consistent.'
-- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends: V1 16.12, V2 58.50, Vss 74.62 L, CL 32.28 L/h, Q 127.4 L/h, t1/2 3.55 min and 1.862 h. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F about 85% for the group -- and stanpumpR already has the engine for it.'
+- '[decision] For Steven L. Shafer, and the only thing on this card that needs him. The paper''s printed means are a two-stage average and describe no subject; the arithmetic, the refit and the validation are in *What this paper actually supports* below. Three candidate parameter sets exist. (1) The printed means closed: V1 32.60, V2 38.90, Vss 71.50 L, CL 32.20 L/h, t1/2 11.4 min and 1.85 h. (2) The mean of the six individually closed sets: V1 20.34, Vss 71.52 L, CL 32.16 L/h, t1/2 5.5 min and 1.84 h. (3) The two-stage refit through the median curve, which this card recommends, with its grid starting at the study''s first observation: V1 18.32, V2 58.56, Vss 76.88 L, CL 32.45 L/h, Q 123.7 L/h, t1/2 4.05 min and 1.903 h. Note that the refit''s V1 moves 32% with where the grid starts (16.12 L from 1 min, 20.65 from 5), so no candidate determines V1 to better than about 30%; CL is firm at 32.3-32.9 L/h across every candidate and method. Which set? And is methylergonovine to be built at all from a six-man study whose bioavailability ranges 22 to 136%? The oral input is settled either way -- zero-order, 55 min after a 15.4 min lag, F the group median of 83.7% -- and stanpumpR already has the engine for it.'
 ---
 
 # de Groot 1994: oral methylergometrine bioavailability in men
@@ -86,11 +86,31 @@ MDPE and MDAPE, which are defined on the ratio measured/predicted. Extended leas
 and its variance power is not identifiable from noise-free medians -- the objective falls monotonically
 over theta 0 to 1.5 with no interior minimum, because simulated medians have no residual variance for
 it to be identified from -- so theta would have to be fixed at 1 on physical grounds; log-OLS avoids
-the question. Grid density was not the constraint: 2.0-fold to 1.15-fold spacing took the points below
-10 min from 4 to 17 and moved CL 0.5% and t1/2alpha not at all.
+the question. Grid SPACING is not the constraint: 2.0-fold to 1.15-fold took the points below 10 min
+from 4 to 17 and moved CL 0.5% and t1/2alpha not at all. Grid START is, and badly -- see the table
+below, which is the single largest uncertainty on this card.
 
-**Result: CL 32.28 L/h, V1 16.12, V2 58.50, Vss 74.62 L, Q 127.4 L/h, t1/2 3.55 min and 1.862 h.**
-CL lands on the paper's printed 32.2.
+The grid's START matters, and far more than its spacing -- found by the methylergonovine session on
+2026-11-27 and reproduced here. Simulating from 1 min extrapolates each man's model into a region
+where the study has no data (its first IV sample is at 3 min; the infusion ends at 1 min), and that
+is exactly where the six differ most. Over starts of 1 to 5 min and both spacings:
+
+| grid starts at | V1 | V2 | Vss | CL | Q | t1/2alpha | t1/2beta |
+|---|---|---|---|---|---|---|---|
+| 1 min | 16.12 | 58.50 | 74.62 | 32.28 | 127.4 | 3.55 min | 1.862 h |
+| 2 min | 17.16 | 58.80 | 75.96 | 32.29 | 125.0 | 3.81 min | 1.893 h |
+| **3 min (first observation)** | **18.32** | **58.56** | **76.88** | **32.45** | **123.7** | **4.05 min** | **1.903 h** |
+| 5 min | 20.65 | 57.39 | 78.03 | 32.91 | 123.3 | 4.45 min | 1.892 h |
+
+V1 moves 32% across that range and t1/2alpha 25%, while Vss moves 5% and CL 2% -- the same two
+quantities the two-stage averaging damaged, and for the same reason. So the refit does not determine
+V1 to better than about 30% either, and the card says so rather than quoting a single figure.
+
+**Recommended, with the grid starting at the study's first observation (3 min): CL 32.45 L/h,
+V1 18.32, V2 58.56, Vss 76.88 L, Q 123.7 L/h, t1/2 4.05 min and 1.903 h.** CL lands on the paper's
+printed 32.2, and V1 lands near the mean of the six individual closures (20.34 L) rather than below
+all but two of them. Do not simulate before the first observation: nothing constrains the model
+there.
 
 Scored by Varvel, Donoho and Shafer 1992 (PMID 1588504, `papers/digests/PMID_1588504.md`),
 PE = 100 (measured - predicted) / predicted, against all six subjects' simulated concentrations:
@@ -113,7 +133,11 @@ matched to the protocol's nominal sampling time, which removes the x-axis readin
 
 Subject 1's unit disposition function, closed from his four Table III numbers alone (V1 19.03 L,
 V2 50.87, Q 109.4 L/h, k10 1.597, k12 5.749, k21 2.151 /h), reproduces his OWN digitised IV points at a
-**median ratio of 1.044 and MDAPE 9.5%**, the points implying a dose of 156 ug against the nominal 152.
+**median ratio of 1.102 and MDAPE 10.5%** when simulated at the dose he actually received -- 144.1 ug,
+recovered as CL x AUC, the paper having measured its solution at 93.3 +/- 6.5% of the claimed 152
+(the methylergonovine session's point, 2026-11-27; at the NOMINAL 152 the agreement reads better,
+1.044 and 9.5%, but the delivered dose is the right basis and is what the authors' own CL and AUC
+imply). Either way the closure is confirmed to about 10%, which is the digitisation's own accuracy.
 So the closed-form V1 recovery is confirmed against observations, not only against arithmetic -- which
 is what licenses the deconvolution below.
 
@@ -135,7 +159,10 @@ concentrations:
 | lagged Weibull (4p) | 0.0548 | -25.95 | 8.40% | 56 min | 1.275 |
 | two parallel first-order (5p) | 0.3145 | -11.72 | 9.48% | 44 min | 0.941 |
 
-**The input is zero-order: F 105.4%, released over 55 min after a 15.4 min lag.** It reaches Cmax 1.404
+**The input is zero-order: F 105.4%, released over 55 min after a 15.4 min lag.** F carries the
+digitisation's scale uncertainty -- the IV arm of the same figure reads about 10% high against the
+delivered dose -- so it is consistent with anything from roughly 96 to 105%, which brackets Table
+IV's own 103.6% for this subject. The SHAPE does not depend on that scale. It reaches Cmax 1.404
 at 70 min against the observed 1.417 at 60 min. A lagged first-order input cannot reach the peak at all
 -- its own maximum is 0.935 ug/L. The Weibull buys nothing for its fourth parameter, and two parallel
 paths collapse to one (ka1 = ka2 = 1.753 /h), so the data support neither. The zero-order residuals
