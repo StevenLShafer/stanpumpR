@@ -38,6 +38,7 @@ test_that("every narrative belongs to a drug in the library", {
 # R/drugs_temazepam.R) (2026-10-09).
 plasmaOnly <- c(
   "codeine", "tramadol", "prednisone",
+  "methylergonovine",  # no measured time of peak effect (2026-11-25)
   "cefazolin", "clindamycin", "cefalexin", "ceftriaxone", "vancomycin",
   "vancomycinKidneyTransplant",
   "metronidazole", "gentamicin",
