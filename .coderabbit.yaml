@@ -37,6 +37,9 @@
 # PDFs are copyrighted, and the cards are publishable only because they hold
 # facts and paraphrase.  Whoever writes or merges a card now owns that check.
 #
+# Devin Review follows the same rule through REVIEW.md at the repository root;
+# keep the two in step.
+#
 # If the quota stops being the binding constraint, the honest thing is to
 # delete this file rather than let an unexplained exclusion persist.
 
