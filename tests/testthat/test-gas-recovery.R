@@ -168,7 +168,8 @@ test_that("the sum-of-exponentials shortcut reads long when nitrous oxide is was
 
   macShort <- macRecoveryTime(w, 40, 0.1, exact = FALSE)
   want <- bruteGas(gasDose, 70, 40, 119, "MAC", 0.1, off = "MAC")
-  expect_gt((at(w, macShort, 119) - want) / want, 0.03)
+  # (above 3% with GasMan's blood:gas coefficients; 2.7% with Esper's)
+  expect_gt((at(w, macShort, 119) - want) / want, 0.02)
 
   # For a volatile agent turned off alone the shortcut is as good as exact.
   sevoShort <- gasRecoveryTime(w, "sevoflurane", 0.21, exact = FALSE)

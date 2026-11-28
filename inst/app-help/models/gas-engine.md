@@ -22,12 +22,12 @@ The capacity of a tissue for a gas is its volume times its tissue:gas partition 
 | Gas | Blood:gas | Brain:gas | Muscle:gas | Fat:gas | MAC at 40 (%) |
 |---|---|---|---|---|---|
 | nitrous oxide | 0.47 | 0.42 | 0.54 | 1.08 | 104 |
-| sevoflurane | 0.65 | 1.1 | 2.4 | 34 | 1.80 |
-| isoflurane | 1.3 | 2.1 | 4.5 | 70 | 1.17 |
-| desflurane | 0.42 | 0.54 | 0.97 | 13 | 6.6 |
+| sevoflurane | 0.74 | 1.1 | 2.4 | 34 | 1.80 |
+| isoflurane | 1.45 | 2.1 | 4.5 | 70 | 1.17 |
+| desflurane | 0.57 | 0.54 | 0.97 | 13 | 6.6 |
 | nitrogen | 0.014 | 0.010 | 0.014 | 0.070 | (200, flagged) |
 
-The partition coefficients are GasMan's. The MACs at 40 are Mapleson's (*Br J Anaesth* 1996;76:179-185), the meta-analysis whose age relation the engine applies, adopted on 23 November 2026: the program was validated against GasMan first and has since moved to more recent research. GasMan's own, which the US labels share, were 110, 2.1, 1.1 and 6.0 per cent; MAC enters no uptake, so that validation is unchanged. Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
+The tissue:gas coefficients, and the blood:gas coefficients of nitrous oxide and nitrogen, are GasMan's. The blood:gas coefficients of the three volatile agents are Esper's, measured in 120 adult patients (*Anesth Analg* 2015;120:45-50), adopted on 28 November 2026 in place of GasMan's 0.65, 1.3 and 0.42; the tissue:gas coefficients, which are properties of the tissues, did not move, so each tissue:blood ratio fell (isoflurane's brain:blood from 1.62 to 1.45). They are the values at 37 °C and a haematocrit of 45 per cent, and move with body temperature and with the Haemoglobin slider (see [Physiology](help:models/physiology)). The MACs at 40 are Mapleson's (*Br J Anaesth* 1996;76:179-185), the meta-analysis whose age relation the engine applies, adopted on 23 November 2026: the program was validated against GasMan first and has since moved to more recent research. GasMan's own, which the US labels share, were 110, 2.1, 1.1 and 6.0 per cent; MAC enters no uptake, so that validation is unchanged. Nitrogen's MAC of 200 per cent is GasMan's own figure, carried as it stands and flagged: the estimate of Koblin, Eger and colleagues, 110 atmospheres in rats (*Anesth Analg* 1998;87:419-424), is about 55 times higher, and nitrogen is not summed into MAC, so the value is inert. Each gas's page under [Drug library](help:drugs/index) shows these values.
 
 ## Equations
 
@@ -116,6 +116,8 @@ Weber J, Schmidt J, Wirth S, Schumann S, Philip JH, Eberhart LHJ. Context-sensit
 Hendrickx JFA, Lemmens HJM, Shafer SL. Do distribution volumes and clearances relate to tissue volumes and blood flows? A computer simulation. *BMC Anesthesiol* 2006;6:7.
 
 Mapleson WW. Effect of age on MAC in humans: a meta-analysis. *Br J Anaesth* 1996;76:179-185.
+
+Esper T, Wehner M, Meinecke CD, Rueffert H. Blood/gas partition coefficients for isoflurane, sevoflurane, and desflurane in a clinically relevant patient population. *Anesth Analg* 2015;120:45-50. doi:10.1213/ANE.0000000000000516
 
 Cameron CB, Robinson S, Gregory GA. The minimum anesthetic concentration of isoflurane in children. *Anesth Analg* 1984;63:418-420.
 

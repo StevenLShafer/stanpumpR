@@ -67,12 +67,14 @@ test_that("the shunt delays the brain and leaves a little more in the alveoli", 
     expect_gt(at(ten, "Alveolar", t), at(none, "Alveolar", t))
   }
   # The help page's numbers (inst/app-help/models/physiology.md, gas-differences.md)
-  expect_equal(round(at(ten, "Brain", 10), 2), 1.50)
+  # (1.50, 1.55, 1.71, 1.74, 1.753 and 1.748 with GasMan's blood:gas
+  # coefficients, before Esper's)
+  expect_equal(round(at(ten, "Brain", 10), 2), 1.51)
   expect_equal(round(at(none, "Brain", 10), 2), 1.55)
-  expect_equal(round(at(ten, "Brain", 30), 2), 1.71)
-  expect_equal(round(at(none, "Brain", 30), 2), 1.74)
-  expect_equal(round(at(ten, "Alveolar", 30), 3), 1.753)
-  expect_equal(round(at(none, "Alveolar", 30), 3), 1.748)
+  expect_equal(round(at(ten, "Brain", 30), 2), 1.68)
+  expect_equal(round(at(none, "Brain", 30), 2), 1.72)
+  expect_equal(round(at(ten, "Alveolar", 30), 3), 1.726)
+  expect_equal(round(at(none, "Alveolar", 30), 3), 1.721)
 })
 
 test_that("arterial blood is (1 - s) alveolar + s mixed venous for every gas", {
@@ -120,7 +122,7 @@ test_that("the arterial oxygen falls with the shunt (the help page's table)", {
     c(PaO2 = a$PaO2[nrow(a)], SaO2 = a$SaO2[nrow(a)])
   }
   oxygen <- shuntTable(); air <- shuntTable(oxygen = 0, air = 6)
-  expect_equal(round(ao(oxygen)[["PaO2"]]), 478)
+  expect_equal(round(ao(oxygen)[["PaO2"]]), 479)
   expect_equal(round(ao(air)), c(PaO2 = 77, SaO2 = 95))
   expect_equal(round(ao(oxygen, shunt = 0.2)[["PaO2"]]), 259)
   expect_equal(round(ao(air, shunt = 0.03)), c(PaO2 = 91, SaO2 = 97))
