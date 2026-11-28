@@ -83,6 +83,94 @@ used where it is the best available, and its header and help page say that it is
 Ciprofol (Liu 2024) was the first case: arterial sampling is the reference of its
 equations.
 
+## A two-stage source: do not trust its summary parameters
+
+Where a paper fitted each subject separately and then averaged the parameters -- the two-stage
+approach -- **the printed means may not describe the data at all**, and must not be transcribed into
+a model as though they did (Steven L. Shafer, 2026-11-27). Simulate the subjects, pool them on a
+reasonable grid of points, and refit a single model to that.
+
+The failure is not sampling noise, so a standard error does not capture it. Averaging a parameter
+over subjects is an operation with no pharmacokinetic meaning, and it is worst for whichever
+parameter is most skewed across them -- usually a rate constant or a half-life, because one slow
+subject drags an arithmetic mean a long way. The surviving parameters can look perfectly healthy
+while one is badly wrong, which is what makes this hard to spot.
+
+**The worked case is de Groot 1994** (methylergometrine, six men; `papers/digests/DOI_10.1007_bf03257449.md`,
+section *What this paper actually supports*, which carries every number below).
+
+### The procedure
+
+1. **Close each subject.** A two-compartment model needs four non-redundant quantities per subject;
+   CL, Vss and both half-lives are the common case, and
+   `V1 = CL / ((alpha+beta) - alpha*beta*Vss/CL)`, which is linear in 1/V1 and so has a unique
+   admissible root. Before writing that a model cannot be closed, count the non-redundant parameters.
+2. **Simulate each subject** on his own closed model, in the form the study actually used -- a short
+   infusion is not a bolus when the distribution half-life is minutes.
+3. **Take the MEDIAN at each time**, not the mean and not the whole cloud. Least squares over the
+   pooled cloud lets one outlying subject torque the model off its centre; the median demotes him to
+   one of n. With simulated data there are equal numbers at each time, so no n-weighting is needed.
+4. **Fit the medians by OLS on the LOG concentrations.** That is scale-free, has no variance model to
+   misidentify, and is in the same currency as the goodness-of-fit criteria below. Extended least
+   squares is not the answer here: its variance power is unidentifiable from noise-free medians (the
+   objective falls monotonically with theta and has no interior minimum), so it would have to be
+   fixed at 1 on physical grounds anyway. Weighting still matters -- unweighted least squares on the
+   medians fixes the outlier and leaves the heteroscedasticity, and on de Groot it put Vss 11% and
+   t1/2beta 20% low.
+5. **Score with MDPE and MDAPE** (Varvel, Donoho and Shafer 1992, PMID 1588504;
+   `papers/digests/PMID_1588504.md`), PE = 100 (measured - predicted) / predicted, the denominator
+   being the PREDICTED concentration. Expect **MDPE to discriminate and MDAPE not to**: MDAPE floors
+   at the between-subject spread rather than the estimator's quality, and its ranking can change with
+   the pooling. Do not minimise MDAPE directly -- it buys the criterion with bias, by writing the
+   outlying subject off.
+
+### Where the grid starts is the largest single choice
+
+Spacing barely matters; the START does. **Begin the grid at the study's first observation.** Earlier
+than that, the individual models are extrapolated into a region where the study has no data, which is
+exactly where subjects differ most. On de Groot, moving the start from 1 to 5 minutes moved V1 by 32%
+and t1/2alpha by 25%, while Vss moved 5% and CL 2% -- the same two quantities the averaging had
+damaged. Record the start in the header, and say what the refit does and does not determine.
+
+### What de Groot's numbers looked like
+
+| | V1 | Vss | CL | t1/2alpha | t1/2beta |
+|---|---|---|---|---|---|
+| printed means, closed | 32.60 | 71.50 | 32.20 | 11.4 min | 1.85 h |
+| mean of the six individual closures | 20.34 | 71.52 | 32.16 | 5.5 min | 1.84 h |
+| refit, grid from the first observation | 18.32 | 76.88 | 32.45 | 4.05 min | 1.903 h |
+
+Against the geometric mean of the six, the printed means sit -30% at 3 min and +28% at 20 min. CL,
+Vss and t1/2beta survived averaging to within 3, 3.5 and 4%; t1/2alpha did not, and took V1 with it.
+That is the usual shape of the damage, and it is why **clearance is the parameter to compare across
+sources** (see *Comparing sources* in `AGENTS.md`).
+
+### When no individual parameters are printed
+
+Then no refit of this kind is possible -- but that is a statement about *parameters*, not about data.
+Look for a published mean concentration-time curve, or a figure, and fit the polyexponential to that
+instead (log-residual weighting). On de Groot the only real observations in the paper were the points
+in Figure 1, and digitising them both validated the closure (the closed model reproduced subject 1's
+own intravenous points at a median ratio of 1.044) and settled the absorption model. Never invent
+pseudo-subjects from mean +/- SD: the correlations are unknown, which is the very problem.
+
+If nothing can be fitted, use the means and **say in the drug's header and help page that they are a
+two-stage average, which parameter is most likely distorted and in which direction**, with the
+magnitude from a comparable cohort if one exists. A model carrying its own caveats is better than no
+model: a clinician with neither has only the label.
+
+### The same fault corrupts the input function
+
+A paper that fitted the wrong disposition structure will have absorbed the error into its absorption
+parameters, so **its ka, lag or absorption half-life are not measurements either**. Once a unit
+disposition function is in hand, the input is identified separately and can be recovered by
+deconvolution. On de Groot the published absorption half-lives implied first-order ka of 3.0 to
+69.3 /h -- one of them a 36-second absorption half-life for a tablet taken after breakfast -- while
+deconvolving the closed UDF out of the digitised oral points showed the input is **zero-order**, over
+55 minutes after a 15-minute lag. The bioavailability, which is model-independent, was right; the
+input's kind was wrong. Check whether a published absorption rate is a measurement or a compensation
+before carrying it into a model.
+
 ## 1. The model — `R/drugs_<name>.R`
 
 Create a file named after the drug (lowercase, matching the CSV `Drug` value). Export one
