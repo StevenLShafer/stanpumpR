@@ -60,13 +60,23 @@ A false positive costs one paper left in Downloads with a line saying why. A fal
 colleague's unpublished work in a repository and its digest on the internet. The rules are tuned
 accordingly, and anything flagged is reported rather than quietly acted on.
 
+## nlmixr2lib never gets here
+
+The model library **nlmixr2lib** (`docs/nlmixr2lib/README.md`) is off limits to the archive, to the
+Paper Management session and to the whole pipeline (Steven L. Shafer, 2026-11-28). Its package, model files,
+vignettes and any copy or extract of them are never uploaded into `stanpumpRPapers`, filed, queued or
+digested, and they never get a card. It is read only by the repository's cross-check,
+`data-raw/nlmixr2libCrossCheck.R`, outside the archive. A drug or a reference of interest it leads to
+is handled as a new drug or a new manuscript by the usual route: the paper is obtained from its
+publisher under its own PMID, filed, and digested like any other.
+
 ## Reading a card
 
 `digests/README.md` is the authoring guide: the frontmatter contract, the verification
 verdicts (`matches`, `discrepancy`, `partly-verified`, `not-applicable`), the `open_questions`
 queue and what `revised:` and `reviewed:` mean.
 
-Two things worth knowing before trusting one:
+Three things worth knowing before trusting one:
 
 - A card's **Study section and parameter blocks are transcription**; the prose around them is
   interpretation. Three defects found in October 2026 were in the prose, downstream of a
@@ -74,6 +84,14 @@ Two things worth knowing before trusting one:
 - A **comparative word is a claim with a hidden second half.** When a source says a parameter
   is higher or shorter, the card must name what it was measured against. One unexamined
   "higher" carried a 64% error into a plotted curve.
+- **A two-stage paper's summary parameters may describe no subject at all.** Where a source
+  fitted each subject and then averaged the parameters, say so in the card and do not let the
+  means pass as a model. Averaging is worst for whichever parameter is most skewed across
+  subjects, usually a rate constant or half-life, and the others can look healthy while that
+  one is badly wrong. de Groot 1994's printed means give a central volume of 32.60 L where a
+  refit of the same six men gives 18.32 -- and the card that first described it said the model
+  could not be closed at all, which was wrong twice over. The procedure for recovering such a
+  paper is *A two-stage source* in `docs/adding-a-drug.md`.
 
 ## How a card gets here
 

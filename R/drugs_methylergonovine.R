@@ -107,13 +107,15 @@
 #
 # HOW WELL V1 IS KNOWN
 # ====================
-# Poorly.  The model closes the women's MEANS.  A prints no individual values
+# Poorly.  The model closes the women's MEANS, a two-stage average
+# (docs/adding-a-drug.md, A two-stage source).  A prints no individual values
 # for them, so the refit that is possible for the men (each man's model from his
-# own four values, then a fit to the six curves) is not possible here.
-#   - A closure of means can be badly biased.  The men's gives V1 32.6 L,
-#     against 18.3 L from a fit to the median of their six individual closures
-#     (B's card, papers/digests/DOI_10.1007_bf03257449.md, pull request 1004,
-#     which puts V1 no closer than about 30%): one man's long distribution
+# own four values, then a fit to the six curves) is not possible here, and A
+# plots no mean curve.
+#   - A closure of means can be badly biased, and V1 is where it falls.  The
+#     men's gives V1 32.6 L, against 16.9 L from a fit to the median of their
+#     six individual closures, anchored at time zero (B's card,
+#     papers/digests/DOI_10.1007_bf03257449.md): one man's long distribution
 #     half-life raised the mean.
 #   - V1 is sensitive to the values closed.  The distribution half-life 1 SD
 #     either way (0.06 to 0.14 h), the others fixed, moves it from 9.0 to
@@ -163,7 +165,7 @@
 # published values.  As a check, not a fit: scaled to the typical man of the
 # same study, the women's model predicts CL 29.7 L/h and Vss 74.8 L, against
 # the men's measured 32.2 (11.8) and 71.5 (25.9).  Its V1 there is 20.2 L
-# (18.3 L in the median fit above), and for 152 mcg over 1 minute its curve is
+# (16.9 L in the median fit above), and for 152 mcg over 1 minute its curve is
 # 12% below to 26% above the GEOMETRIC MEAN of the six men's individual curves
 # from 3 minutes to 6 hours.
 #

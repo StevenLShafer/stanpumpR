@@ -14,7 +14,7 @@ Subject 2 is not the average subject: his clearance is about a fifth below the g
 
 The only modern population model, **Roozekrans and colleagues 2017** (nine healthy men, arterial samples, two compartments), describes the first hour or two well but was sampled for only 3 hours, so it has no terminal phase, and it overpredicted the infusions above by a third to a half. It is not used for the plasma curve.
 
-In patients, concentrations run from about half to twice what this model predicts. Robson & Prescott's patients in respiratory failure reached 6.6 to 6.8 μg/mL on 1.5 mg/min, about twice the prediction. Mattila's postoperative patients, and one patient with a half-life of 155 minutes while taking carbamazepine, were lower. Doxapram is metabolized by CYP3A4: inducers lower its concentration and strong inhibitors would be expected to raise it.
+In patients, concentrations run from about half to twice what this model predicts. Robson & Prescott's patients in ventilatory failure reached 6.6 to 6.8 μg/mL on 1.5 mg/min, about twice the prediction. Mattila's postoperative patients, and one patient with a half-life of 155 minutes while taking carbamazepine, were lower. Doxapram is metabolized by CYP3A4: inducers lower its concentration and strong inhibitors would be expected to raise it.
 
 ### What is plotted
 
@@ -28,7 +28,7 @@ Roozekrans and colleagues fitted an effect compartment for doxapram's rise in **
 - no one in that study received a bolus (every dose was a 9- or 20-minute loading infusion);
 - the uncertainty puts the time to peak anywhere from about 3.5 to 8 minutes.
 
-The label says respiratory stimulation begins 20 to 40 seconds after an injection and peaks at 1 to 2 minutes. The model follows the later, measured study rather than the label.
+The label says ventilatory stimulation begins 20 to 40 seconds after an injection and peaks at 1 to 2 minutes. The model follows the later, measured study rather than the label.
 
 ### The band
 

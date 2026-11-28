@@ -89,7 +89,7 @@
 # Subject 2 is closest wherever the dose runs for hours, which is how
 # doxapram is usually given, and Roozekrans is closest in the first half hour
 # of an infusion.  Measured concentrations in patients run from about half
-# to twice this model's (Robson & Prescott's patients in respiratory failure
+# to twice this model's (Robson & Prescott's patients in ventilatory failure
 # reached 6.6-6.8 ug/mL on 1.5 mg/min, about twice; one reached 1.6, half).
 #
 # EFFECT SITE: tPeak 5.8 MIN, DERIVED FROM ROOZEKRANS 2017
@@ -104,7 +104,7 @@
 # Roozekrans' study received a bolus (every dose was a 9- or 20-min loading
 # infusion); and the standard error puts the time to peak anywhere from
 # about 3.5 to 8 min.  The label gives 20-40 s to onset and 1-2 min to the
-# peak RESPIRATORY effect after an injection; Dr. Shafer chose the measured,
+# peak VENTILATORY effect after an injection; Dr. Shafer chose the measured,
 # modelled 5.8 min over the label (a label is frozen at approval; AGENTS.md).
 #
 # BAND: 1.5 TO 3 ug/mL, TYPICAL 2 (THE LIBRARY'S, NOT A THERAPEUTIC RANGE)

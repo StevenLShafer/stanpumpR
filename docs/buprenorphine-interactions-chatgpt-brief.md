@@ -10,7 +10,7 @@ A pharmacokinetic/pharmacodynamic simulator for anaesthesia and pain medicine ne
 buprenorphine interacts with other opioids at the μ-opioid receptor. Buprenorphine is a high-affinity
 μ **partial agonist** whose defining property is **very slow dissociation** from the receptor
 (dissociation half-life ≈ 37 min). The clinical difficulty — durable blockade of other opioids,
-precipitated withdrawal, a respiratory-depression ceiling, and the problem of providing analgesia to a
+precipitated withdrawal, a ventilatory-depression ceiling, and the problem of providing analgesia to a
 maintenance patient who needs a full agonist — is driven by that slow dissociation, **not** by
 affinity. (Affinity alone cannot explain it: a full agonist such as sufentanil binds with comparable
 or higher affinity yet is readily displaced, because its dissociation is fast. Displaceability is set

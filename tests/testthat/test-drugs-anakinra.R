@@ -55,22 +55,32 @@ ivOf <- function(...) {
 }
 noEvents <- data.frame(Time = numeric(0), Event = character(0))
 
-test_that("intravenous: Table 1 at the reference man, the published values with the switch off", {
-  expect_equal(ivOf(70, 170, 35, "male"), ogungbenro)
+cohortIV <- do.call(cohortSizeFactors, ANAKINRA_IV_COHORT)
+test_that("intravenous: Table 1 anchored at Galea 2011's cohort, the published values with the switch off", {
+  ref <- pkSizeFactors(70, 170, 35, "male", TRUE)
+  expect_equal(ivOf(70, 170, 35, "male"),
+               ogungbenro * c(1 / cohortIV$volume, 1 / cohortIV$volume,
+                              1 / cohortIV$clearance, 1 / cohortIV$clearance))
+  expect_equal(ivOf(70, 170, 35, "male")[["cl1"]] * 60, 8.723, tolerance = 1e-3)
   expect_equal(ivOf(50, 160, 60, "female", adjustToFFM = FALSE), ogungbenro)
   size <- pkSizeFactors(110, 165, 50, "female", TRUE)
   expect_equal(ivOf(110, 165, 50, "female"),
-               ogungbenro * c(size$volume, size$volume, size$clearance, size$clearance))
+               ogungbenro * c(size$volume / cohortIV$volume, size$volume / cohortIV$volume,
+                              size$clearance / cohortIV$clearance,
+                              size$clearance / cohortIV$clearance))
+  # the cohort: 7 men and 18 women of 73.4 kg and 53 years, NCD-RisC's UK heights
+  expect_equal(unlist(cohortIV), c(volume = 0.8703, clearance = 0.9010), tolerance = 1e-3)
   expect_equal(getDrugPK("anakinra", 70, 170, 35, "male")$routes, ROUTE_SC)
 })
 
-test_that("intravenous: 100 mg then 2 mg/kg/h reaches 140/7.86 mg/L; each route runs on its own model", {
+test_that("intravenous: 100 mg then 2 mg/kg/h reaches its steady state; each route runs on its own model", {
   PK <- getDrugPK("anakinra", 70, 170, 35, "male")
   iv <- data.frame(Drug = "anakinra", Time = c(0, 0), Dose = c(100, 2),
                    Units = c("mg", "mg/kg/hr"))
   w <- simCpCe(iv, noEvents, PK, 2880, FALSE)$wide
-  expect_equal(w$Plasma[w$Time == 2880], 140 / 7.86 * 1000, tolerance = 2e-3)  # ng/mL
-  expect_equal(max(w$Plasma[w$Time <= 0.01]), 100 / 5.74 * 1000, tolerance = 1e-3)
+  p <- PK$parallelSystems[[1]]$PK$default
+  expect_equal(w$Plasma[w$Time == 2880], 140 / (p$cl1 * 60) * 1000, tolerance = 2e-3)  # ng/mL
+  expect_equal(max(w$Plasma[w$Time <= 0.01]), 100 / p$v1 * 1000, tolerance = 1e-3)
   # an SC dose is untouched by the IV system, an IV dose by the SC one
   sc <- data.frame(Drug = "anakinra", Time = 0, Dose = 100, Units = "mg SC")
   wSC <- simCpCe(sc, noEvents, PK, 1440, FALSE)$wide
@@ -90,9 +100,16 @@ test_that("intravenous: 100 mg then 2 mg/kg/h reaches 140/7.86 mg/L; each route 
 
 test_that("intravenous: against Yang 2003's healthy men, which it was not fitted to", {
   p <- ivOf(70, 170, 35, "male")
-  expect_equal(p[["cl1"]] * 60 / 8.22, 0.956, tolerance = 1e-3)   # CL 137 mL/min
+  expect_equal(p[["cl1"]] * 60 / 8.22, 1.061, tolerance = 1e-3)   # CL 137 mL/min
   k10 <- p[["cl1"]] / p[["v1"]]; k12 <- p[["cl2"]] / p[["v1"]]; k21 <- p[["cl2"]] / p[["v2"]]
   b <- k10 + k12 + k21
   hl <- log(2) / ((b + c(1, -1) * sqrt(b^2 - 4 * k10 * k21)) / 2) / 60
-  expect_equal(hl, c(0.4626, 4.154), tolerance = 1e-3)
+  expect_equal(hl, c(0.4790, 4.301), tolerance = 1e-3)
+})
+
+test_that("intravenous: against Fisher 1994's patients with sepsis, about 0.55 of the model", {
+  cl <- c(17, 67, 133) / c(3.54, 14.8, 25.2)            # L/h, rate / mean concentration
+  expect_equal(cl, c(4.802, 4.527, 5.278), tolerance = 1e-3)
+  p <- ivOf(70, 170, 35, "male")
+  expect_true(all(cl / (p[["cl1"]] * 60) > 0.5 & cl / (p[["cl1"]] * 60) < 0.62))
 })

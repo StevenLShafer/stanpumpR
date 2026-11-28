@@ -23,9 +23,11 @@ Intravenous doses run on a model of their own (Steven L. Shafer, 2026-11-26): Og
 | Intercompartmental clearance | 0.65 L/h |
 | Peripheral volume | 3.56 L |
 
-The paper prints no body size, so these are taken as the 70 kg reference man's and scaled to the patient's fat-free mass; with the switch off they are the published values. At 70 kg the half-lives are 28 minutes and 4.2 hours, and 100 mg then 2 mg/kg/hour reaches a steady state of about 17,800 ng/mL. Yang 2003's 12 healthy men, given 1 mg/kg intravenously and not part of the fit, had a clearance of 137 mL/min (8.2 L/h), within 5% of this model's.
+These values belong to the source's own patients. Galea 2011 describes 25 of them: 7 men and 18 women, mean 53 years and 73 kg. A patient like them receives the published values, and other patients are scaled by fat-free mass; with the switch off, everyone receives the published values. For the 70 kg, 35-year-old reference man that gives a clearance of 8.7 L/h, half-lives of 29 minutes and 4.3 hours, and a steady state of about 16,000 ng/mL after 100 mg then 2 mg/kg/hour. Yang 2003's 12 healthy men, given 1 mg/kg intravenously and not part of the fit, had a clearance of 137 mL/min (8.2 L/h), within 6% of this model's.
 
-The two routes run as separate systems on separate models, and their concentrations add. A dose by one route does not change the other route's model. The two populations differ: Urien's apparent clearance at 70 kg, 6.24 L/h, is CL/F; multiplied by the label's subcutaneous bioavailability of 95%, it gives a systemic clearance of 5.93 L/h, 25% below Ogungbenro's. Neither model carries renal function, which sepsis often impairs; the curve is that of a patient with normal renal function.
+**In sepsis the concentration may run higher than drawn.** Fisher 1994 gave 99 adults with sepsis syndrome 100 mg, then 17, 67 or 133 mg/hour for 72 hours. Their mean concentrations during the infusion, 3,540, 14,800 and 25,200 ng/mL, give a clearance of 4.5 to 5.3 L/hour, about 0.55 of this model's; a fifth of the treated patients had acute renal dysfunction at entry. Their clearance rose with creatinine clearance, but the paper prints no equation, so no renal term is applied.
+
+The two routes run as separate systems on separate models, and their concentrations add. A dose by one route does not change the other route's model. The two populations differ: Urien's apparent clearance at 70 kg, 6.24 L/h, is CL/F; multiplied by the label's subcutaneous bioavailability of 95%, it gives a systemic clearance of 5.93 L/h, a third below the intravenous model's 8.7 L/h for the same man. Neither model carries renal function, which sepsis often impairs; the curve is that of a patient with normal renal function.
 
 ### Covariates
 
