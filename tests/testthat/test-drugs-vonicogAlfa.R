@@ -142,7 +142,7 @@ test_that("normalised factor VIII starts at zero, and its time until threshold i
 
 test_that("the help pages: Vonvendi is not a prodrug, factor VIII names its parent and no PK table", {
   dd <- getDrugDefaultsGlobal()
-  expect_identical(helpParentDrugs("factorVIIIvwf", dd), "vonicogAlfa")
+  expect_setequal(helpParentDrugs("factorVIIIvwf", dd), c("vonicogAlfa", "humateP"))
   expect_false(grepl("prodrug", helpIvDrugPageHTML("vonicogAlfa", getDrugDefaults("vonicogAlfa"), dd)))
   page <- helpIvDrugPageHTML("factorVIIIvwf", getDrugDefaults("factorVIIIvwf"), dd)
   expect_true(grepl("placeholder that nothing simulates", page))
