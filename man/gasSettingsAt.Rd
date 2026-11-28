@@ -4,7 +4,13 @@
 \alias{gasSettingsAt}
 \title{Settings in force at a given time, and the derived fresh-gas composition}
 \usage{
-gasSettingsAt(split, t, deadSpace = GAS_DEAD_SPACE_FRACTION, ratio = 1)
+gasSettingsAt(
+  split,
+  t,
+  deadSpace = GAS_DEAD_SPACE_FRACTION,
+  ratio = 1,
+  expansion = 1
+)
 }
 \arguments{
 \item{split}{list of per-setting data frames, from \code{split()} on Drug}
@@ -22,6 +28,10 @@ returned as partial pressures in \% of a sea-level atmosphere: a flowmeter
 gas at \code{ratio} times its fraction, a variable-bypass vaporizer at its
 dial, and the desflurane vaporizer, which delivers volume percent, at
 \code{ratio} times its dial.}
+
+\item{expansion}{litres in the lungs per litre at the flowmeters
+(\code{gasFreshGasExpansion()}); the total flow is returned times it, the
+fractions being unchanged}
 }
 \value{
 a list with total fresh gas flow \code{Q}, minute ventilation

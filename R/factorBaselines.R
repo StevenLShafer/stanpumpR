@@ -71,6 +71,16 @@ FACTOR_BASELINE_FIELDS <- list(
     min = 0,
     max = 300,
     step = 0.5
+  ),
+  # Von Willebrand factor, the ristocetin cofactor activity (VWF:RCo), IU/dL,
+  # read by the VWF concentrates, which also drive factor VIII with it
+  # (R/vwfFactorVIII.R; Shafer, 2026-11-28)
+  vonWillebrandFactorBaseline = list(
+    label = "VWF:RCo baseline",
+    units = "IU/dL",
+    min = 0,
+    max = 300,
+    step = 0.5
   )
 )
 

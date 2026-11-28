@@ -136,7 +136,8 @@
 # Free drug, read from R/antibioticThresholds.R and R/antibioticMbc.R.  The
 # MIC line is free ceftolozane at 4 mg/L, the susceptible breakpoint for
 # Pseudomonas aeruginosa.  No band is drawn: no MBC50 or MBC90 for
-# ceftolozane has been found (antibioticNoBands()).
+# ceftolozane has been found (antibioticNoBands()).  Steven L. Shafer decided
+# on 2026-11-28 that Zerbaxa has no MBC band, as cefepime has none.
 #
 # References:
 # Zhang Z et al., J Clin Pharmacol 2021;61:254-268.

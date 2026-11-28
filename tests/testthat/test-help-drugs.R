@@ -114,7 +114,7 @@ plasmaOnly <- c(
     # levosimendan (2026-11-25): no measured time to peak haemodynamic effect
     "levosimendan", "OR1896",
     # narrow-therapeutic-window drugs (2026-11-12): plasma only
-    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "micafungin", "micafunginJullien", "micafunginWasmann", "teicoplanin", "teicoplaninKim", "teicoplaninZhang", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
+    "theophylline", "lithiumCarbonate", "tranexamicAcid", "caffeineNeonatal", "tacrolimus", "sotalol", "voriconazole", "posaconazole", "fluconazole", "micafungin", "caspofungin", "isavuconazole", "micafunginJullien", "micafunginWasmann", "teicoplanin", "teicoplaninKim", "teicoplaninZhang", "clozapine", "norclozapine", "tobramycin", "amikacin", "linezolid", "ganciclovir", "sirolimus", "everolimus", "cyclosporine", "scopolamine", "flecainide", "mexiletine", "amitriptyline", "dofetilide", "quinidine", "nortriptyline", "meropenem", "piperacillin",
     # pulmonary hypertension (2026-11-15): plasma only
     "treprostinil", "sildenafil", "tadalafil", "riociguat", "selexipag", "ACT333679",
     # suzetrigine and its metabolite (2026-11-16): plasma only
@@ -141,6 +141,10 @@ plasmaOnly <- c(
     "artemether", "dihydroartemisinin", "lumefantrine",
     # ceftolozane, drawn for Zerbaxa (Zhang 2021, 2026-11-25): plasma only
     "ceftolozane",
+    # ceftazidime, drawn for Avycaz (Franzese 2022, 2026-11-25): plasma only
+    "ceftazidime",
+    # imipenem (Patel 2022, 2026-11-25): plasma only
+    "imipenem",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only
@@ -160,6 +164,7 @@ plasmaOnly <- c(
     "immunoglobulin",
     "antithrombin",
     "antithrombinAlfa",
+    "vonicogAlfa", "factorVIIIvwf", "humateP",
     "antithrombinIlias",
     "antithrombinMoffett",
     "thrombomodulinAlfa",
@@ -357,7 +362,10 @@ test_that("every intravenous drug page carries its citation, units and tables", 
     if (!is.na(row$Default.Units) && nzchar(row$Default.Units)) {
       expect_match(html, row$Default.Units, fixed = TRUE, info = drug)
     }
-    expect_match(html, "Volumes and clearances", fixed = TRUE, info = drug)
+    # except a curve computed from its parent's model (factorVIIIvwf), whose
+    # PK set is a placeholder the page does not show
+    if (!isTRUE(helpDrugModelOutput(drug, helpReferencePatients()[1, ])$pkPlaceholder))
+      expect_match(html, "Volumes and clearances", fixed = TRUE, info = drug)
     expect_match(html, "About this model", fixed = TRUE, info = drug)
     expect_match(html, 'data-help-page="drugs/index"', fixed = TRUE, info = drug)
   }

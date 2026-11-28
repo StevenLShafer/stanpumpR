@@ -80,7 +80,11 @@ patientFieldReadersSentence <- function(arg, drugDefaults = getDrugDefaultsGloba
   named <- vapply(seq_along(readers), function(i) {
     drug <- readers[i]
     if (drug %in% names(notes)) sprintf("%s (%s)", drug, notes[[drug]])
-    else if (!is.na(products[i])) sprintf("%s (given as %s)", drug, products[i])
+    else if (!is.na(products[i]))
+      # a component that is also dosed in its own right (imipenem, as
+      # PRIMAXIN) is "also given as" its product
+      sprintf(if (isTRUE(drugDefaults$Category[match(drug, drugDefaults$Drug)] != ""))
+                "%s (also given as %s)" else "%s (given as %s)", drug, products[i])
     else drug
   }, character(1))
   sprintf("Read by %s; no other drug is affected.", patientFieldList(named))
@@ -231,6 +235,12 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
       "The patient's own antithrombin activity, in IU/dL (% of normal),",
       "before any concentrate. The antithrombin curve is this level plus the",
       "activity infused, and the model's volume depends on it."
+    ),
+    vonWillebrandFactorBaseline = paste(
+      "The patient's own von Willebrand factor activity (ristocetin",
+      "cofactor, VWF:RCo), in IU/dL (% of normal), before any concentrate.",
+      "The VWF curve is this level plus the activity infused, and the factor",
+      "VIII curve drawn with it follows the total."
     )
   )
   trail <- if (arg == "creatinine") sprintf(
@@ -255,7 +265,8 @@ patientFieldTooltip <- function(arg, drugDefaults = getDrugDefaultsGlobal()) {
     "fitted in, which the drug's help page gives (severe haemophilia A or B",
     "for factors VIII and IX, afibrinogenaemia for fibrinogen, Guillain-Barre",
     "syndrome for immunoglobulin, 60 IU/dL in the children antithrombin was",
-    "fitted in, hereditary deficiency for antithrombin alfa): a patient with",
+    "fitted in, hereditary deficiency for antithrombin alfa, type 3 von",
+    "Willebrand disease for VWF): a patient with",
     "a different level is then",
     "drawn too high or too low."
   ) else if (arg == "ast") sprintf(

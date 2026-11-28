@@ -227,6 +227,29 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
   for (target in names(contributions))
   {
     parents <- contributions[[target]]
+    # The factor VIII a VWF concentrate protects is not linear in the
+    # VWF:RCo (R/vwfFactorVIII.R), so two concentrates' integrations cannot
+    # be added: the panel would be neither product's model.
+    nonlinear <- vapply(parents, function(p)
+      isTRUE(attr(drugs[[p]]$metaboliteSeries, "nonlinear")), logical(1))
+    # A concentrate in the dose table but not given (a startup row at 0, a
+    # dose after the plot ends) draws only the patient's own factor VIII, so
+    # only the concentrates given count; with none given, one draws it
+    if (any(nonlinear))
+    {
+      exposed <- vapply(parents, function(p)
+        isTRUE(attr(drugs[[p]]$metaboliteSeries, "exposed")), logical(1))
+      keep <- !nonlinear | exposed
+      if (!any(keep & nonlinear)) keep[which(nonlinear)[1]] <- TRUE
+      parents <- parents[keep]
+      nonlinear <- nonlinear[keep]
+      contributions[[target]] <- parents
+    }
+    if (length(parents) > 1 && any(nonlinear))
+      stop("The factor VIII drawn as ", target, " is formed by ",
+           paste(parents, collapse = " and "), " together, which the model cannot ",
+           "draw: it is not the sum of each concentrate's own. Give one VWF ",
+           "concentrate at a time.")
     # One line for every contributor at once: the receiving drug's own doses
     # and each parent's.  The state sets' lines are the series' lines, but are
     # included so that the time until threshold, carried onto this line by
@@ -241,7 +264,13 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
       merged <- mergeMetaboliteSeries(merged, drugs[[parent]]$metaboliteSeries, times)
     if (is.null(merged)) next
 
-    if (plotRecovery)
+    # A response that is not linear in its parent (the factor VIII a VWF
+    # concentrate protects, R/vwfFactorVIII.R) has no states to solve a time
+    # until threshold from: it is unavailable, not zero.
+    nonlinear <- vapply(parents, function(p)
+      isTRUE(attr(drugs[[p]]$metaboliteSeries, "nonlinear")), logical(1))
+    if (any(nonlinear)) merged$Recovery <- NA_real_
+    else if (plotRecovery)
     {
       recovery <- foldedRecovery(merged$Time, drugs, target, contributions[[target]])
       if (!is.null(recovery)) merged$Recovery <- recovery
@@ -256,7 +285,11 @@ foldMetabolites <- function(drugs, maximum, plotRecovery = FALSE)
       merged$Time
     )
 
-    X <- finishDrugSeries(merged, drugs[[target]], maximum, plotRecovery)
+    entry <- drugs[[target]]
+    # normalised above its pre-dose level, which only the parent knows
+    base <- attr(drugs[[parents[1]]]$metaboliteSeries, "baseline")
+    if (length(parents) == 1 && !is.null(base)) entry$endogenousActivity <- base
+    X <- finishDrugSeries(merged, entry, maximum, plotRecovery)
     drugs[[target]]$results   <- X$results
     drugs[[target]]$equiSpace <- X$equiSpace
     drugs[[target]]$max       <- X$max

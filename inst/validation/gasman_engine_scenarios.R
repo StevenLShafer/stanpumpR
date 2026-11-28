@@ -171,10 +171,12 @@ gasScenarioEngine <- function(s, resolution = 601, circuit = "ideal")
   # with a 30% dead space, which GasMan has no counterpart for.
   # oxygenUptake = FALSE: GasMan has no oxygen, so none of its volume is lost
   # to oxygen consumption.
+  # volumeConversion = FALSE: GasMan takes the fresh gas litre for litre,
+  # where the app expands it from the flowmeters' conditions to the lungs'.
   sim <- advanceClosedFormGas(s$DT, weight = s$weight, maximum = s$maximum,
                               cardiacOutput = s$CO, resolution = resolution,
                               circuit = circuit, deadSpace = 0,
-                              oxygenUptake = FALSE)
+                              oxygenUptake = FALSE, volumeConversion = FALSE)
   do.call(rbind, lapply(s$agents, function(g) {
     m <- sim$state[[g]][, 1:5, drop = FALSE]
     out <- as.data.frame(lapply(seq_len(5), function(j)

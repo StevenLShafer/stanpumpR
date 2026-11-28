@@ -52,7 +52,7 @@ test_that("1: a closed circuit rebreathes the gas pushed out on emergence, and l
   props <- getGasProperties()
   MV <- 4.6
   VA <- MV * (1 - GAS_DEAD_SPACE_FRACTION)
-  VCO2 <- GAS_RESPIRATORY_QUOTIENT * body$VO2
+  VCO2 <- GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(body)
   cE <- VCO2 / MV
   u <- -0.1
   for (g in props$gas[props$soluble]) {
@@ -64,7 +64,7 @@ test_that("1: a closed circuit rebreathes the gas pushed out on emergence, and l
   }
   ox <- gasSystemOxygen(body, Q = 0, VA = VA, Ffgf = 100, MV = MV, totUptake = u, cE = cE)
   expect_lt(abs(ox$A[2, 2]), 1e-12)
-  expect_equal(body$V_alveolar * ox$b[2], -100 * body$VO2)   # the oxygen consumed, no more
+  expect_equal(body$V_alveolar * ox$b[2], -100 * gasOxygenUptake(body))   # the oxygen consumed, no more
 
   # A little fresh gas, the pushed-out gas more than the shortfall: the
   # alveoli receive all of VA again, and what is vented is the circuit's
@@ -121,11 +121,11 @@ test_that("1: a nitrous oxide washout into a closed circuit conserves every gas"
                   list(20, "nitrousOxide", 0), list(20, "oxygen", 6), list(21, "oxygen", 0))
   sim <- simulateGases(DT, weight = 70, age = 40, maximum = 35)
   body <- sim$body
-  VCO2 <- GAS_RESPIRATORY_QUOTIENT * body$VO2
+  VCO2 <- GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(body)
   closed <- which(sim$timeLine >= 21 - 1e-9 & sim$state$oxygen[, 2] > 0)
   expect_gt(length(closed), 50)
   first <- lapply(sim$state, function(m) m[closed[1], ])
-  u <- gasTotalUptake(first, getGasProperties(), body, body$Q_cardiac) + body$VO2 - VCO2
+  u <- gasTotalUptake(first, getGasProperties(), body, body$Q_cardiac) + gasOxygenUptake(body) - VCO2
   expect_true(u < 0 && u > -VCO2)                 # a washout, and the circuit short
   for (g in c("nitrousOxide", "nitrogen")) {
     held <- cr730Amount(sim, g)[closed]
@@ -133,7 +133,7 @@ test_that("1: a nitrous oxide washout into a closed circuit conserves every gas"
   }
   o2 <- cr730Amount(sim, "oxygen")[closed]
   t <- sim$timeLine[closed]
-  expect_equal(o2, o2[1] - body$VO2 * (t - t[1]), tolerance = 1e-9)
+  expect_equal(o2, o2[1] - gasOxygenUptake(body) * (t - t[1]), tolerance = 1e-9)
 })
 
 
@@ -142,27 +142,29 @@ test_that("1: what a closed circuit vents on emergence is only its surplus", {
   # the tissues give back more than the oxygen consumed and the carbon
   # dioxide absorbed take, so the circuit has a surplus and vents it, and
   # then it is short and vents nothing.  The nitrous oxide lost is the
-  # surplus at its alveolar tension, max(0, Q - VCO2 - u) F_alv: 31 mL.
+  # surplus at its alveolar tension, max(0, Q - VCO2 - u) F_alv: 31 mL
+  # (18 mL since 2026-11-28, the oxygen consumed being 1.21 times the volume
+  # in the lungs: gasStpdFactor()).
   # Before, all of -u was vented, and 115 mL was lost.
   DT <- cr730Rows(list(0, "nitrousOxide", 4), list(0, "oxygen", 2), list(0, "ventilation", 4.6),
                   list(60, "nitrousOxide", 0), list(60, "oxygen", 6), list(61, "oxygen", 0))
   sim <- simulateGases(DT, weight = 70, age = 40, maximum = 66)
   props <- getGasProperties()
   body <- sim$body
-  VCO2 <- GAS_RESPIRATORY_QUOTIENT * body$VO2
+  VCO2 <- GAS_RESPIRATORY_QUOTIENT * gasOxygenUptake(body)
   tl <- sim$timeLine
   closed <- which(tl >= 61 - 1e-9 & sim$state$oxygen[, 2] > 0)
   vented <- 0
   for (j in seq_len(length(closed) - 1)) {
     i <- closed[j]
     st <- lapply(sim$state, function(m) m[i, ])
-    u <- gasTotalUptake(st, props, body, body$Q_cardiac) + body$VO2 - VCO2
+    u <- gasTotalUptake(st, props, body, body$Q_cardiac) + gasOxygenUptake(body) - VCO2
     alv <- (sim$state$nitrousOxide[i, 2] + sim$state$nitrousOxide[i + 1, 2]) / 2
     vented <- vented + max(0, -VCO2 - u) * alv / 100 * (tl[i + 1] - tl[i])
   }
   n2o <- cr730Amount(sim, "nitrousOxide")
   lost <- n2o[closed[1]] - n2o[closed[length(closed)]]
-  expect_gt(vented, 0.02)
+  expect_gt(vented, 0.015)
   expect_equal(lost, vented, tolerance = 5e-3)
 })
 

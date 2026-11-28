@@ -134,7 +134,18 @@ antibioticMicTable <- function()
     teicoplanin   = paste(
       "MIC: the top of the EUCAST teicoplanin MIC distribution for MRSA used by Kim 2024 (Pharmaceutics",
       "16:499, read in full): 0.25 mg/L in 5.6%, 0.5 in 40.4%, 1 in 43.1% and 2 mg/L in 11.0% of 555",
-      "isolates, so 2 mg/L is the MIC the drug must still cover.")
+      "isolates, so 2 mg/L is the MIC the drug must still cover."),
+    ceftazidime   = paste(
+      "MIC: the susceptible breakpoint of ceftazidime-avibactam (avibactam fixed at 4 mg/L) for",
+      "Enterobacterales and Pseudomonas aeruginosa, S <= 8 and R > 8 mg/L, 'established by the FDA,",
+      "CLSI, and EUCAST' for 2,000/500 mg every 8 h by 2-h infusion (Nichols WW et al., Antimicrob",
+      "Agents Chemother 2018;62:e02590-17, abstract); the source's own target, 50% fT > 8 mg/L",
+      "(Franzese 2022), which it says 'encompasses the majority of target pathogens'."),
+    imipenem      = paste(
+      "MIC: 2 mg/L, the imipenem/relebactam MIC breakpoint at which the source assessed target",
+      "attainment ('an IPM/REL MIC breakpoint of less than or equal to 2 ug/ml'; Patel M et al., Clin",
+      "Transl Sci 2022;15:396-408, read in full), with the imipenem target 30% fT > MIC. The PRIMAXIN",
+      "and RECARBRIO labels defer to FDA's STIC page.")
   )
   bindingSource <- c(
     cefazolin     = "Free fraction: not needed, the model plots unbound cefazolin (Komatsu T et al., Antimicrob Agents Chemother 2024;68:e00267-24).",
@@ -192,13 +203,20 @@ antibioticMicTable <- function()
     teicoplanin   = paste(
       "Free fraction: 0.10 (Abdul-Aziz MH et al., Intensive Care Med 2020;46:1127-1153, read in full:",
       "'high plasma protein binding (>= 90%)'; Wang 2023 and Zhang 2020: over 90%), the lower bound of",
-      "the binding; total drug is plotted.")
+      "the binding; total drug is plotted."),
+    ceftazidime   = paste(
+      "Free fraction: 0.90 (Avycaz label, NDA 206494, 2026, sec. 12.3: 'Less than 10% of ceftazidime",
+      "was protein bound. The degree of protein binding was independent of concentration'); the",
+      "source's target-attainment simulations assumed 0.85 (Franzese 2022, Methods)."),
+    imipenem      = paste(
+      "Free fraction: 0.80 (PRIMAXIN label, NDA 050587, 2026, sec. 12.3: 'The binding of imipenem to",
+      "human serum proteins is approximately 20%'; RECARBRIO label, NDA 212819, the same).")
   )
 
   x <- data.frame(
     Drug = c("cefazolin", "cefalexin", "ceftriaxone", "clindamycin",
              "gentamicin", "metronidazole", "tobramycin", "amikacin", "linezolid", "meropenem",
-             "piperacillin", "vancomycin", "colistin", "cefepime", "ceftolozane", "teicoplanin"),
+             "piperacillin", "vancomycin", "colistin", "cefepime", "ceftolozane", "teicoplanin", "ceftazidime", "imipenem"),
     Organism = c(
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
       "Staphylococcus aureus, methicillin-susceptible (MSSA)",
@@ -215,19 +233,21 @@ antibioticMicTable <- function()
       "Enterobacterales and Acinetobacter baumannii",
       "Pseudomonas aeruginosa",
       "Pseudomonas aeruginosa",
-      "Staphylococcus aureus, including MRSA"
+      "Staphylococcus aureus, including MRSA",
+      "Enterobacterales and Pseudomonas aeruginosa",
+      "Enterobacterales and Pseudomonas aeruginosa"
     ),
-    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 2, 8, 1, 2, 8, 4, 2),
+    MIC = c(2, 4, 1, 0.5, 2, 4, 2, 4, 2, 2, 8, 1, 2, 8, 4, 2, 8, 2),
     Plotted = c("unbound", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total", "total",
-                "total", "total", "total", "total"),
-    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.98, 0.70, 0.70, 0.49, 0.80, 0.80, 0.10),
-    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+                "total", "total", "total", "total", "total", "total"),
+    FreeFraction = c(1, 0.85, 0.065, 0.096, 1, 0.96, 1, 0.82, 0.69, 0.98, 0.70, 0.70, 0.49, 0.80, 0.80, 0.10, 0.90, 0.80),
+    Saturable = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     # The one-site binding fits named in the binding sources, total = free +
     # capacity x free / (Kd + free); FreeFraction is that map's free / total
     # at the MIC, which is what puts the threshold on the curve.
-    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 2, 11.4, 1.4, 4.1, 10, 5, 20),
+    BindingKd       = c(NA, NA, 23.7, 0.85, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+    BindingCapacity = c(NA, NA, 354, 12.7, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+    Threshold = c(2, 4.7, 15, 5.2, 2, 4.2, 2, 4.9, 2.9, 2, 11.4, 1.4, 4.1, 10, 5, 20, 8.9, 2.5),
     MicSource = unname(micSource),
     BindingSource = unname(bindingSource),
     stringsAsFactors = FALSE
