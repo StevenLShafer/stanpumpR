@@ -401,9 +401,9 @@ antithrombinMoffett,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,
 antithrombinIlias,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#00897B,80,120,100,0,0,IV,
 desmopressin,pg,mcg,mcg/hr,mcg/kg,"mcg,mcg/kg,mcg/hr,mcg/kg/hr",#AD1457,0,0,0,0,0,IV,Hemostasis and reversal
 antithrombinAlfa,IUdL,IU/kg,IU/kg/hr,IU/kg,"IU/kg,IU,IU/kg/hr,IU/hr",#26A69A,80,120,100,0,0,IV,Hemostasis and reversal
-micafungin,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
-micafunginJullien,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,
-micafunginWasmann,mcg,mg,mg/hr,mg/hr,"mg,mg qd,mg/kg,mg/kg qd,mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
+micafungin,mcg,,mg/hr,mg/hr,"mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,Other
+micafunginJullien,mcg,,mg/hr,mg/hr,"mg/hr,mg/kg/hr",#7D6608,0,0,0,0,0,IV,
+micafunginWasmann,mcg,,mg/hr,mg/hr,"mg/hr,mg/kg/hr",#9A7D0A,0,0,0,0,0,IV,
 teicoplanin,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#6A1B9A,15,30,22.5,0,20,IV,Antibiotics
 teicoplaninKim,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#8E24AA,15,30,22.5,0,0,IV,
 teicoplaninZhang,mcg,mg,mg/hr,mg,"mg,mg/kg,mg/hr,mg/kg/hr,mg qd,mg bid,mg/kg qd,mg/kg bid",#AB47BC,15,30,22.5,0,0,IV,
