@@ -581,6 +581,8 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
           } else if (noEffectSite && !is.na(row$endCe) && row$endCe > 0) {
             sprintf("%s %s, timed on the plasma (no effect site in the model)",
                     helpFormatNumber(row$endCe), concUnits)
+          } else if (isTRUE(modelOut$pkPlaceholder)) {
+            "None: no time until threshold for a curve computed from its parent's model"
           } else if (noEffectSite) {
             "None by default; a threshold set under Drug Thresholds is timed on the plasma"
           } else if (is.na(row$endCe) || row$endCe <= 0) {
@@ -796,7 +798,18 @@ helpIvDrugPageHTML <- function(drug, row, drugDefaults) {
 
   # --- Formed from ------------------------------------------------------------
   formedHTML <- ""
-  if (length(parents)) {
+  if (length(parents) && isTRUE(modelOut$pkPlaceholder)) {
+    items <- vapply(parents, function(p) {
+      paste0("<li>", helpPageLink(paste0("drugs/", p)), "</li>")
+    }, character(1))
+    formedHTML <- paste0(
+      helpH2("Formed from"),
+      "<p>This curve is computed from the model of ", if (length(parents) > 1) "these drugs" else "this drug",
+      ", and drawn whenever ", if (length(parents) > 1) "one of them is" else "it is",
+      " given. It has no time until threshold. The equations are on the parent's page.</p>",
+      "<ul>", paste(items, collapse = ""), "</ul>"
+    )
+  } else if (length(parents)) {
     items <- vapply(parents, function(p) {
       paste0("<li>", helpPageLink(paste0("drugs/", p)), "</li>")
     }, character(1))
