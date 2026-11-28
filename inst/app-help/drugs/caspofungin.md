@@ -1,29 +1,23 @@
-### The model
+### One name, the model chosen for the patient
 
-stanpumpR draws caspofungin with Xu and colleagues' model of critically ill children (Xu 2026, *Antimicrob Agents Chemother* 70:e01277-25). They studied 29 children in a paediatric intensive care unit, aged 4 months to 16 years and weighing 4.9 to 74 kg. Four of the children were on ECMO. All were given CANCIDAS as a one-hour infusion each day. The model has two compartments, and every parameter is scaled by body-surface area (Mosteller) about a child of 0.79 m². Clearance and intercompartmental clearance scale with BSA to the power 0.66, and both volumes in proportion to BSA. The paper fixes those exponents for "clearance" and "volume" but does not say whether Q and V2 take them. stanpumpR scales Q as a clearance and V2 as a volume, which is an assumption. Steven Shafer chose this model on 28 November 2026, over Yang 2022's step covariates.
+stanpumpR holds 2 published models of caspofungin. You do not choose between them: stanpumpR picks the model whose study population best matches the patient you entered (a rule of Steven Shafer's, 9 November 2026). The References panel under the plot names the model in use.
 
-Doses are in mg of caspofungin, as CANCIDAS is labelled: a 50 mg vial holds caspofungin acetate equivalent to 50 mg of caspofungin. The label forbids an intravenous bolus, so a dose is entered as a rate and stopped after an hour. Children are dosed per m² (for example 50 mg/m²/hr from 0 to 60 minutes) and adults as a total (50 mg/hr from 0 to 60 minutes).
+| Model | Source | Studied in |
+|---|---|---|
+| [caspofunginWurthwein](help:drugs/caspofunginWurthwein) | Würthwein 2013 | 46 German adults with invasive aspergillosis, 18-74 years, 43-104 kg, 70-200 mg daily |
+| [caspofunginXu](help:drugs/caspofunginXu) | Xu 2026 | 29 critically ill Chinese children, 0.33-16 years, 4.9-74 kg |
 
-**Not applied.** Xu found ECMO enlarged the central volume (a coefficient of 18.2, in a form the paper does not state, from four children). The Patient Profile has no ECMO field, so the curve is that of a child not on ECMO.
+**The rule.** Among the models whose studied age and weight ranges include the patient, the one fitted to more patients is chosen, then the newer. If none includes the patient, the one whose ranges are nearest is chosen.
 
-### Comparison with the label
+**What that means for caspofungin.** Adults get Würthwein's model, including adults older than 74 or outside 43-104 kg, who are nearer to it than to the children's. Children up to 16 get Xu's. A 17-year-old is one year from each range; the tie goes to Würthwein's larger study. Steven Shafer chose this pairing on 28 November 2026.
 
-The model agrees with Xu's own estimates of its patients' exposure: their median AUC over a day without ECMO was 194 mg·h/L, and the model gives 204 at 50 mg/m² in a 6-year-old of 0.82 m². It does **not** agree with the CANCIDAS label's Table 8, whose patients were not in intensive care:
+### Doses
 
-| | Label AUC (mg·h/L) | Model AUC | Label clearance (mL/min) | Model clearance |
-|---|---|---|---|---|
-| 12-17 years, 50 mg/m² | 124.9 | 250 | 12.6 | 5.0 |
-| 2-11 years, 50 mg/m² | 120.0 | 204 | 6.4 | 3.4 |
-| 3-23 months, 50 mg/m² | 131.2 | 167 | 3.2 | 2.3 |
-| Adults, 50 mg | 87.3 | 147 | 10.6 | 5.7 |
-
-The model's patients cleared caspofungin about half as fast as the label's, so the curve runs 1.3 to 2 times higher than the label's patients would. Xu found its BSA-normalised clearance higher than three earlier paediatric models (0.248 against a median of 0.208 L/h/m²). The gap is therefore between the label's studies and the population models, not a misreading of this one.
-
-**Adults.** Xu studied no adults. Because this is the library's only caspofungin model, an adult gets it by the nearest-population rule. For adults it is an extrapolation of a paediatric ICU model, and it predicts about 1.7 times the label's adult exposure. Steven Shafer decided on 28 November 2026 to keep it for adults for now; an adult model may be added later.
+Doses are in mg of caspofungin, as CANCIDAS is labelled: a 50 mg vial holds caspofungin acetate equivalent to 50 mg of caspofungin. The label forbids an intravenous bolus, so a dose is entered as a rate and stopped when the infusion ends. Adults are dosed as a total (for example 50 mg/hr from 0 to 60 minutes) and children per m² (50 mg/m²/hr from 0 to 60 minutes).
 
 ### Target concentrations
 
-No band is drawn. Xu judges exposure by target attainment, using the ratio of the daily total AUC to the organism's MIC and a trough concentration, not by a concentration range. The label gives no therapeutic range.
+No band is drawn. Both sources report exposure as the daily AUC and the trough, and Xu judges it by the ratio of the AUC to the organism's MIC, not by a concentration range. The label gives no therapeutic range.
 
 ### Pregnancy
 

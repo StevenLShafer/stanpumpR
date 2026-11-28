@@ -183,6 +183,16 @@ MODEL_GROUPS <- list(
   # 19-55 years; no weight range printed), chosen by the nearest rule above
   # 55, and Zhang's children, each read in full.  Wang 2023 was rejected for
   # its A2-2-only assay (R/drugs_teicoplaninKim.R).
+  # Caspofungin (R/drugs_caspofungin*.R; Shafer, 2026-11-28: Xu 2026 for
+  # children, Wurthwein 2013 for adults).  Between Xu's 16 and Wurthwein's 18
+  # years the nearer range wins; an adult outside 43-104 kg is still nearer
+  # Wurthwein by age.
+  caspofungin = data.frame(
+    model = c("caspofunginWurthwein", "caspofunginXu"),
+    source = c("Wurthwein 2013", "Xu 2026"),
+    ageMin = c(18, 0.33), ageMax = c(74, 16),
+    weightMin = c(43, 4.9), weightMax = c(104, 74),
+    n = c(46, 29), year = c(2013, 2026)),
   teicoplanin = data.frame(
     model = c("teicoplaninKim", "teicoplaninZhang"),
     source = c("Kim 2024", "Zhang 2020"),
@@ -529,3 +539,14 @@ micafungin <- modelGroup("micafungin")
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
 teicoplanin <- modelGroup("teicoplanin")
+
+#' Caspofungin: the model chosen for the patient
+#'
+#' Wurthwein 2013 (46 adults, 18-74 years, 43-104 kg) or Xu 2026 (29
+#' critically ill children, 0.33-16 years, 4.9-74 kg), chosen by
+#' \code{selectModel()}; see \code{R/modelSelection.R}.
+#' @inheritParams caspofunginWurthwein
+#' @inheritParams caspofunginXu
+#' @returns a list in the shape \code{getDrugPK()} expects
+#' @export
+caspofungin <- modelGroup("caspofungin")

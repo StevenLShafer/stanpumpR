@@ -1,6 +1,7 @@
 # -----------------------------------------------------------------------------
 # Caspofungin (Cancidas): intravenous, two compartments, scaled by body-surface
-# area (Xu 2026, critically ill children)
+# area (Xu 2026, critically ill children); the children's candidate of the
+# caspofungin group (R/modelSelection.R), Wurthwein 2013 the adults'
 # -----------------------------------------------------------------------------
 # Units: time in minutes, volumes in litres, clearances in L/min, amounts in mg
 # of caspofungin, concentrations in mcg/mL (= mg/L) of total caspofungin in
@@ -33,11 +34,12 @@
 # clearance and V2 as a volume, as allometric scaling does (an assumption,
 # said on the help page).  Body-surface area is Mosteller's, as the paper's.
 #
-# POPULATION.  Critically ill children.  It is the only caspofungin model the
-# library holds, so it is used for every patient by the nearest-population
-# rule, adults included; the label's adults (Table 8) are the check on that
-# extrapolation.  Yang 2022 (step covariates at 70 kg and 35 g/L albumin) was
-# set aside on Shafer's decision.
+# POPULATION.  Critically ill children, 0.33-16 years, 4.9-74 kg.  Since
+# 2026-11-28 the caspofungin group (R/modelSelection.R) gives it to children
+# and Wurthwein 2013 (R/drugs_caspofunginWurthwein.R) to adults, on Shafer's
+# decision of that day; until then it was the library's only caspofungin
+# model and every adult received it.  Yang 2022 (step covariates at 70 kg and
+# 35 g/L albumin) was set aside on Shafer's decision.
 #
 # NOT APPLIED.  ECMO on V1 (18.2, a form the paper does not state; four
 # patients; the card's [check]): the Patient Profile has no ECMO field, so the
@@ -69,9 +71,8 @@
 # Xu's were, in intensive care; Xu itself finds its BSA-normalised clearance
 # above three earlier paediatric models (0.248 against a median 0.208 L/h/m2),
 # so the gap is to the label's studies, not to the other population models.
-# An adult is an extrapolation of a paediatric ICU model, kept for adults on
-# Shafer's decision of 2026-11-28 ("Keep Xu for adults for now"; the card,
-# papers/digests/PMID_41468548.md).
+# The adult row is what this model would give an adult; the group gives
+# adults Wurthwein 2013 instead.
 #
 # References
 # ----------
@@ -88,17 +89,18 @@ CASPOFUNGIN_V2  <- 1.63        # L
 CASPOFUNGIN_CL_EXP <- 0.66
 CASPOFUNGIN_V_EXP  <- 1
 
-#' Caspofungin pharmacokinetics (intravenous)
+#' Caspofungin in children (Xu 2026)
 #'
 #' Two compartments scaled by body-surface area (Xu 2026, critically ill
-#' children); see the header of the file.
+#' children); the children's candidate of the caspofungin group.  See the
+#' header of \code{R/drugs_caspofunginXu.R}.
 #'
 #' @inheritParams cefazolin
 #' @param adjustToFFM not used: the model's own body-surface-area covariate is
 #'   evaluated from total weight and height whichever way the switch is set
 #' @returns a list in the shape \code{getDrugPK()} expects
 #' @export
-caspofungin <- function(weight, height, age, sex, adjustToFFM = TRUE)
+caspofunginXu <- function(weight, height, age, sex, adjustToFFM = TRUE)
 {
   # Body-surface area from TOTAL weight whichever way the switch is set: the
   # covariate was fitted against the children's actual size.
