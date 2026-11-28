@@ -139,6 +139,8 @@ plasmaOnly <- c(
     "artemether", "dihydroartemisinin", "lumefantrine",
     # ceftolozane, drawn for Zerbaxa (Zhang 2021, 2026-11-25): plasma only
     "ceftolozane",
+    # ceftazidime, drawn for Avycaz (Franzese 2022, 2026-11-25): plasma only
+    "ceftazidime",
     # tamsulosin (Tsuda 2010, 2026-11-19): plasma only
     "tamsulosin",
     # rosuvastatin (Courlet 2021, 2026-11-19): plasma only
