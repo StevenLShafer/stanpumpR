@@ -276,9 +276,9 @@ test_that("a drug the sliders cannot switch during a run says so and keeps norma
 # --- The inhaled agents --------------------------------------------------------
 
 gasEventTable <- function(...) {
-  s <- physiologyEventNormal()
-  over <- list(...)
-  for (n in names(over)) s[[n]] <- over[[n]]
+  # Through checkPhysiologyEvent(), as a decoded event is: a shunt not given
+  # is the state's default, 50% with the tube (2026-11-28)
+  s <- checkPhysiologyEvent(unlist(list(...)))
   ev <- data.frame(Time = 20)
   for (f in PHYSIOLOGY_EVENT_FIELDS) ev[[f]] <- s[[f]]
   ev
@@ -386,11 +386,13 @@ test_that("the Visualizer draws an intubation that steps, with the lungs' capaci
   expect_equal(run$capacity[c("vrg", "mg", "fg")], plain$capacity[c("vrg", "mg", "fg")])
   expect_null(plain$lungsCapacity)
   # Arterial blood is below end-tidal while half the output is shunted, and
-  # at end-tidal afterwards; the saturation is sent with it
+  # close under it afterwards, at the 10% shunt under anesthesia
+  # (2026-11-28; at end-tidal until then); the saturation is sent with it
   early <- which(run$t > 30 & run$t < 290)
   late <- which(run$t > 310)
   expect_true(all(run$arterial[early] < run$p$lungs[early]))
-  expect_equal(run$arterial[late], run$p$lungs[late])
+  expect_true(all(run$arterial[late] < run$p$lungs[late]))
+  expect_true(all(run$arterial[late] > 0.9 * run$p$lungs[late]))
   expect_true(all(run$saturation[early] < 90))
   expect_true(all(run$saturation[late] > 99))
   # The steps the viewer shows: endobronchial from the start, tracheal at 5 min
@@ -407,7 +409,7 @@ test_that("the Visualizer draws an intubation that steps, with the lungs' capaci
   uptake <- function(i) (held(i + 1) - held(i - 1)) / ((run$t[i + 1] - run$t[i - 1]) / 60)
   blood <- function(i, shunt) (1 - shunt) * run$cardiacOutput[i] * pr$lambda_blood * (run$p$lungs[i] - run$venous[i])
   expect_equal(uptake(200), blood(200, ENDOBRONCHIAL_SHUNT_FRACTION), tolerance = 0.02)
-  expect_equal(uptake(1200), blood(1200, 0), tolerance = 0.02)
+  expect_equal(uptake(1200), blood(1200, GAS_SHUNT_ANESTHESIA), tolerance = 0.02)
   # A window after the step holds one capacity, so none is sent per time
   after <- viewerGasRun(entries$sevoflurane, 10, 60)
   expect_null(after$lungsCapacity)
